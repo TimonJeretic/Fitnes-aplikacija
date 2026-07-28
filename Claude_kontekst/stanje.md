@@ -14,6 +14,12 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   `https://timonjeretic.github.io/Fitnes-aplikacija/prototip/`.
   Vsi pogoji za namestitev PWA so torej izpolnjeni.
 - **Kontekstna dokumentacija** — `CLAUDE.md` kot indeks in ta mapa.
+- **Ogrodje prave aplikacije** (`aplikacija/`) — prazen zaslon, spodaj štirje kvadratni
+  gumbi T / W / S / A. Klik odpre zaslon svoje barve z napisom TRENING / TEŽA /
+  STATISTIKA / RAČUN. Vsebine še ni; namen je bil postaviti razširljivo ogrodje.
+  Preverjeno lokalno: vsi štirje zasloni, naslov `#/...` in gumb *nazaj*, nesmiseln
+  naslov pade na TRENING, service worker se registrira, aplikacija se naloži tudi
+  z ugasnjenim strežnikom. Razširljivost preizkušena s petim, začasnim zaslonom.
 
 ## V teku
 
@@ -31,7 +37,13 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
 3. **Izvoz in uvoz JSON** — varnostna kopija. Ne odlašati; podatki živijo samo na telefonu.
 4. **Grafa** — napredek moči po vaji, telesna teža.
 
-## Odprta vprašanja za 
+## Odprta vprašanja
 
 - Tri odprta vprašanja o podatkovnem modelu iz točke 1 zgoraj.
 - Ali prototip po prehodu na pravo aplikacijo ostane v repozitoriju ali se izbriše.
+  Zaenkrat ostaja.
+- Kaj sploh pride na zaslon **RAČUN**. Aplikacija namenoma nima prijave
+  ([produkt.md](produkt.md)); najbolj verjetna vsebina je izvoz/uvoz JSON in
+  brisanje podatkov.
+- Ali aplikacija ostane v podmapi `aplikacija/` ali se kdaj preseli na koren
+  zaradi lepšega naslova.

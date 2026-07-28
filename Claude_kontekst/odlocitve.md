@@ -82,3 +82,51 @@ ki teče v brskalniku — kar je pri učenju bistveno, ker ni skritega vmesnega 
 
 **Kaj bi jo ovrglo:** potreba po knjižnici, ki obstaja samo kot npm paket in je ni mogoče
 vendorati kot eno datoteko.
+
+---
+
+## 2026-07-28 — Aplikacija v mapi `aplikacija/`, ne na korenu
+
+**Odločitev:** prava aplikacija živi v `aplikacija/`, naslov je
+`https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`.
+
+**Zakaj:** koren repozitorija je skupen z `CLAUDE.md`, `Claude_kontekst/`, `prototip/`
+in `.docx`. Če se mednje vsujejo še `index.html`, `css/`, `js/` in `icons/`, na prvi
+pogled ni več jasno, kaj je aplikacija in kaj so zapiski. Ta odločitev prepiše prejšnji
+zapis v [arhitektura.md](arhitektura.md), da gre aplikacija na koren.
+
+**Cena:** naslov je daljši in `.../aplikacija/` je videti nerodno.
+
+**Kaj bi jo ovrglo:** želja po čistem naslovu. Selitev je poceni — mapa se prestavi na
+koren, poti so že relativne, popravi se samo `CACHE` verzija in ta dokument.
+
+---
+
+## 2026-07-28 — Register zaslonov namesto ročnega preklapljanja
+
+**Odločitev:** vsak zaslon je svoja datoteka v `js/screens/`, ki izvozi objekt vedno iste
+oblike. `js/screens/register.js` jih našteje. Iz tega seznama se sama zgradita spodnja
+vrstica gumbov in usmerjanje po naslovu (`#/trening`).
+
+**Zakaj:** brez tega bi bilo dodajanje zaslona popravek na štirih mestih — HTML za gumb,
+CSS za barvo, `if` v preklopu in nekje še napis. To je natanko tisto, kar se pri učenju
+sesuje. Tako je nov zaslon **nova datoteka + ena vrstica**. Preverjeno s petim,
+začasnim zaslonom: gumb, barva in naslov so se pojavili sami.
+
+**Posledica:** vsak nov modul je treba dopisati v `FILES` v `sw.js`, sicer aplikacija
+brez interneta ne dela. To je edina cena razdelitve na module.
+
+**Kaj bi jo ovrglo:** nič predvidljivega. Če bi zaslonov postalo veliko, se doda
+lena naložitev (`import()` na klic), register pa ostane isti.
+
+---
+
+## 2026-07-28 — Naslov z lojtro (`#/trening`)
+
+**Odločitev:** zaslon se bere iz `location.hash`, ne iz prave poti.
+
+**Zakaj:** prava pot (`/trening`) zahteva strežnik, ki vsak naslov vrne na `index.html`.
+GitHub Pages tega ne zna in strežnika nimava. Lojtra zastonj prinese delujoč sistemski
+gumb *nazaj* in to, da po osvežitvi ostaneš na istem zaslonu.
+
+**Kaj bi jo ovrglo:** selitev na gostovanje, ki zna preusmeritve. Ni na obzorju.

@@ -9,8 +9,9 @@ moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 
 ## Trenutno stanje
 
-Prototip PWA deluje in je objavljen; prava aplikacija se še ni začela. Naslednji korak
-je potrditev podatkovnega modela. Podrobnosti: `Claude_kontekst/stanje.md`
+Prava aplikacija stoji v `aplikacija/` — zaenkrat samo ogrodje: štirje zasloni in
+spodnja vrstica gumbov, brez vsebine. Naslednji korak je potrditev podatkovnega modela.
+Podrobnosti: `Claude_kontekst/stanje.md`
 
 ## Stalna pravila
 
@@ -19,6 +20,10 @@ je potrditev podatkovnega modela. Podrobnosti: `Claude_kontekst/stanje.md`
   V kodi nikoli šumnikov; v UI besedilu so normalni.
 - **Po vsaki spremembi kode povečaj `CACHE` verzijo v `sw.js`.** Sicer telefon servira
   staro različico in izgleda, kot da koda ne deluje. To je najpogostejša past v projektu.
+  Vsaka nova datoteka mora biti tudi našteta v `FILES` v `aplikacija/sw.js`, sicer
+  aplikacija brez interneta ne dela.
+- **Nov zaslon = nova datoteka v `aplikacija/js/screens/` + ena vrstica v `register.js`.**
+  Gumb, barva in naslov se naredijo sami. Podrobnosti: `Claude_kontekst/arhitektura.md`.
 - **Aplikacija se uporablja v telovadnici, z eno roko.** Veliki gumbi, malo tipkanja,
   čim manj korakov do vpisanega seta.
 

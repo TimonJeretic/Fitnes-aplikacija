@@ -11,17 +11,24 @@
 
 ## Lokalni zagon
 
-V mapi projekta (ali v `prototip/`):
+V mapi projekta (na korenu, ne v podmapi):
 
 ```
 python -m http.server 5500
 ```
 
-Nato `http://localhost:5500` v Chromu. Ustavi se s `Ctrl + C`.
+Nato v Chromu:
+
+- prava aplikacija: `http://localhost:5500/aplikacija/`
+- prototip: `http://localhost:5500/prototip/`
+
+Ustavi se s `Ctrl + C`. Če pisalo javi, da je vrata 5500 zasedena, teče strežnik že od prej
+— ali ga ugasni ali uporabi drugo številko (`5501`).
 
 **Zakaj strežnik in ne dvoklik na datoteko?** Ob dvokliku se naslov začne s `file://`,
-kjer se service worker iz varnostnih razlogov ne registrira. Aplikacija bi delovala,
-PWA del pa ne. `localhost` velja za varen naslov, zato tam deluje vse.
+kjer se service worker iz varnostnih razlogov ne registrira. Pri pravi aplikaciji je
+še huje: tam se ne naložijo niti ES moduli, tako da ostane bel zaslon.
+`localhost` velja za varen naslov, zato tam deluje vse.
 
 ## Objava
 
@@ -34,7 +41,7 @@ git push
 GitHub Pages je nastavljen na vejo `main`, mapa `/ (root)`. Objava traja minuto ali dve,
 napredek je viden v zavihku **Actions** na GitHubu.
 
-- Prava aplikacija (kasneje): `https://timonjeretic.github.io/Fitnes-aplikacija/`
+- Prava aplikacija: `https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`
 - Prototip: `https://timonjeretic.github.io/Fitnes-aplikacija/prototip/`
 
 Datoteka `.nojekyll` na korenu prepreči, da bi GitHub Pages spustil datoteke skozi Jekyll
@@ -43,11 +50,19 @@ in preskočil tiste, ki se začnejo s podčrtajem.
 ## Pravilo predpomnilnika — najpogostejša past
 
 Service worker trmasto servira shranjeno različico. Po **vsaki** spremembi kode je treba
-povečati verzijo v `sw.js`:
+povečati verzijo v tistem `sw.js`, ki mu spremenjena datoteka pripada:
 
 ```js
-const CACHE = 'prototip-v2';   // v1 -> v2 -> v3 ...
+const CACHE = 'aplikacija-v1';   // v1 -> v2 -> v3 ...   (aplikacija/sw.js)
+const CACHE = 'prototip-v2';     // (prototip/sw.js)
 ```
+
+Prototip in aplikacija imata **ločena predpomnilnika** — sprememba v enem ne vpliva
+na drugega.
+
+Druga past, ki jo prinese razdelitev na module: vsaka nova datoteka (`js/screens/*.js`,
+nov CSS) mora biti našteta v `FILES` v `aplikacija/sw.js`. Če je ni, se aplikacija
+z internetom odpre normalno, brez interneta pa se sesuje.
 
 Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Service workers**
 → obkljukaj **Update on reload**.

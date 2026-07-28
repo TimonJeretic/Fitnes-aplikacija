@@ -1,0 +1,49 @@
+/* Osnova: barvni tokeni, reset in postavitev celotne strani.
+   Tukaj so samo NEVTRALNE barve. Barva posameznega zaslona (--accent) ni tukaj,
+   ampak v modulu zaslona (js/screens/*.js) — tako je nov zaslon ena sama datoteka. */
+
+:root {
+  /* Nevtralna paleta, prevzeta iz prototipa. */
+  --bg: #12151a;          /* ozadje strani */
+  --text: #e8ecf2;        /* glavno besedilo */
+  --text-muted: #8b95a5;  /* drugotno besedilo */
+  --surface: #1d222b;     /* ploskev: gumbi, kartice */
+  --border: #2b323d;      /* obrobe */
+  --on-accent: #ffffff;   /* besedilo na barvni podlagi */
+
+  /* Rezerva: če router še ni nastavil barve zaslona, ostane nevtralna. */
+  --accent: var(--surface);
+
+  --tab-size: 60px;       /* stranica kvadratka v spodnji vrstici */
+  --radius: 16px;
+
+  /* Varno območje: zareza zgoraj, črtica za domov spodaj (iPhone). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Zaslon zgoraj, gumbi spodaj — gumbi so vedno na dosegu palca. */
+  display: flex;
+  flex-direction: column;
+
+  /* Brez izbiranja besedila in brez elastičnega odbijanja pri drsenju,
+     da se aplikacija obnaša kot aplikacija in ne kot spletna stran. */
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}

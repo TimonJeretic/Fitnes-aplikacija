@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fitnes</title>
+
+  <!-- Povezava na manifest: brez tega ni namestitve -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#12151a">
+
+  <!-- iOS posebnosti: Safari za ikono in celozaslonski način ne bere manifesta -->
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fitnes">
+
+  <!-- Vse poti so relativne, ker aplikacija živi v podmapi /aplikacija/.
+       Absolutna pot (/css/base.css) bi na GitHub Pages iskala napačno mesto. -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/screen.css">
+  <link rel="stylesheet" href="css/tabbar.css">
+</head>
+<body>
+
+  <!-- Sem router vstavi trenutni zaslon. HTML je namenoma prazen: vsebino in
+       gumbe zgradi JavaScript iz seznama zaslonov (js/screens/register.js),
+       zato za nov zaslon te datoteke ni treba spreminjati. -->
+  <main id="screen" class="screen"></main>
+
+  <nav id="tabbar" class="tabbar"></nav>
+
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
