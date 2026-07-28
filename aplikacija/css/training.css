@@ -1,0 +1,539 @@
+/* Zaslon TRENING.
+   Drugi trije zasloni so en velik napis na barvni ploskvi. Ta je seznam, ki drsi,
+   zato ozadje ostane temno, barva (--accent) pa pobarva samo ploščice vaj. */
+
+:root {
+  --training-card: #1a1e25;    /* kartica vaje */
+  --training-field: #0d0f13;   /* vnosno polje: temnejše od kartice, da je vidno */
+  --training-ref: #e4e7ec;     /* stolpec "zadnjič": svetel, ker ni za vpisovanje */
+  --training-ref-text: #14171c;
+  --training-ref-off: #2a2f38; /* prazna škatlica v stolpcu "zadnjič" */
+}
+
+.training {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 14px) 12px 0;
+}
+
+/* --- Glava ---------------------------------------------------------------- */
+
+.training__header {
+  flex: none;
+}
+
+.training__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.training__logo {
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+
+.training__logo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.training__heading {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* Ime treninga je polje in ne napis, da ga popraviš z enim dotikom.
+   Videti mora biti kot naslov, dokler se ga ne dotakneš. */
+.training__name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 6px;
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.training__name::placeholder {
+  color: var(--text-muted);
+}
+
+.training__name:focus {
+  outline: none;
+  border-color: var(--border);
+  background: var(--training-field);
+}
+
+.training__name.is-error {
+  border-color: #d05050;
+}
+
+.training__date {
+  margin: 2px 0 0 44px;   /* poravnano pod ime, ne pod ikono */
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* --- Iskalno polje in predlogi -------------------------------------------- */
+
+.field {
+  margin-top: 14px;
+}
+
+.field__input {
+  width: 100%;
+  padding: 14px 14px;
+
+  background: var(--training-field);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+}
+
+.field__input::placeholder {
+  color: var(--text-muted);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.suggest__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+
+  /* Tarča za palec: 52 px je več kot priporočenih 44 px, ker se aplikacija
+     uporablja med serijo, ko roka ni mirna. */
+  min-height: 52px;
+  padding: 0 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggest__item:active {
+  background: var(--training-card);
+}
+
+.suggest__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Koliko vaj ima predloga — namig, ali si izbral pravo. */
+.suggest__count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--training-field);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.suggest__item--new {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.picker__cancel {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+
+  background: none;
+  border: none;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* --- Prazno stanje: velik plus -------------------------------------------- */
+
+.training__empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 30px 0 60px;
+}
+
+.bigplus {
+  width: 96px;
+  height: 96px;
+
+  background: var(--training-card);
+  border: 2px solid var(--border);
+  border-radius: 28px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 46px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: transform .12s ease;
+}
+
+.bigplus:active {
+  transform: scale(0.94);
+}
+
+/* --- Kartica vaje --------------------------------------------------------- */
+
+.training__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exercise {
+  padding: 12px;
+  background: var(--training-card);
+  border-radius: 14px;
+}
+
+.exercise__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Ime vaje na barvni ploščici: pri drsanju po dolgem treningu takoj vidiš,
+   kje se ena vaja konča in začne druga. */
+.exercise__name {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+
+  background: linear-gradient(100deg, var(--accent), #591515);
+  border-radius: 10px;
+  color: var(--on-accent);
+
+  font-size: 18px;
+  font-weight: 600;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exercise__note {
+  flex: none;
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.exercise__note-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.exercise__note-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Vaja, ki zapisek že ima, ga tudi pokaže — sicer ne veš, da je tam. */
+.exercise__note.is-filled {
+  color: var(--accent);
+}
+
+.exercise__note:active {
+  transform: scale(0.9);
+}
+
+/* --- Vrstica serije ------------------------------------------------------- */
+
+.exercise__sets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.set-row__label {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+
+  background: var(--training-field);
+  border-radius: 10px;
+  color: var(--text);
+
+  font-size: 16px;
+}
+
+.set-row__divider {
+  flex: none;
+  align-self: stretch;
+  width: 1px;
+  background: var(--border);
+}
+
+.pair {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pair__times {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Vnosno polje in škatlica "zadnjič" imata isto velikost, da se stolpca ujemata. */
+.numbox {
+  width: 46px;
+  height: 46px;
+
+  background: var(--training-field);
+  border: none;
+  border-radius: 10px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 16px;
+  text-align: center;
+}
+
+.numbox:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Stolpec "zadnjič": svetel in drugačen od vnosnih polj, da je na prvi pogled
+   jasno, da to niso polja za vpisovanje. Klik prepiše vrednost v polje levo. */
+.numbox--ref {
+  background: var(--training-ref);
+  color: var(--training-ref-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.numbox--ref:active {
+  transform: scale(0.92);
+}
+
+.numbox--ref:disabled {
+  background: var(--training-ref-off);
+  cursor: default;
+}
+
+.exercise__controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mini {
+  width: 46px;
+  height: 40px;
+
+  background: var(--training-field);
+  border: none;
+  border-radius: 10px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mini--muted {
+  color: var(--text-muted);
+}
+
+.mini:active {
+  transform: scale(0.94);
+}
+
+/* Plus pod zadnjo vajo: doda novo vajo v trening. */
+.addbar {
+  width: 100%;
+  padding: 16px;
+
+  background: transparent;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.addbar:active {
+  background: var(--training-card);
+}
+
+/* --- Zavrži in shrani ----------------------------------------------------- */
+
+/* Lepljivo na dnu: pri dolgem treningu gumba ni treba iskati z drsanjem. */
+.training__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 12px 0;
+
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+
+.btn {
+  flex: 1;
+  min-height: 54px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: #6b2b2b;
+  color: #e08585;
+}
+
+/* --- Okno z zapiskom ------------------------------------------------------ */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+
+  display: grid;
+  place-items: center;
+  padding: 20px;
+
+  background: rgba(0, 0, 0, .6);
+}
+
+.modal__box {
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+
+  background: var(--training-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--text);
+}
+
+.modal__title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal__text {
+  width: 100%;
+  padding: 12px;
+
+  background: var(--training-field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+
+  /* Zapisek je edino mesto v aplikaciji, kjer se besedilo res piše in bere. */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.modal__text:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal__hint {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.modal__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}

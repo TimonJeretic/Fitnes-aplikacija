@@ -1,8 +1,36 @@
 # Podatkovni model
 
-> **Status: PREDLOG.** Ni še potrjen in ni še implementiran.
-> To je najdražja odločitev v projektu — ko so podatki enkrat v telefonu, vsaka
-> sprememba strukture zahteva migracijo. Zato se potrdi, preden nastane prva vrstica kode.
+> **Status: POTRJEN in implementiran** (2026-07-28) v `aplikacija/js/store.js`.
+> Vsaka nadaljnja sprememba strukture zahteva migracijo v `migrate()` in dvig
+> `schemaVersion` — od tu naprej so na telefonu pravi podatki.
+
+## Shramba
+
+Vse je **en JSON objekt v `localStorage`** pod ključem `fitnes`:
+
+```js
+{
+  schemaVersion: 1,
+  exercises: [],          // register vaj
+  templates: [],          // predloge treningov
+  workouts: [],           // zgodovina
+  bodyweightEntries: [],  // telesna teža
+  draft: null             // trening v teku
+}
+```
+
+Register vaj je **ploščat**, treningi so **gnezdeni**. Razlog: zapisek je last vaje,
+zato vaja obstaja natanko enkrat; trening pa je natanko to, kar je na zaslonu, zato
+je en objekt. "Shrani" je s tem `workouts.push(...)`, "zavrži" pa `draft = null`,
+brez čiščenja sirot po treh tabelah.
+
+**Zakaj localStorage in ne IndexedDB:** brez build koraka, brez knjižnic, sinhronen
+in razumljiv API. Dnevnik treningov je majhen — nekaj tisoč serij je pod 1 MB,
+omejitev pa je okoli 5 MB. Zadošča za leta uporabe.
+
+**Do podatkov se pride samo prek `js/store.js`.** Noben zaslon ne kliče
+`localStorage` neposredno. Zato je prehod na IndexedDB, če ga bo kdaj treba,
+zamenjava ene datoteke.
 
 ## Entitete
 
@@ -10,33 +38,61 @@
 
 | Polje | Tip | Opomba |
 |---|---|---|
-| `id` | string | naključen, npr. `crypto.randomUUID()` |
+| `id` | string | `crypto.randomUUID()` |
 | `name` | string | kot ga je Timon vpisal, npr. "BB bench press" |
-| `category` | string | `push` \| `pull` \| `legs` \| `upper` |
-| `equipment` | string | `bodyweight` \| `barbell` \| `dumbbell` \| `machine` \| `cable` |
+| `note` | string | trajni zapisek: nastavitev stola, elastika, oprijem |
 | `createdAt` | string | ISO datum |
 
-Ta tabela je hkrati vir za predlaganje imen: ko Timon tipka, iščemo po `name`.
+Register nastane **izključno iz Timonovih vnosov** med treningom. Vnaprej
+pripravljene baze vaj ni. Ta tabela je hkrati vir za šepetalnik imen.
+
+Vaja **nima** polj `category` in `equipment`. Vsako dodatno polje je en korak več
+ob prvem vnosu vaje, v telovadnici pa šteje vsak korak. Neobvezno polje se doda
+kasneje poceni; odstraniti obveznega ni.
+
+### `template` — predloga treninga
+
+| Polje | Tip | Opomba |
+|---|---|---|
+| `id` | string | |
+| `name` | string | "Push"; hkrati ključ za šepetalnik |
+| `exerciseIds` | string[] | zaporedje vaj |
+| `updatedAt` | string | ISO datum |
+
+Predloga je **ime, ki mu pripada zaporedje vaj**. Ob shranjevanju treninga se
+predloga z istim imenom **prepiše** — če si danes zamenjal vajo, je od zdaj naprej
+to tvoj Push. Zgodovina ostane nedotaknjena.
+
+Imena se primerjajo prek `normalizeName()`: brez velikih črk, brez šumnikov, brez
+odvečnih presledkov. "Počepi " in "pocepi" sta ista stvar.
 
 ### `workout` — trening
 
 | Polje | Tip | Opomba |
 |---|---|---|
 | `id` | string | |
+| `name` | string | ime treninga ob shranjevanju |
+| `templateId` | string | predloga, ki je bila takrat prepisana |
 | `date` | string | ISO datum |
-| `split` | string | `push` \| `pull` \| `legs` \| `upper` |
-| `note` | string | neobvezen zapisek |
+| `exercises` | array | `{ exerciseId, sets: [...] }` |
+
+Vsak shranjen trening ostane tukaj za vedno. Prazne serije se ob shranjevanju
+zavržejo, predloga pa dobi **vse** vaje — tudi tiste, ki jih tisti dan ni uspel
+narediti; naslednjič naj se spet ponudijo.
 
 ### `set` — posamezna serija
 
 | Polje | Tip | Opomba |
 |---|---|---|
-| `id` | string | |
-| `workoutId` | string | kateremu treningu pripada |
-| `exerciseId` | string | katera vaja |
-| `order` | number | zaporedje seta znotraj vaje (1, 2, 3 …) |
-| `reps` | number | ponovitve |
-| `weightKg` | number \| null | `null` pri čistih BW vajah |
+| `weightKg` | number \| null | `null` = telesna teža ali neizpolnjeno |
+| `reps` | number \| null | |
+
+**Nima `id` in nima `order`** — mesto v polju `sets` je zaporedje. Serija ni nikoli
+naslovljena od zunaj, zato bi bil id mrtvo polje.
+
+Pri vajah z lastno težo gre v `weightKg` **dodana** teža (npr. pas pri dipsih),
+ne skupna. Ali naj graf moči prišteje telesno težo iz `bodyweightEntry`, se odloči,
+ko bo graf nastal — to je vprašanje prikaza, ne shrambe.
 
 ### `bodyweightEntry` — telesna teža
 
@@ -46,51 +102,39 @@ Ta tabela je hkrati vir za predlaganje imen: ko Timon tipka, iščemo po `name`.
 | `date` | string | ISO datum |
 | `weightKg` | number | |
 
-## Odprta vprašanja (rešiti pred implementacijo)
+Zaslon TEŽA še ni narejen; polje v shrambi že obstaja.
 
-1. **Ali vaja pripada enemu sklopu ali več?**
-   Trenutni predlog: enemu (`category` je en niz). Realno pa marsikatera vaja sodi
-   v `push` in `upper` hkrati. Alternativa: `categories` kot polje nizov.
-   Cena poznejše spremembe: srednja.
+### `draft` — trening v teku
 
-2. **Kako se beležijo BW vaje?**
-   Predlog: `weightKg = null` pomeni čisto telesno težo. Če Timon dodaja utež
-   (npr. pas pri dipsih), gre v `weightKg` **dodana** teža, ne skupna.
-   Odprto: ali naj graf pri BW vajah prišteje telesno težo iz `bodyweightEntry`?
+Ista oblika kot `workout`, brez `id` in `date`, z `startedAt`.
 
-3. **Katera metrika se riše na grafu moči?**
-   Predlog: **najtežji set v treningu** — najbolj neposredno odgovarja na
-   "ali sem močnejši". Alternativi: skupni volumen (teža × ponovitve × seti)
-   ali ocenjeni 1RM. Odločitev vpliva samo na prikaz, ne na shranjene podatke,
-   zato je poceni spremenljiva kasneje.
+Zapiše se **ob vsaki spremembi**, ne šele ob "Shrani". Telefon se v telovadnici
+zaklene in sistem aplikacijo ubije — ob vrnitvi mora biti trening cel. Prisotnost
+`draft` je hkrati tisto, kar zaslonu TRENING pove, katero od dveh stanj naj pokaže.
 
-## Shramba
+## Poizvedbe
 
-Vsi podatki so **en JSON objekt v `localStorage`**:
+Zasloni ne brskajo po podatkih sami. Kar rabijo, je v `store.js`:
 
-```js
-{
-  schemaVersion: 1,
-  exercises: [],
-  workouts: [],
-  sets: [],
-  bodyweightEntries: []
-}
-```
+- `searchTemplates(query)`, `searchExercises(query)` — šepetalnik; prazno iskanje
+  vrne vse, ujemanja na začetku imena so prva.
+- `lastSetsFor(exerciseId)` — serije iz **zadnjega treninga kjerkoli v zgodovini**,
+  v katerem se je ta vaja pojavila, ne glede na ime treninga. To je številka,
+  ki jo hočeš prekositi.
+- `upsertTemplate(name, exerciseIds)`, `saveWorkout(draft)`.
 
-**Zakaj localStorage in ne IndexedDB:** brez build koraka, brez knjižnic, sinhronen
-in razumljiv API. Dnevnik treningov je majhen — nekaj tisoč setov je pod 1 MB,
-omejitev pa je okoli 5 MB. Zadošča za leta uporabe.
+## Migracije
 
-**Polje `schemaVersion` je obvezno.** Ob spremembi strukture se poveča in koda ob
-zagonu pretvori stare podatke. Brez tega bo posodobitev nekomu (Timonu) pobrisala
-zgodovino treningov.
+`schemaVersion` je obvezno polje. Ob spremembi strukture se poveča in `migrate()`
+v `store.js` pretvori stare podatke. Brez tega bo posodobitev nekomu (Timonu)
+pobrisala zgodovino treningov.
 
-**Pot naprej, če prerastemo localStorage:** prehod na IndexedDB. Ker vsi podatki
-tečejo skozi eno plast za dostop do shrambe, je zamenjava lokalna in ne zadeva UI.
+`migrate()` je hkrati zaščita pred pokvarjenim zapisom: manjkajoča ali napačna
+polja se nadomestijo s praznimi, da aplikacija ne obstane.
 
 ## Varnostna kopija
 
 Podatki živijo samo v brskalniku na telefonu. Če Timon odstrani aplikacijo ali
 iOS počisti shrambo, jih ni več. Zato je **izvoz v JSON datoteko obvezna funkcija v1**,
-ne dodatek za kasneje. Uvoz iste datoteke mora podatke vrniti.
+ne dodatek za kasneje. Uvoz iste datoteke mora podatke vrniti. Ker je vse en objekt
+pod enim ključem, je izvoz `JSON.stringify` celotne shrambe. **Še ni narejeno.**

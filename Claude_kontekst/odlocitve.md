@@ -73,6 +73,72 @@ je prehod na IndexedDB lokalna sprememba.
 
 ---
 
+## 2026-07-28 — Treningi gnezdeni, ne normalizirani
+
+**Odločitev:** trening je en objekt s poljem vaj, vsaka vaja pa s poljem serij.
+Ločene tabele `sets` s tujimi ključi (`workoutId`, `exerciseId`) ni. Register vaj
+ostane ploščat, ker je zapisek last vaje.
+
+**Zakaj:** en trening je natanko to, kar je na zaslonu. "Shrani" postane
+`workouts.push(draft)`, "zavrži" pa `draft = null` — brez čiščenja sirot po treh
+tabelah in brez združevanja pri vsakem izrisu. Serija zato ne rabi niti `id` niti
+`order`: mesto v polju je zaporedje, od zunaj je nihče ne naslavlja.
+
+**Cena:** graf moči bo moral prehoditi vse treninge, namesto da filtrira eno
+tabelo. Pri nekaj sto treningih je to nič.
+
+**Kaj bi jo ovrglo:** potreba po poizvedbah čez vse serije naenkrat, ki bi bile
+prepočasne — realno šele pri desettisočih vnosov.
+
+---
+
+## 2026-07-28 — Predloga treninga je svoja entiteta
+
+**Odločitev:** obstaja `templates`: ime treninga in zaporedje vaj. Ob shranjevanju
+treninga se predloga z istim imenom prepiše.
+
+**Zakaj:** razmislila sva tudi, da predloge sploh ne bi bilo in bi "Push" pomenil
+zadnji shranjeni trening s tem imenom. Timon je izbral izrecno predlogo: ime, ki
+mu pripišeš zaporedje vaj. Šepetalnik tako bere kratek seznam imen in ne celotne
+zgodovine, predloga pa lahko obdrži vajo, ki je tisti dan ni uspel narediti.
+
+**Posledica:** dve mesti, ki se lahko razideta (predloga in zgodovina). Zato gresta
+vpis v zgodovino in prepis predloge skozi eno funkcijo — `saveWorkout()`.
+
+**Kaj bi jo ovrglo:** če bi se izkazalo, da predloge nikoli ne urejaš drugače kot
+prek shranjevanja treninga; takrat je zadnji trening s tem imenom dovolj.
+
+---
+
+## 2026-07-28 — Vaja ima samo ime in zapisek
+
+**Odločitev:** `exercise` nima `category` (push/pull/legs/upper) ne `equipment`
+(bodyweight/barbell/…). Ima `name` in `note`.
+
+**Zakaj:** aplikacija se uporablja med serijo, z eno roko. Vsako polje je en korak
+več ob prvem vnosu vaje. Sklop treninga je itak že ime treninga ("Push"), vrsta
+opreme pa je v praksi kar del imena ("BB bench press", "DB incline press").
+
+**Posledica:** vprašanje iz starega predloga — ali vaja pripada enemu sklopu ali
+več — odpade.
+
+**Kaj bi jo ovrglo:** graf, ki bi hotel združevati po opremi ali sklopu. Dodati
+neobvezno polje je poceni; zato je izpust varna smer.
+
+---
+
+## 2026-07-28 — Trening v teku se zapisuje sproti
+
+**Odločitev:** `draft` gre v `localStorage` ob vsaki spremembi, ne šele ob "Shrani".
+
+**Zakaj:** telefon se v telovadnici zaklene, iOS aplikacijo v ozadju ubije. Trening,
+ki bi živel samo v pomnilniku, bi bil takrat izgubljen — in to sredi vadbe, ko ga
+ni časa vpisovati znova.
+
+**Posledica:** `draft` je hkrati stanje zaslona: če obstaja, si v treningu.
+
+---
+
 ## 2026-07-28 — Brez build koraka
 
 **Odločitev:** navaden HTML/CSS/JS z ES moduli. Ni Node.js, ni npm, ni bundlerja.

@@ -9,8 +9,10 @@ moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 
 ## Trenutno stanje
 
-Prava aplikacija stoji v `aplikacija/` — zaenkrat samo ogrodje: štirje zasloni in
-spodnja vrstica gumbov, brez vsebine. Naslednji korak je potrditev podatkovnega modela.
+Prava aplikacija stoji v `aplikacija/`. Podatkovni model je potrjen in
+implementiran (`js/store.js`), zaslon **TRENING** dela: predloge treningov,
+register vaj, serije s stolpcem "zadnjič", zapiski pri vajah, shrani/zavrži.
+Zasloni TEŽA, STATISTIKA in RAČUN so še prazni.
 Podrobnosti: `Claude_kontekst/stanje.md`
 
 ## Stalna pravila
@@ -24,6 +26,10 @@ Podrobnosti: `Claude_kontekst/stanje.md`
   aplikacija brez interneta ne dela.
 - **Nov zaslon = nova datoteka v `aplikacija/js/screens/` + ena vrstica v `register.js`.**
   Gumb, barva in naslov se naredijo sami. Podrobnosti: `Claude_kontekst/arhitektura.md`.
+- **Do podatkov samo prek `aplikacija/js/store.js`.** Noben zaslon ne kliče
+  `localStorage` neposredno in ne brska po poljih sam — kar rabi, vpraša store.
+  Ob spremembi strukture podatkov se dvigne `schemaVersion` in dopolni `migrate()`,
+  sicer posodobitev pobriše zgodovino treningov.
 - **Aplikacija se uporablja v telovadnici, z eno roko.** Veliki gumbi, malo tipkanja,
   čim manj korakov do vpisanega seta.
 

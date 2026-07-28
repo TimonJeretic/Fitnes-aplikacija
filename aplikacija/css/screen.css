@@ -19,6 +19,17 @@
   transition: background .25s ease;
 }
 
+/* Zaslon s pravo vsebino ni en napis na sredini, ampak seznam, ki drsi od vrha.
+   Router postavi body[data-screen], zato lahko tak zaslon izklopi sredinjenje in
+   polnobarvno ozadje — ostali trije ostanejo nedotaknjeni. Ko bodo predelani vsi,
+   se pravila zgoraj lahko poenostavijo. */
+body[data-screen="training"] .screen {
+  display: block;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0;
+}
+
 /* Velik napis na sredini. Začasno je to celotna vsebina zaslona;
    ko bo zaslon dobil pravo vsebino, se spremeni samo render() v modulu. */
 .screen-title {

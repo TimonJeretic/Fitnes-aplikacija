@@ -3,7 +3,7 @@
 
 // Ime predpomnilnika. Ko spremeniš kodo, POVEČAJ številko (v2, v3, ...),
 // sicer bo brskalnik trmasto serviral staro različico. To je najpogostejša past.
-const CACHE = 'aplikacija-v1';
+const CACHE = 'aplikacija-v2';
 
 // POZOR: aplikacija je razdeljena na module. Vsak modul je svoja datoteka in
 // mora biti naštet spodaj. Če dodaš nov zaslon (js/screens/nekaj.js) in ga tukaj
@@ -17,10 +17,12 @@ const FILES = [
   './css/base.css',
   './css/screen.css',
   './css/tabbar.css',
+  './css/training.css',
 
   './js/app.js',
   './js/router.js',
   './js/ui.js',
+  './js/store.js',
   './js/screens/register.js',
   './js/screens/training.js',
   './js/screens/weight.js',

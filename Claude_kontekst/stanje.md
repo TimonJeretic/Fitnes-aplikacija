@@ -21,6 +21,18 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   naslov pade na TRENING, service worker se registrira, aplikacija se naloži tudi
   z ugasnjenim strežnikom. Razširljivost preizkušena s petim, začasnim zaslonom.
 
+- **Podatkovni model potrjen in implementiran** — `aplikacija/js/store.js` je edina
+  pot do `localStorage`. Oblika in razlogi so v [podatkovni-model.md](podatkovni-model.md),
+  odločitve v [odlocitve.md](odlocitve.md). Tri stara odprta vprašanja so s tem zaprta.
+- **Zaslon TRENING dela.** Prazno stanje s šepetalnikom predlog in velikim plusom;
+  trening s karticami vaj, serijami, stolpcem "zadnjič" (klik prepiše vrednost),
+  zapiskom pod svinčnikom ter gumboma Zavrži in Shrani. Shranjevanje doda trening
+  v zgodovino in prepiše predlogo z istim imenom.
+  Preverjeno v brskalniku s 65 samodejnimi preizkusi celotne poti: nov trening,
+  nova vaja, vpis serij, shranjevanje, autofill iz predloge, stolpec "zadnjič",
+  zapisek, preživetje osvežitve, prepis predloge, zavrži, trening brez imena,
+  iskanje brez ozira na šumnike in velike črke.
+
 ## V teku
 
 - **Namestitev prototipa na telefon (Android).** Zataknilo se je pri tem, da je
@@ -30,16 +42,21 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
 
 ## Sledi
 
-1. **Potrditev podatkovnega modela** — [podatkovni-model.md](podatkovni-model.md) ima tri
-   odprta vprašanja (ali vaja pripada več sklopom, kako se beležijo BW vaje, katera
-   metrika gre na graf moči). To je edina odločitev, ki je kasneje res draga.
-2. **v1 dnevnika treningov** — vnos treninga, seti, predlaganje imen vaj.
-3. **Izvoz in uvoz JSON** — varnostna kopija. Ne odlašati; podatki živijo samo na telefonu.
-4. **Grafa** — napredek moči po vaji, telesna teža.
+1. **Preizkus zaslona TRENING na telefonu** — vse do zdaj je preverjeno v brskalniku
+   na računalniku. Tipkovnica, velikost tarč in drsenje se pokažejo šele v roki.
+2. **Izvoz in uvoz JSON** — varnostna kopija. Ne odlašati; podatki živijo samo na telefonu.
+   Ker je vse en objekt pod ključem `fitnes`, je izvoz kratek.
+3. **Pregled zgodovine** — treningi se že shranjujejo, videti pa se jih še ne da.
+4. **Zaslon TEŽA** — vnos telesne teže; `bodyweightEntries` v shrambi že obstaja.
+5. **Grafa** — napredek moči po vaji, telesna teža.
 
 ## Odprta vprašanja
 
-- Tri odprta vprašanja o podatkovnem modelu iz točke 1 zgoraj.
+- Katera metrika gre na graf moči: najtežja serija, skupni volumen ali ocenjeni 1RM.
+  Vpliva samo na prikaz, ne na shranjene podatke, zato je poceni spremenljiva.
+- Ali graf pri vajah z lastno težo prišteje telesno težo iz `bodyweightEntries`.
+- Kje se ureja in briše zgodovina (napačno vpisan trening). Zaenkrat je ni mogoče
+  popraviti, ko je enkrat shranjena.
 - Ali prototip po prehodu na pravo aplikacijo ostane v repozitoriju ali se izbriše.
   Zaenkrat ostaja.
 - Kaj sploh pride na zaslon **RAČUN**. Aplikacija namenoma nima prijave
