@@ -26,27 +26,64 @@ in Chrome v naslovni vrstici ponudi ikono za namestitev.
 
 Streznik ustavis s `Ctrl + C`.
 
+## Objava na GitHub Pages
+
+Projekt je objavljen preko GitHub Pages iz veje `main`, koren repozitorija:
+
+<https://timonjeretic.github.io/Fitnes-aplikacija/prototip/>
+
+Objavis tako, da spremembe potisnes:
+
+```
+git add .
+git commit -m "opis spremembe"
+git push
+```
+
+Datoteka `.nojekyll` v korenu repozitorija pove GitHubu, naj datotek ne
+obdela z Jekyllom, ampak jih servira take, kot so.
+
+Po pushu traja priblizno minuto, da se objava zgradi. Stanje vidis v
+repozitoriju pod zavihkom *Actions*.
+
+Aplikacija tece v podmapi (`/Fitnes-aplikacija/prototip/`), zato so vse poti
+v `manifest.json` in `sw.js` relativne (`.` oz. `./`). Ce jih spremenis v
+absolutne (`/index.html`), namestitev na Pages neha delovati.
+
 ## Namestitev na telefon
 
-1. Odpri <https://app.netlify.com/drop>
-2. Povleci **mapo `prototip`** na stran (celo mapo, ne posameznih datotek).
-3. Dobis naslov tipa `https://nekaj-nakljucnega.netlify.app`.
-4. Ta naslov odpri na telefonu:
-   - **Android / Chrome:** meni (tri pikice) -> *Namesti aplikacijo*
-   - **iPhone / Safari:** Deli -> *Dodaj na zacetni zaslon*
-     (mora biti Safari, iz Chroma na iOS ne gre)
+Na telefonu odpri zgornji naslov in:
+
+- **Android / Chrome:** meni (tri pikice) -> *Namesti aplikacijo*
+- **iPhone / Safari:** Deli -> *Dodaj na zacetni zaslon*
+  (mora biti Safari, iz Chroma na iOS ne gre)
 
 Po namestitvi se aplikacija zaganja s svojo ikono, brez naslovne vrstice
 brskalnika, in deluje tudi v letalskem nacinu.
 
 ## Ko spremenis kodo
 
-Service worker servira shranjeno razlicico, zato sprememb ne bos videl takoj.
-Povecaj stevilko predpomnilnika v `sw.js`:
+Service worker servira shranjeno razlicico, zato sprememb ne bos videl takoj —
+niti v namescen aplikaciji niti v navadnem brskalniku, ker si delita isti
+predpomnilnik. Ob **vsaki** spremembi povecaj stevilko v `sw.js`:
 
 ```js
 const CACHE = 'prototip-v2';   // v1 -> v2
 ```
 
-Med razvojem v Chromu pomaga tudi: F12 -> zavihek *Application* ->
-*Service workers* -> obkljukaj *Update on reload*.
+Brskalnik `sw.js` preverja mimo predpomnilnika, zato ze en spremenjen bajt
+sprozi namestitev nove razlicice in izbris stare.
+
+Nato:
+
+1. Pocakaj minuto, da se GitHub Pages zgradi.
+2. Stran nalozi **dvakrat** — prvi reload namesti novo razlicico, drugi jo
+   pokaze. Na telefonu je najbolj zanesljivo aplikacijo popolnoma zapreti
+   (odstrani iz seznama odprtih) in znova odpreti.
+
+GitHub Pages servira datoteke z `Cache-Control: max-age=600`, zato zna
+posodobitev na robnem strezniku zamujati do 10 minut.
+
+Med razvojem na `localhost` si prihranis to cakanje: F12 -> zavihek
+*Application* -> *Service workers* -> obkljukaj *Update on reload*.
+Takrat stevilke ni treba spreminjati.

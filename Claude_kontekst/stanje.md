@@ -2,7 +2,7 @@
 
 **Zadnja posodobitev:** 2026-07-28
 
-To datoteko posodabljam sam, kadar se stanje spremeni — ne čakam, da Timon reče.
+To datoteko posodabljam sam, kadar se stanje spremeni.
 
 ## Narejeno
 
@@ -17,7 +17,7 @@ To datoteko posodabljam sam, kadar se stanje spremeni — ne čakam, da Timon re
 
 ## V teku
 
-- **Namestitev prototipa na Timonov telefon (Android).** Zataknilo se je pri tem, da je
+- **Namestitev prototipa na telefon (Android).** Zataknilo se je pri tem, da je
   bil naslov odprt v vgrajenem brskalniku (WebView), ki ponuja samo zaznamek.
   V pravem Chromu je pravilna izbira *Dodaj na domači zaslon* → **Namesti**, ne
   *Ustvari bližnjico*. Potrditev: ob zagonu z ikone ni naslovne vrstice.
@@ -31,7 +31,7 @@ To datoteko posodabljam sam, kadar se stanje spremeni — ne čakam, da Timon re
 3. **Izvoz in uvoz JSON** — varnostna kopija. Ne odlašati; podatki živijo samo na telefonu.
 4. **Grafa** — napredek moči po vaji, telesna teža.
 
-## Odprta vprašanja za Timona
+## Odprta vprašanja za 
 
 - Tri odprta vprašanja o podatkovnem modelu iz točke 1 zgoraj.
 - Ali prototip po prehodu na pravo aplikacijo ostane v repozitoriju ali se izbriše.
