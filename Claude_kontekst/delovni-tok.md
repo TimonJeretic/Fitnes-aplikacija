@@ -49,8 +49,6 @@ povečati verzijo v `sw.js`:
 const CACHE = 'prototip-v2';   // v1 -> v2 -> v3 ...
 ```
 
-Brez tega Timon na telefonu ne bo videl nobene spremembe in bo mislil, da koda ne deluje.
-
 Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Service workers**
 → obkljukaj **Update on reload**.
 
@@ -89,5 +87,3 @@ try {
 
 Če je dokument odprt v Wordu, obstaja tudi zaklepna datoteka `~$tnes-aplikacija.docx`.
 To je začasna navlaka; v `.gitignore` je vzorec `~$*`, da ne pride v repozitorij.
-
-**Ta docx se bere samo na Timonovo izrecno zahtevo in se nikoli ne spreminja.**

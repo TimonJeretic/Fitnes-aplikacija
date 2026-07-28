@@ -1,8 +1,7 @@
 # Fitnes aplikacija
 
-Osebni dnevnik treningov za Timona: vaje, seti, ponovitve, kile, plus grafa napredka
-moči in telesne teže. PWA brez backenda — podatki živijo na telefonu. Uporablja jo
-ena sama oseba.
+Osebni dnevnik treningov: vaje, seti, ponovitve, kile, plus grafa napredka
+moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 
 - **Živa aplikacija:** https://timonjeretic.github.io/Fitnes-aplikacija/
 - **Repozitorij je JAVEN.** Vse, kar gre v git, je javno berljivo. Nič občutljivega
@@ -18,8 +17,6 @@ je potrditev podatkovnega modela. Podrobnosti: `Claude_kontekst/stanje.md`
 - **Koda angleško, vmesnik slovensko.** Identifikatorji, polja in CSS razredi angleško
   (`weightKg`, `addSet()`), besedilo na zaslonu slovensko ("Dodaj serijo").
   V kodi nikoli šumnikov; v UI besedilu so normalni.
-- **Timon se programiranja uči.** To je njegova prva aplikacija. Razloži *zakaj*, ne samo
-  *kaj*. Odgovarjaj slovensko. Ne preskakuj korakov, ki so tebi očitni.
 - **Po vsaki spremembi kode povečaj `CACHE` verzijo v `sw.js`.** Sicer telefon servira
   staro različico in izgleda, kot da koda ne deluje. To je najpogostejša past v projektu.
 - **Aplikacija se uporablja v telovadnici, z eno roko.** Veliki gumbi, malo tipkanja,
@@ -28,13 +25,12 @@ je potrditev podatkovnega modela. Podrobnosti: `Claude_kontekst/stanje.md`
 ## Vzdrževanje konteksta — moja odgovornost, ne Timonova
 
 - Datoteke v `Claude_kontekst/` berem **sam od sebe**, kadar so relevantne za nalogo.
-  Ne čakam, da Timon reče "preberi".
 - Ko sprejmeva odločitev, jo **takoj** zapišem v `odlocitve.md`.
 - Ko se spremeni stanje projekta (nova funkcija, deploy, potrjeno delovanje),
   posodobim `stanje.md`.
 - Ko se spremeni podatkovni model ali arhitektura, posodobim ustrezno datoteko
   **v istem commitu kot kodo**. Dokument in koda se ne smeta razjti.
-- **Edina izjema:** `fitnes-aplikacija.docx` so Timonovi osebni zapiski. Berem ga **samo**
+- **Edina izjema:** `fitnes-aplikacija.docx`, berem ga **samo**
   na izrecno zahtevo in ga nikoli ne spreminjam. Navodilo za branje je v `delovni-tok.md`.
 
 ## Kje kaj piše

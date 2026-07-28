@@ -1,6 +1,6 @@
 # Produkt — kaj gradiva
 
-Osebni dnevnik treningov za Timona. Uporablja ga ena sama oseba na enem telefonu.
+Osebni dnevnik treningov. 
 
 ## Osnovna zanka
 
@@ -30,7 +30,7 @@ Osebni dnevnik treningov za Timona. Uporablja ga ena sama oseba na enem telefonu
 | BB | barbell — drog |
 | DB | dumbbell — ročka |
 
-Kratice so Timonove in se uporabljajo v vmesniku. V kodi se pišejo s polnimi imeni
+Kratice se uporabljajo v vmesniku. V kodi se pišejo s polnimi imeni
 (`bodyweight`, `barbell`, `dumbbell`) — glej [arhitektura.md](arhitektura.md).
 
 ## Česa aplikacija namenoma NE dela
@@ -46,7 +46,7 @@ se sprememba zapiše v [odlocitve.md](odlocitve.md).
 
 ## Izvor
 
-Specifikacijo je Timon napisal v `fitnes-aplikacija.docx`. Ta datoteka je njegov
+Specifikacija je v `fitnes-aplikacija.docx`. Ta datoteka je njegov
 osebni zapisnik — berem jo **samo na izrecno zahtevo**. Ta dokument je moj delovni
-vir resnice; če Timon docx dopolni, mi bo rekel, naj ga preberem, in nato posodobim
+vir resnice; če se docx dopolni, mi bo rekel, naj ga preberem, in nato posodobim
 to datoteko.
