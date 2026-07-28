@@ -1,7 +1,7 @@
 {
   "name": "Prototip – barvni gumbi",
   "short_name": "Prototip",
-  "description": "Testna PWA: dva gumba, ki ob kliku dobita nakljucno barvo.",
+  "description": "Testna PWA: dva gumba, ki ob kliku dobita naključno barvo.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

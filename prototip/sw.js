@@ -1,11 +1,11 @@
-// Service worker = skript, ki tece loceno od strani in prestreza zahteve za datoteke.
+// Service worker = skript, ki teče ločeno od strani in prestreza zahteve za datoteke.
 // Njegova naloga tukaj: shrani datoteke aplikacije, da dela tudi brez interneta.
 
-// Ime predpomnilnika. Ko spremenis kodo, POVECAJ stevilko (v2, v3, ...),
-// sicer bo brskalnik trmasto serviral staro razlicico.
-const CACHE = 'prototip-v1';
+// Ime predpomnilnika. Ko spremeniš kodo, POVEČAJ številko (v2, v3, ...),
+// sicer bo brskalnik trmasto serviral staro različico.
+const CACHE = 'prototip-v2';
 
-const DATOTEKE = [
+const FILES = [
   './',
   './index.html',
   './manifest.json',
@@ -14,27 +14,27 @@ const DATOTEKE = [
 ];
 
 // 1. Namestitev: prenesi in shrani vse datoteke aplikacije.
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(DATOTEKE))
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(FILES))
   );
   self.skipWaiting();
 });
 
-// 2. Aktivacija: pobrisi predpomnilnike starih razlicic.
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((kljuci) =>
-      Promise.all(kljuci.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+// 2. Aktivacija: pobriši predpomnilnike starih različic.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
-// 3. Vsaka zahteva: najprej poglej v predpomnilnik, sele nato na internet.
-self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then((zadetek) => zadetek || fetch(e.request))
+// 3. Vsaka zahteva: najprej poglej v predpomnilnik, šele nato na internet.
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then((hit) => hit || fetch(event.request))
   );
 });

@@ -1,0 +1,7 @@
+# Wordove zaklepne datoteke (nastanejo, ko je dokument odprt)
+~$*
+
+# Windows / macOS navlaka
+Thumbs.db
+desktop.ini
+.DS_Store
