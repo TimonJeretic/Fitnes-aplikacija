@@ -18,11 +18,38 @@
 /* Posnetek napolni zaslon. `cover` in ne `contain`: robovi se raje obrežejo,
    kot da bi ob strani ostala črna pasova. Zato sta posnetka dva — pokončen in
    ležeč — da obrez nikoli ne pojé bistvenega. */
-.splash__video {
+.splash__video,
+.splash__still {
+  position: absolute;
+  inset: 0;
+
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Slika logotipa leži pod posnetkom in se vidi, kadar predvajanja ni: v
+   varčevanju z baterijo iPhone ne dovoli samodejnega predvajanja, pa naj bo
+   posnetek še tako utišan. Rahel prelet je zato, da tudi takrat nekaj oživi. */
+.splash__still {
+  animation: splash-still .9s ease both;
+}
+
+@keyframes splash-still {
+  from { opacity: 0; transform: scale(1.05); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Posnetek se pokaže šele, ko res teče. Sicer bi iPhone čez sliko narisal svoj
+   sivi gumb za predvajanje — videti je kot okvara, čeprav je samo ponudba. */
+.splash__video {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.splash__video.is-playing {
+  opacity: 1;
 }
 
 /* Umik: preliv v prosojno, šele nato element izgine iz strani.

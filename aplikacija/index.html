@@ -12,7 +12,13 @@
   <!-- iOS posebnosti: Safari za ikono in celozaslonski način ne bere manifesta -->
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- `black` in NE `black-translucent`. Pri `black-translucent` iOS vsebino
+       potisne pod vrstico s uro, okna pa ne poveča — zato spodaj ostane črn pas,
+       visok natanko toliko kot vrstica z uro. Aplikacija ga ne more zapolniti,
+       ker je zunaj okna: tja ne seže niti element `position: fixed; inset: 0`.
+       Pri `black` se okno začne pod uro in seže do dna zaslona. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Fitnes">
 
   <!-- Vse poti so relativne, ker aplikacija živi v podmapi /aplikacija/.
@@ -35,11 +41,14 @@
 
        Zakaj muted + playsinline: brez tega iPhone samodejnega predvajanja ne
        dovoli, posnetek pa bi se odprl čez cel zaslon v svojem predvajalniku.
-       Poster je zadnja sličica posnetka: če predvajanja ni (varčevanje z
-       baterijo), se namesto praznine vidi vsaj logotip. -->
+       Slika pod posnetkom je zadnja sličica animacije. Vidi se, kadar
+       predvajanja ni (varčevanje z baterijo na iPhonu ga ustavi tudi pri
+       utišanem posnetku) — namesto praznine takrat ostane logotip.
+       Zato tudi `poster` na posnetku ni: iPhone bi čezenj narisal svoj sivi
+       gumb za predvajanje. -->
   <div id="splash" class="splash">
-    <video class="splash__video" autoplay muted playsinline preload="auto"
-           poster="media/intro-poster.jpg"></video>
+    <img class="splash__still" src="media/intro-poster.jpg" alt="">
+    <video class="splash__video" autoplay muted playsinline preload="auto"></video>
   </div>
 
   <!-- Sem router vstavi trenutni zaslon. HTML je namenoma prazen: vsebino in
