@@ -79,7 +79,7 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 | Datoteka | Kaj je notri |
 |---|---|
 | `base.css` | barvni tokeni (`--accent`, `--accent-gradient`, `--accent-glow`), reset, postavitev strani |
-| `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule` |
+| `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, spustni seznam `.sheet` in izbira `.choice` |
 | `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
 | `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal`, `.picked` |
 | `weight.css`, `stats.css` | samo tisto, česar v training.css še ni |
@@ -145,6 +145,7 @@ Fitnes aplikacija/
 │   │   ├── store.js       edina pot do localStorage
 │   │   ├── chart.js       crtni graf iz SVG, brez knjiznice
 │   │   ├── icons.js       ikone kot nizi (izvor: icons/*.svg)
+│   │   ├── sheet.js       spustni seznam cez zaslon (izbira meritve, izbira vaje)
 │   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
 │   │   └── screens/       ena datoteka na zaslon
 │   └── icons/

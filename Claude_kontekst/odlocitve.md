@@ -7,6 +7,105 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Izbirnik vaj ponuja samo vaje tega treninga
+
+**Odločitev:** "Izberi vajo" ponudi vaje, ki spadajo k treningu **s tem imenom** —
+iz njegove predloge in iz zgodovine treningov z istim imenom
+(`store.exercisesForWorkoutName`). Vaja, ki je v treningu že dodana, se ne ponudi
+drugič. Ime treninga, ki ga še ni bilo, nima česa ponuditi, zato se takrat ponudi
+cel register.
+
+**Zakaj:** pri "Pull" ni kaj iskati med vajami, ki jih delaš pri "Push" — seznam
+je bil dvakrat daljši, kot bi moral biti. Register vaj ostane **skupen**: ista vaja
+je ista vaja, ne glede na to, v katerem treningu se pojavi. Filtriranje je stvar
+tega, kaj se ponudi, ne tega, kako so podatki zapisani.
+
+**Zakaj cel register, kadar imena še ni bilo:** prazen izbirnik bi ob prvem "Legs"
+pomenil, da moraš vsako vajo vpisati na roko — tudi tisto, ki v registru že je.
+
+**Kaj bi jo ovrglo:** trening, ki namenoma meša vaje iz več shem (npr. "Poljubno").
+Takrat bi rabil gumb "pokaži vse vaje" pod seznamom.
+
+---
+
+## 2026-07-29 — Ime vaje se da popraviti
+
+**Odločitev:** v oknu pod svinčnikom je ime vaje polje in ne napis
+(`store.renameExercise`). Ime, ki ga ima že druga vaja, se zavrne z opozorilom.
+
+**Zakaj:** register nastaja iz tipkanja med treningom in tipkarska napaka je do
+zdaj ostala v njem za vedno — "Bench pres" in "Bench press" bi bili dve vaji z
+ločenima grafoma. Popravek je varen, ker vajo vse naslavlja z `id`: ime se
+spremeni tudi v zgodovini in na grafu, podatki pa se ne premaknejo.
+
+**Zakaj zavrnitev in ne združitev:** združevanje dveh vaj v eno je poseg v
+zgodovino in rabi svojo potrditev. Za popravek črke to ni potrebno.
+
+**Kaj bi jo ovrglo:** potreba po združevanju podvojenih vaj, ki so že nastale.
+To je svoje opravilo, ne stranski učinek preimenovanja.
+
+---
+
+## 2026-07-29 — Izbiranje gre v spustni seznam čez zaslon
+
+**Odločitev:** izbira meritve (TEŽA) in izbira vaje (STATISTIKA) se odpreta v
+spustnem seznamu čez ves zaslon: ozadje se zabriše (`backdrop-filter`), ploskev
+seznama je **svetlejša** od strani. Skupna koda je v `js/sheet.js`, videz v
+`css/screen.css` (`.sheet`). Iskalnega polja v seznamu ni — vpisi so urejeni
+po abecedi.
+
+**Zakaj:** seznam, vgrajen v zaslon, je odrival vsebino pod sabo, zato je bilo
+treba po izbiri iskati, kam je skočil vnos. Zabrisano ozadje pove, da ta trenutek
+nič drugega ne dela, in odpravi zgrešen dotik mimo seznama. Svetlejša ploskev je
+edini način, da nekaj v temni aplikaciji izgleda, kot da leži **nad** stranjo.
+
+**Zakaj brez iskalnega polja:** abecedni seznam je pri desetih do petdesetih vpisih
+hitrejši od tipkanja z eno roko, tipkovnica pa bi pokrila pol seznama.
+
+**Popravek isti dan:** vrstice seznama so navadni sivi pravokotniki, tudi trenutno
+izbrana. Rdeča obroba je pridržana za izbiro enote (cm / kg) spodaj — dve različni
+"izbrano" v istem oknu ne povesta nobene stvari jasno. Katera vrstica je izbrana,
+piše na gumbu, s katerega se seznam odpre.
+
+**Kaj bi jo ovrglo:** register, ki preraste dve dolžini zaslona. Takrat gre iskalno
+polje nazaj — na vrh seznama, ne namesto njega.
+
+---
+
+## 2026-07-29 — Meritev ima svojo enoto (`schemaVersion: 4`)
+
+**Odločitev:** meritev telesa ima polje `unit` (`'cm'` ali `'kg'`), izbrano ob
+nastanku v spustnem seznamu. Vnos meritve hrani `value` namesto `valueCm`.
+Migracija postavi stare meritve na `'cm'` in preimenuje polje.
+
+**Zakaj:** vse meritve niso obsegi. Telesna maščoba, teža z opremo ali kar koli, kar
+se meri v kilogramih, je do zdaj v aplikacijo prišlo kot "cm" in je bilo na grafu
+narobe označeno.
+
+**Zakaj se enota **ne** da spremeniti kasneje:** stare in nove točke bi bile na
+istem grafu v različnih enotah in krivulja bi pokazala skok, ki se ni zgodil.
+Meritev v napačni enoti se naredi na novo pod drugim imenom.
+
+**Kaj bi jo ovrglo:** potreba po pretvorbi (cm → palci). Takrat enota ni več
+lastnost meritve, ampak nastavitev prikaza, in podatki ostanejo v eni sami enoti.
+
+---
+
+## 2026-07-29 — Registra vaj in meritev sta po abecedi
+
+**Odločitev:** `searchExercises`, `searchTrainedExercises` in `searchMeasurements`
+vračajo vpise urejene po abecedi (slovensko, prek `localeCompare('sl')`). Predloge
+treningov (`searchTemplates`) ostanejo v vrstnem redu nastanka.
+
+**Zakaj:** register vaj se bere kot imenik — vedeti moraš, kje iskati, ne kdaj si
+vajo prvič vpisal. Pri predlogah je nasprotno: Push, Pull, Legs je zaporedje tedna
+in abeceda bi ga razmetala.
+
+**Kaj bi jo ovrglo:** nič na obzorju. Če bi kdaj štel "najpogosteje uporabljene na
+vrh", to ne bi zamenjalo abecede, ampak dodalo kratek seznam nad njo.
+
+---
+
 ## 2026-07-29 — Koš pri vsaki seriji namesto gumba "−"
 
 **Odločitev:** vsaka vrstica serije ima čisto desno, za svojo črto, koš, ki odstrani
@@ -20,10 +119,16 @@ takrat hočeš stran **to** vrstico. `−` je odstranil zadnjo — če si se zmo
 sredini, si moral brisati in znova vpisovati. Dva gumba za isto dejanje sta bila
 tudi eden preveč.
 
-**Cena:** vrstica ima zdaj štiri stolpce (napis, vpis, zadnjič, koš). Da gre to na
-360 px širok telefon, so se polja zožila s 46 na **42 px** (višina ostaja 46),
-razmiki s 8 na 6 px, napis "Set 1" pa s 16 na 14 px in se po potrebi skrajša s tremi
-pikami. Preverjeno pri 360 in 390 px.
+**Cena:** vrstica ima zdaj štiri stolpce (napis, vpis, zadnjič, koš). Prostor si
+delijo tako, da dobi največ tisti stolpec, v katerega se piše:
+
+- napis je ozek in fiksen (46 px) — pove samo, katera serija po vrsti je to;
+- **polji za današnjo težo in ponovitve se raztegneta** čez ves prostor, ki ostane
+  (okoli 70 px na polje pri 390 px, več, kadar vaja nima zgodovine);
+- stolpec "zadnjič" je ozek (34 px, manjša pisava) — je podatek, ne tarča;
+- koš je 26 px in stoji ob desnem robu kartice.
+
+Preverjeno pri 360 in 390 px.
 
 **Podrobnost:** pri vaji brez zgodovine odpade stolpec "zadnjič" **in z njim njegova
 črta** — sicer bi se ob črti pred košem videli dve črti druga ob drugi.
@@ -130,18 +235,23 @@ skupaj). Nov zaslon je ena datoteka in ena vrstica v registru, zato vrnitev ni d
 
 ---
 
-## 2026-07-29 — Številsko polje sprejme največ štiri števke in eno decimalko
+## 2026-07-29 — Številsko polje sprejme največ tri števke in eno decimalko
 
 **Odločitev:** `limitNumber()` v `js/dom.js` sproti počisti vnos v polja za težo in
-ponovitve: dovoljeno je `1234` ali `123,4`. Ločilo na zaslonu je **vejica**; pika se
+ponovitve: dovoljeno je `123` ali `123,4`. Ločilo na zaslonu je **vejica**; pika se
 pri tipkanju prepiše vanjo, `parseNumber()` pa razume oboje.
 
-**Zakaj:** polje je široko 46 px in daljšega vnosa ne pokaže do konca — vpisal bi
-številko, ki je ne vidiš. Nad 999,9 kg ali 9999 ponovitev ni resnične meritve, zato
-omejitev ne odreže ničesar pravega. Popravlja se sproti in ne šele ob shranjevanju:
-v polju vedno piše natanko to, kar bo šlo v podatke.
+**Zakaj:** daljšega vnosa polje ne pokaže do konca — vpisal bi številko, ki je ne
+vidiš. Nad 999,9 kg ali 999 ponovitev ni resnične meritve, zato omejitev ne odreže
+ničesar pravega. Popravlja se sproti in ne šele ob shranjevanju: v polju vedno piše
+natanko to, kar bo šlo v podatke.
 
-**Kaj bi jo ovrglo:** teža v gramih ali druga enota, kjer so štiri števke premalo.
+**Popravek isti dan:** prvotna meja so bile štiri števke (`1234`), a "1234,5" v
+škatlici ni bilo berljivo. Poleg omejitve se pri vnosu, daljšem od štirih znakov,
+pisava tudi pomanjša (razred `is-long`) — številka se raje stisne, kot da bi ji
+konec ušel čez rob.
+
+**Kaj bi jo ovrglo:** teža v gramih ali druga enota, kjer so tri števke premalo.
 
 ---
 

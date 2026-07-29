@@ -130,11 +130,7 @@ function startFromQuery() {
   // Brez imena ni treninga. Namesto tihega nič se polje pobarva in dobi kurzor —
   // sicer izgleda, kot da gumb ne dela.
   if (!query.trim()) {
-    const field = root.querySelector('.field__input');
-    if (field) {
-      field.classList.add('is-error');
-      field.focus();
-    }
+    markEmptyField();
     return;
   }
 
@@ -155,6 +151,7 @@ function startWorkout(template) {
   query = '';
   picking = false;
   persist();
+  closeKeyboard();   // polje z imenom izgine z zaslona; tipkovnica naj gre z njim
   paint();
 }
 
@@ -227,46 +224,81 @@ function addExerciseButton() {
     picking = true;
     query = '';
     paint();
-    // Po izrisu: tipkovnica naj se odpre takoj, brez drugega dotika.
-    const field = root.querySelector('.field__input');
-    if (field) field.focus();
+    // Kurzorja tukaj namenoma NE postavljamo v polje za novo vajo. Odkar je nad
+    // poljem seznam vaj, je izbira s seznama pogostejša od vpisovanja novega
+    // imena; tipkovnica bi seznam pokrila, na iPhonu pa je ostala odprta tudi
+    // potem, ko je bilo polje že odstranjeno z zaslona — in naslednji dotik v
+    // polje za kilažo ni prijel.
   });
 }
 
+// Zgoraj register vaj po abecedi, spodaj okvir za novo vajo — ista postavitev
+// kot "Pretekli treningi" in "Ustvari nov trening" na praznem zaslonu. Kar se
+// dela z istimi koraki, naj tudi izgleda enako.
 function exercisePicker() {
   const wrap = el('div', 'picker');
-  const list = el('div', 'suggest');
 
-  const field = searchField(
-    T.exerciseName,
-    () => fillExerciseSuggestions(list),
-    () => addExerciseByName(query)
-  );
+  const section = el('section', 'training__section');
+  section.append(el('h2', 'section__title', T.pickExercise));
 
-  // Klik mimo zapre iskanje, da plus spet zasede svoje mesto.
-  wrap.append(field, list, button('picker__cancel', T.close, () => {
+  // Ponudijo se vaje tega treninga — iz predloge in iz zgodovine treningov z
+  // istim imenom. Pri "Pull" torej ni vaj, ki jih delaš pri "Push".
+  // Ime treninga, ki ga še ni bilo, nima česa ponuditi; takrat se ponudi cel
+  // register, sicer bi bil izbirnik ob prvem "Legs" prazen.
+  const forName = store.exercisesForWorkoutName(draft.name);
+  const source = forName.length ? forName : store.searchExercises('');
+
+  // Vaja, ki je v treningu že zdaj, se ne ponudi drugič.
+  const added = new Set(draft.exercises.map((entry) => entry.exerciseId));
+  const known = source.filter((exercise) => !added.has(exercise.id));
+
+  if (known.length) {
+    const list = el('div', 'suggest');
+    known.forEach((exercise) => list.append(suggestion(exercise.name, null, () => addExercise(exercise))));
+    section.append(list);
+  } else {
+    section.append(el('p', 'templates__empty', source.length ? T.allAdded : T.noExercisesYet));
+  }
+  wrap.append(section);
+
+  wrap.append(el('div', 'rule'));
+
+  // Nova vaja. Gumb Potrdi je tukaj in ne pri vsaki vrstici seznama: ko vajo
+  // potrdiš, se cel okvir zapre in se prikaže spet ob naslednjem plusu.
+  const create = el('section', 'training__section');
+  create.append(el('h2', 'section__title', T.newExercise));
+  create.append(searchField(T.exerciseName, () => {}, () => addExerciseByName(query)));
+  create.append(button('btn btn--primary', T.confirm, () => addExerciseByName(query)));
+  wrap.append(create);
+
+  // Klik mimo zapre okvir, da plus spet zasede svoje mesto.
+  wrap.append(button('picker__cancel', T.close, () => {
     picking = false;
     query = '';
+    closeKeyboard();
     paint();
   }));
 
-  fillExerciseSuggestions(list);
   return wrap;
-}
-
-function fillExerciseSuggestions(list) {
-  const rows = store.searchExercises(query).map((exercise) =>
-    suggestion(exercise.name, null, () => addExercise(exercise))
-  );
-  rows.push(button('suggest__item suggest__item--new', T.newExercise, () => addExerciseByName(query)));
-  list.replaceChildren(...rows);
 }
 
 // Vaja, ki je register še ne pozna, se ob dodajanju vanj zapiše. Tako seznam
 // vaj nastane sam od sebe iz treningov in ga ni treba nikoli urejati posebej.
 function addExerciseByName(name) {
-  if (!String(name).trim()) return;
+  if (!String(name).trim()) {
+    markEmptyField();
+    return;
+  }
   addExercise(store.createExercise(name));
+}
+
+// Prazno polje ob dotiku gumba: rdeč rob in kurzor povesta isto kot okno s
+// sporočilom, brez dotika za potrditev.
+function markEmptyField() {
+  const field = root.querySelector('.field__input');
+  if (!field) return;
+  field.classList.add('is-error');
+  field.focus();
 }
 
 function addExercise(exercise) {
@@ -274,7 +306,19 @@ function addExercise(exercise) {
   picking = false;
   query = '';
   persist();
+
+  // Tipkovnico spravimo dol, preden polje pod njo izgine z zaslona. Brez tega
+  // iOS ostane v stanju, ko je tipkovnica odprta za element, ki ga ni več —
+  // in dotik v novo polje za kilažo takrat ne prijeme.
+  closeKeyboard();
   paint();
+}
+
+// Odvzame kurzor temu, kar ga ima. Kliče se pred vsakim izrisom, ki odstrani
+// polje z zaslona.
+function closeKeyboard() {
+  const active = document.activeElement;
+  if (active && typeof active.blur === 'function') active.blur();
 }
 
 // --- Kartica vaje ----------------------------------------------------------
@@ -537,16 +581,24 @@ function numberField(value, mode, onChange) {
   input.type = 'text';        // text + inputMode: številska tipkovnica, brez puščic
   input.inputMode = mode;
   input.value = formatNumber(value);
+  fitText(input);
 
   // Vnos se popravi sproti in ne šele ob shranjevanju: v polju vedno piše
   // natanko to, kar bo šlo v podatke. Odvečna tipka se enostavno ne pozna.
   input.addEventListener('input', () => {
     const limited = limitNumber(input.value, mode === 'decimal');
     if (limited !== input.value) input.value = limited;
+    fitText(input);
     onChange(parseNumber(limited));
   });
 
   return input;
+}
+
+// "102,5" je pet znakov in pri polni pisavi zadene ob rob ozke škatlice. Namesto
+// da bi se konec skril, se pisava pomanjša.
+function fitText(input) {
+  input.classList.toggle('is-long', input.value.length > 4);
 }
 
 // Klik na številko iz zadnjič jo prepiše v polje levo. En dotik namesto dveh
@@ -578,7 +630,10 @@ function openNote(entry) {
   const overlay = el('div', 'modal');
   const box = el('div', 'modal__box');
 
-  box.append(el('h2', 'modal__title', exercise.name));
+  // Ime je polje in ne napis: tipkarska napaka se sicer zapiše v register in
+  // ostane tam za vedno. Popravek velja povsod, ker vajo vse ostalo naslavlja
+  // z `id` in ne z imenom.
+  box.append(renameField(exercise));
 
   const area = el('textarea', 'modal__text');
   area.value = exercise.note || '';
@@ -616,6 +671,34 @@ function openNote(entry) {
   overlay.append(box);
   root.append(overlay);
   area.focus();
+}
+
+// Ime vaje v oknu pod svinčnikom. Shrani se sproti, kot zapisek — dokler je ime
+// veljavno. Prazno ime ali ime, ki ga ima že druga vaja, se ne zapiše: polje
+// dobi rdeč rob in pod njim piše, zakaj.
+function renameField(exercise) {
+  const wrap = el('div', 'modal__name');
+
+  const input = el('input', 'modal__name-input');
+  input.type = 'text';
+  input.value = exercise.name;
+  input.setAttribute('aria-label', T.exerciseName);
+  input.autocomplete = 'off';
+  input.autocapitalize = 'words';
+
+  const problem = el('p', 'modal__name-problem', T.nameTaken);
+  problem.hidden = true;
+
+  input.addEventListener('input', () => {
+    const saved = store.renameExercise(exercise.id, input.value);
+    input.classList.toggle('is-error', !saved);
+    // Prazno polje je vmesno stanje med tipkanjem in ne napaka; opozorilo je
+    // samo za ime, ki je zasedeno.
+    problem.hidden = saved || !input.value.trim();
+  });
+
+  wrap.append(input, problem);
+  return wrap;
 }
 
 // Stikalo je navadna potrditvena škatlica v <label>: dotik kjerkoli po vrstici

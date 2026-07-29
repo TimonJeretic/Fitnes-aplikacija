@@ -108,6 +108,44 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   so se polja zožila na 42 px (višina ostaja 46). Preverjeno pri **360 in 390 px**
   z aplikacijo v okvirju prave širine.
 
+- **Spustni seznami, enote in prazen pas na iPhonu (2026-07-29).**
+  Izbira meritve in izbira vaje se odpreta v spustnem seznamu čez zaslon
+  (`js/sheet.js`): zabrisano ozadje, svetlejša ploskev, vpisi po abecedi, spodaj
+  okvir za nov vpis z izbiro enote (cm / kg). Meritev ima od zdaj svojo enoto,
+  zato je model pri **`schemaVersion: 4`** — `valueCm` se je preimenoval v `value`,
+  stare meritve so dobile `'cm'`. Migracija preverjena na zapisu verzije 3.
+  Register vaj in meritev se vrača po abecedi, predloge treningov v vrstnem redu
+  nastanka. Izbirnik vaje na zaslonu TRENING ima zdaj isto postavitev kot prazen
+  zaslon: seznam vaj, črta, *Nova vaja*, polje in *Potrdi*.
+  Prazen pas pod ikonami na iPhonu je odpravljen: `height: 100dvh` (prej `100%`,
+  kar je pri nameščeni aplikaciji nižje od zaslona) in `max()` namesto seštevanja
+  varnega območja v spodnji vrstici. **Na telefonu še ni preverjeno.**
+  Preverjeno v brskalniku pri 360 in 390 px: vse tri poti, oba spustna seznama,
+  migracija z verzije 3.
+
+- **Vrstica serije predelana in hrošč s tipkovnico (2026-07-29).** Napis serije je
+  ozek (46 px), polji za današnjo težo in ponovitve se raztegneta čez ves prostor,
+  ki ostane, stolpec "zadnjič" je ozek in manjši, koš je ob desnem robu. Vnos je
+  omejen na tri števke in eno decimalko (`999,9`), pri več kot štirih znakih se
+  pisava pomanjša (`is-long`). Izbrana enota v spustnem seznamu ima samo rdečo
+  obrobo, ne polnila — sicer tekmuje z gumbom *Potrdi*.
+  **Hrošč:** po dodajanju vaje prek *Izberi vajo* ni bilo mogoče vpisati kilaže.
+  Vzrok: ob odpiranju izbirnika je koda sama postavila kurzor v polje za novo vajo,
+  na iPhonu pa je tipkovnica ostala odprta tudi potem, ko je bilo polje z izrisom
+  odstranjeno z zaslona. Odpravljeno: kurzorja ne postavljamo več sami, pred vsakim
+  izrisom, ki odstrani polje, gre `blur()`, polja pa imajo izrecno
+  `user-select: text` (podedovan `none` zna na iOS preprečiti kurzor v polju).
+  V brskalniku na računalniku se hrošč ni pokazal — **potrditev na telefonu čaka**.
+
+- **Izbirnik vaj po treningu, popravek imena vaje (2026-07-29).** "Izberi vajo"
+  ponudi samo vaje tega treninga (predloga + zgodovina treningov z istim imenom)
+  in izpusti tiste, ki so v treningu že dodane; pri imenu treninga, ki ga še ni
+  bilo, ponudi cel register. Ime vaje je v oknu pod svinčnikom polje — tipkarska
+  napaka se popravi in velja povsod, zasedeno ime se zavrne. V spustnem seznamu
+  vrstice nimajo obrobe (navadni sivi pravokotniki), rdečo obrobo ima samo izbira
+  enote. Preverjeno v brskalniku: "Pull" z že dodanim Veslanjem ponudi samo Zgibi,
+  preimenovanje se zapiše, zasedeno ime pa ne.
+
 ## V teku
 
 - **Namestitev prototipa na telefon (Android).** Zataknilo se je pri tem, da je

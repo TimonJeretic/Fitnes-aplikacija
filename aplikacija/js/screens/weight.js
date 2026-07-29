@@ -12,6 +12,7 @@ import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
 import { aggregate, lineChart } from '../chart.js';
 import { ICON_WEIGHT, ICON_TRASH } from '../icons.js';
+import { openSheet } from '../sheet.js';
 import { el, button, icon, withLabel, parseNumber, formatNumber, formatDay } from '../dom.js';
 
 const T = TEXT.weight;
@@ -22,8 +23,6 @@ const T = TEXT.weight;
 
 let root = null;          // koren zaslona
 let selectedId = null;    // null = telesna teža, sicer id meritve
-let picking = false;      // ali je izbirnik razprt
-let query = '';           // kar je vpisano v iskalno polje izbirnika
 let step = 'month';       // obdobje povprečenja: 'week' | 'month' | 'year'
 let value = '';           // kar je vpisano v polje za vrednost
 let day = '';             // izbran datum, ISO dan
@@ -46,8 +45,10 @@ function selectedName() {
   return measurement ? measurement.name : T.bodyweight;
 }
 
+// Enota pripada meritvi (obseg roke v cm, maščoba v kg); telesna teža je vedno kg.
 function unit() {
-  return selectedId === null ? T.unitWeight : T.unitMeasurement;
+  const measurement = selected();
+  return measurement ? measurement.unit : T.unitWeight;
 }
 
 // Vnosi izbrane serije, najstarejši prvi — v obliki, ki jo razume graf.
@@ -63,7 +64,7 @@ function points() {
   return store.getMeasurementEntries(selectedId).map((entry) => ({
     id: entry.id,
     date: entry.date,
-    value: entry.valueCm
+    value: entry.value
   }));
 }
 
@@ -98,19 +99,11 @@ function brandRow() {
 
 // --- Izbirnik meritve ------------------------------------------------------
 
+// Zaprt izbirnik je ena široka tarča; dotik odpre spustni seznam čez zaslon
+// (js/sheet.js). Seznam je bil prej vgrajen v zaslon in je odrival vsebino pod
+// sabo — zdaj se ozadje zabriše in nič drugega ta trenutek ne dela.
 function pickerSection() {
-  return picking ? openPicker() : closedPicker();
-}
-
-function closedPicker() {
-  const bar = button('picked', '', () => {
-    picking = true;
-    query = '';
-    paint();
-    // Po izrisu: tipkovnica naj se odpre takoj, brez drugega dotika.
-    const field = root.querySelector('.field__input');
-    if (field) field.focus();
-  });
+  const bar = button('picked', '', openPicker);
 
   bar.append(el('span', 'picked__label', T.picked));
   bar.append(el('span', 'picked__name', selectedName()));
@@ -118,104 +111,57 @@ function closedPicker() {
   return bar;
 }
 
+// Prva vrstica je telesna teža (ni v registru meritev, ampak je najpogostejša),
+// za njo meritve po abecedi. Spodaj je vedno okvir za novo meritev z izbiro enote.
 function openPicker() {
-  const wrap = el('div', 'picker');
-  const list = el('div', 'suggest');
+  const items = [{
+    id: null,
+    name: T.bodyweight,
+    count: store.getBodyweightEntries().length,
+    active: selectedId === null
+  }];
 
-  const field = searchField(T.measurementName, () => fillSuggestions(list), () => pickByName(query));
-
-  // Klik mimo zapre iskanje, da vrstica z izbiro spet zasede svoje mesto.
-  wrap.append(field, list, button('picker__cancel', T.close, () => {
-    picking = false;
-    query = '';
-    paint();
-  }));
-
-  fillSuggestions(list);
-  return wrap;
-}
-
-// Prva vrstica je telesna teža, potem meritve iz registra, zadnja je vedno
-// "+ Nova meritev". Prazno iskanje vrne vse — seznam je uporaben že ob dotiku.
-function fillSuggestions(list) {
-  const rows = [];
-
-  if (matches(T.bodyweight, query)) {
-    rows.push(suggestion(T.bodyweight, store.getBodyweightEntries().length, () => pick(null)));
+  for (const measurement of store.searchMeasurements('')) {
+    items.push({
+      id: measurement.id,
+      name: measurement.name,
+      count: store.getMeasurementEntries(measurement.id).length,
+      active: measurement.id === selectedId
+    });
   }
 
-  for (const measurement of store.searchMeasurements(query)) {
-    rows.push(suggestion(
-      measurement.name,
-      store.getMeasurementEntries(measurement.id).length,
-      () => pick(measurement.id)
-    ));
-  }
-
-  rows.push(button('suggest__item suggest__item--new', T.newMeasurement, () => pickByName(query)));
-  list.replaceChildren(...rows);
-}
-
-// Telesna teža ni v registru meritev, zato se filtrira tukaj — po istem pravilu
-// kot ostala imena: brez ozira na velike črke in šumnike.
-function matches(name, query) {
-  const needle = store.normalizeName(query);
-  return !needle || store.normalizeName(name).includes(needle);
-}
-
-// Isto polje kot pri vajah: tipkaš, spodaj se ožijo predlogi, Enter vzame
-// vpisano. Med tipkanjem se osveži samo seznam, da kurzor obstane.
-function searchField(placeholder, onType, onEnter) {
-  const wrap = el('div', 'field');
-
-  const input = el('input', 'field__input');
-  input.type = 'text';
-  input.placeholder = placeholder;
-  input.setAttribute('aria-label', placeholder);
-  input.value = query;
-  input.autocomplete = 'off';
-  input.autocapitalize = 'words';
-
-  input.addEventListener('input', () => {
-    query = input.value;
-    onType();
+  openSheet({
+    title: T.pickMeasurement,
+    items,
+    onPick: pick,
+    closeLabel: T.close,
+    create: {
+      title: T.newMeasurement,
+      placeholder: T.measurementName,
+      // Prva je privzeta: cm, ker so obsegi najpogostejša meritev telesa.
+      choices: [{ value: 'cm', label: 'cm' }, { value: 'kg', label: 'kg' }],
+      confirmLabel: T.confirm,
+      onCreate: createAndPick
+    }
   });
-  input.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    onEnter();
-  });
-
-  wrap.append(input);
-  return wrap;
-}
-
-function suggestion(name, count, onClick) {
-  const row = button('suggest__item', '', onClick);
-  row.append(el('span', 'suggest__name', name));
-  row.append(el('span', 'suggest__count', String(count)));
-  return row;
 }
 
 function pick(id) {
   selectedId = id;
-  picking = false;
-  query = '';
+  value = '';        // vrednost pripada meritvi, ki je bila takrat izbrana
   paint();
 }
 
 // Ime, ki se ujema z obstoječo meritvijo, izbere njo — tudi če si ga vpisal do
 // konca namesto da bi ga izbral s seznama. Zato "roka" nikoli ne naredi druge
-// meritve poleg "Roka".
-function pickByName(name) {
-  if (!String(name).trim()) return;
-
+// meritve poleg "Roka"; enota takrat ostane, kakršna je bila.
+function createAndPick(name, chosenUnit) {
   if (store.normalizeName(name) === store.normalizeName(T.bodyweight)) return pick(null);
 
   const existing = store.findMeasurementByName(name);
   if (existing) return pick(existing.id);
 
-  pick(store.createMeasurement(name).id);
+  pick(store.createMeasurement(name, chosenUnit).id);
 }
 
 // --- Vnos ------------------------------------------------------------------
@@ -378,8 +324,6 @@ export default {
   // obiski: vsak obisk se začne pri telesni teži in današnjem datumu.
   render() {
     selectedId = null;
-    picking = false;
-    query = '';
     step = 'month';
     value = '';
     day = store.todayIso();       // datum je prednastavljen, a ga lahko popraviš

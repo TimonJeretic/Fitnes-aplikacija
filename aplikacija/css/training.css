@@ -468,22 +468,23 @@
   gap: 6px;
 }
 
-/* Napis se stisne prvi: številke in koš so tarče za palec in se ne smejo ožiti,
-   "Set 1" pa je samo oznaka. */
+/* Napis je ozek in fiksen: pove samo, katera serija po vrsti je to. Ves prostor,
+   ki ostane, gre poljema za težo in ponovitve — tja se piše in tam mora biti
+   "102,5" berljivo. */
 .set-row__label {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 8px;
+  flex: none;
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   background: var(--training-field);
   border-radius: 10px;
-  color: var(--text);
+  color: var(--text-muted);
 
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .set-row__divider {
@@ -493,11 +494,31 @@
   background: var(--border);
 }
 
+/* Današnja teža in ponovitve: par vzame ves prostor, ki ostane v vrstici, in ga
+   razdeli na pol. Na 390 px je to okoli 70 px na polje — dovolj za "102,5". */
 .pair {
-  flex: none;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 3px;
+}
+
+.pair .numbox {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+/* Stolpec "zadnjič" je samo podatek in ne tarča za tipkanje, zato ostane ozek. */
+.pair--ref {
+  flex: none;
+}
+
+.pair--ref .numbox {
+  flex: none;
+  width: 34px;
+  font-size: 13px;
 }
 
 .pair__times {
@@ -505,11 +526,8 @@
   font-size: 12px;
 }
 
-/* Vnosno polje in škatlica "zadnjič" imata isto velikost, da se stolpca ujemata.
-   42 px je ožje od priporočenih 44, a je polje visoko 46 — tarča je zato dovolj
-   velika, v vrstico pa gresta oba stolpca in koš tudi na ožjem telefonu. */
 .numbox {
-  width: 42px;
+  width: 46px;
   height: 46px;
 
   background: var(--training-field);
@@ -518,8 +536,14 @@
   color: var(--text);
 
   font: inherit;
-  font-size: 16px;
+  font-size: 17px;
   text-align: center;
+}
+
+/* Dolga številka ("102,5") ne sme čez rob škatlice: pisava se pomanjša, namesto
+   da bi se konec skril. Razred postavi js/screens/training.js ob vsakem vpisu. */
+.numbox.is-long {
+  font-size: 14px;
 }
 
 .numbox:focus {
@@ -550,10 +574,13 @@
 /* Koš na koncu vrstice: odstrani natanko to serijo. Siv in brez ozadja, ker
    brisanje ne sme biti enako vidno kot vpisovanje. Pri edini seriji je ugasnjen —
    vaja brez serij nima kaj pokazati, odstrani se z × spodaj na kartici. */
+/* Koš čisto ob desnem robu kartice: sam po sebi ni tarča, ki bi jo iskala roka,
+   zato naj vzame čim manj prostora vrstici. */
 .set-row__remove {
   flex: none;
-  width: 34px;
+  width: 26px;
   height: 46px;
+  margin-right: -2px;
 
   display: grid;
   place-items: center;
@@ -746,6 +773,42 @@
   margin: 0 0 12px;
   font-size: 18px;
   font-weight: 700;
+}
+
+/* Ime vaje je polje, ki izgleda kot naslov, dokler se ga ne dotakneš — isto
+   kot ime treninga na vrhu zaslona. */
+.modal__name {
+  margin-bottom: 12px;
+}
+
+.modal__name-input {
+  width: 100%;
+  padding: 8px 10px;
+
+  background: var(--training-field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal__name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal__name-input.is-error {
+  border-color: #d05050;
+}
+
+.modal__name-problem {
+  margin: 6px 0 0;
+  color: #e08585;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .modal__text {

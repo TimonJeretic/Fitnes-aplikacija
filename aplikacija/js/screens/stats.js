@@ -16,6 +16,7 @@ import * as store from '../store.js';
 import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
 import { ICON_STATS } from '../icons.js';
+import { openSheet } from '../sheet.js';
 import { el, button, icon, formatNumber, formatRounded, formatDay } from '../dom.js';
 
 const T = TEXT.stats;
@@ -31,8 +32,6 @@ let archive = false;        // kateri od obeh pogledov je odprt
 let workoutQuery = '';      // iskalnik v arhivu
 let openWorkoutId = null;   // razprta vrstica arhiva
 let selectedId = null;      // vaja, ki je na grafu
-let picking = false;        // ali je izbirnik vaje razprt
-let query = '';             // kar je vpisano v izbirniku vaje
 let step = 'month';         // obdobje združevanja: 'week' | 'month' | 'year'
 
 // --- Izris -----------------------------------------------------------------
@@ -72,13 +71,6 @@ function searchField(placeholder, value, onType) {
   return wrap;
 }
 
-function suggestion(name, count, onClick) {
-  const row = button('suggest__item', '', onClick);
-  row.append(el('span', 'suggest__name', name));
-  row.append(el('span', 'suggest__count', String(count)));
-  return row;
-}
-
 function hint(text) {
   return el('p', 'stats__hint', text);
 }
@@ -90,7 +82,7 @@ function statsView() {
   link.append(el('span', 'archive-link__text', T.archive));
   link.append(el('span', 'archive-link__caret', '›'));
 
-  return [link, picking ? openPicker() : closedPicker(), chartSection()];
+  return [link, pickerSection(), chartSection()];
 }
 
 function selected() {
@@ -104,18 +96,12 @@ function selected() {
 }
 
 // Ena široka tarča čez ves zaslon: pove, katera vaja je na grafu, in je hkrati
-// gumb za menjavo. Enak vzorec kot izbirnik meritve na zaslonu TEŽA.
-function closedPicker() {
+// gumb za menjavo. Enak vzorec kot izbirnik meritve na zaslonu TEŽA — dotik
+// odpre spustni seznam čez zaslon (js/sheet.js).
+function pickerSection() {
   const exercise = selected();
 
-  const bar = button('picked', '', () => {
-    picking = true;
-    query = '';
-    paint();
-    // Po izrisu: tipkovnica naj se odpre takoj, brez drugega dotika.
-    const field = root.querySelector('.field__input');
-    if (field) field.focus();
-  });
+  const bar = button('picked', '', openPicker);
 
   bar.append(el('span', 'picked__label', T.picked));
   bar.append(el('span', 'picked__name', exercise ? exercise.name : T.choose));
@@ -123,45 +109,27 @@ function closedPicker() {
   return bar;
 }
 
+// Ponudijo se samo vaje, ki so vsaj enkrat v zgodovini: vaja brez treningov nima
+// česa pokazati na grafu. Zato tukaj ni okvirja za novo vajo — vaje nastanejo med
+// treningom. Številka desno je, koliko treningov jo vsebuje.
 function openPicker() {
-  const wrap = el('div', 'picker');
-  const list = el('div', 'suggest');
+  const items = store.searchTrainedExercises('').map((exercise) => ({
+    id: exercise.id,
+    name: exercise.name,
+    count: exercise.workoutCount,
+    active: exercise.id === selectedId
+  }));
 
-  wrap.append(
-    searchField(T.exerciseName, query, (value) => {
-      query = value;
-      fillExercises(list);
-    }),
-    list,
-    button('picker__cancel', T.close, () => {
-      picking = false;
-      query = '';
+  openSheet({
+    title: T.choose,
+    items,
+    emptyLabel: T.noTrainedExercises,
+    onPick: (id) => {
+      selectedId = id;
       paint();
-    })
-  );
-
-  fillExercises(list);
-  return wrap;
-}
-
-// Ponudijo se samo vaje, ki so vsaj enkrat v zgodovini: vaja brez treningov
-// nima česa pokazati na grafu. Številka desno je, koliko treningov jo vsebuje.
-function fillExercises(list) {
-  const found = store.searchTrainedExercises(query);
-
-  if (!found.length) {
-    list.replaceChildren(hint(query ? T.noMatches : T.noTrainedExercises));
-    return;
-  }
-
-  list.replaceChildren(...found.map((exercise) =>
-    suggestion(exercise.name, exercise.workoutCount, () => {
-      selectedId = exercise.id;
-      picking = false;
-      query = '';
-      paint();
-    })
-  ));
+    },
+    closeLabel: T.close
+  });
 }
 
 function chartSection() {
@@ -385,8 +353,6 @@ export default {
     workoutQuery = '';
     openWorkoutId = null;
     selectedId = null;
-    picking = false;
-    query = '';
     step = 'month';
 
     root = el('div', 'stats');

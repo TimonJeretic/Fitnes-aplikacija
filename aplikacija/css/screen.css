@@ -74,6 +74,165 @@ body[data-screen="stats"] .screen {
   background: var(--border);
 }
 
+/* --- Spustni seznam (js/sheet.js) ----------------------------------------- */
+
+/* Ozadje se zabriše: ko je seznam odprt, nič drugega ne dela in to se vidi.
+   `-webkit-` različica je obvezna, sicer na iPhonu zabrisa ni. */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
+  display: grid;
+  place-items: center;
+  padding: 16px;
+
+  background: rgba(8, 10, 14, .5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.sheet {
+  width: 100%;
+  max-width: 460px;
+
+  /* Seznam vaj je lahko dolg; okno naj ne preraste zaslona, ampak drsi v sebi. */
+  max-height: 82vh;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 14px;
+
+  background: var(--sheet);
+  border: 1px solid var(--sheet-border);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .55);
+}
+
+.sheet__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sheet__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheet__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+
+  min-height: 52px;
+  padding: 0 14px;
+
+  background: var(--sheet-item);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheet__item:active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Vrstice seznama so navadni sivi pravokotniki — tudi tista, ki je trenutno
+   izbrana. Obroba je pridržana za izbiro enote spodaj; če bi jo imela tudi
+   vrstica, bi bili v istem oknu dve različni "izbrano" in nobena jasna. */
+
+.sheet__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet__count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .3);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.sheet__item:active .sheet__count {
+  color: var(--on-accent);
+}
+
+.sheet__empty {
+  margin: 0;
+  padding: 8px 2px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Spodnji del: črta, naslov, polje, izbira enote, Potrdi. */
+.sheet__create {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ploskev seznama je svetlejša od strani, zato bi se črta v barvi obrobe strani
+   na njej izgubila. */
+.sheet .rule {
+  background: var(--sheet-border);
+}
+
+/* Polje in gumbi znotraj seznama stojijo na svetlejši ploskvi, zato so tudi sami
+   svetlejši od tistih na zaslonu. */
+.sheet .field__input {
+  background: rgba(0, 0, 0, .28);
+  border-color: var(--sheet-border);
+}
+
+/* Dve možnosti drug ob drugem (enota meritve). */
+.choice {
+  display: flex;
+  gap: 8px;
+}
+
+.choice__button {
+  flex: 1;
+  min-height: 46px;
+
+  background: rgba(0, 0, 0, .28);
+  border: 1px solid var(--sheet-border);
+  border-radius: 12px;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Izbrana enota dobi samo rdečo obrobo, ne polnila: v istem oknu je Potrdi, ki je
+   ves rdeč, in dva polna rdeča gumba bi se tepla za pozornost. */
+.choice__button:active,
+.choice__button.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--text);
+}
+
+.choice__button.is-active {
+  font-weight: 600;
+}
+
 /* Velik napis na sredini. Začasno je to celotna vsebina zaslona;
    ko bo zaslon dobil pravo vsebino, se spremeni samo render() v modulu. */
 .screen-title {

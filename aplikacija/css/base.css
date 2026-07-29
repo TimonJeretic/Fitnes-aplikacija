@@ -24,6 +24,11 @@
      v telovadnici je zaslon svetel in premočan sij bi bil packa. */
   --accent-glow: 0 0 0 1px rgba(157, 15, 11, .55), 0 0 12px rgba(157, 15, 11, .45);
 
+  /* Spustni seznam je svetlejši od strani: leži nad njo, zato mora biti bližje. */
+  --sheet: #2a313d;
+  --sheet-border: #3c4453;
+  --sheet-item: #363f4d;
+
   --tab-size: 60px;       /* stranica kvadratka v spodnji vrstici */
   --radius: 16px;
 
@@ -39,6 +44,12 @@
 
 html, body {
   height: 100%;
+
+  /* iPhone: pri nameščeni aplikaciji je `100%` nižje od zaslona — višina varnega
+     območja zgoraj se odšteje, vsebina pa se vseeno začne čisto na vrhu, zato je
+     spodaj ostal prazen pas pod gumbi. `dvh` meri pravo višino okna.
+     Vrstica stoji za `100%`, ki ostane rezerva za starejše brskalnike. */
+  height: 100dvh;
 }
 
 body {
@@ -56,4 +67,12 @@ body {
   -webkit-user-select: none;
   user-select: none;
   overscroll-behavior: none;
+}
+
+/* Prepoved izbiranja ne sme veljati za polja, v katera se piše: na iOS zna
+   podedovan `user-select: none` preprečiti postavitev kurzorja v polje. */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }

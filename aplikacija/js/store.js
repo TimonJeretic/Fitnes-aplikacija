@@ -8,7 +8,11 @@
 // Oblika podatkov je opisana v Claude_kontekst/podatkovni-model.md.
 
 const KEY = 'fitnes';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
+
+// Enote, v katerih se meri telo. Meritev si enoto izbere ob nastanku in je ne
+// menja — sicer bi bile stare in nove točke na istem grafu v različnih enotah.
+export const UNITS = ['kg', 'cm'];
 
 function emptyData() {
   return {
@@ -54,9 +58,12 @@ function migrate(raw) {
       : base.bodyweightEntries,
     // Verzija 2: register meritev telesa in njihovi vnosi. Stari zapis ju nima,
     // zato ju dobi prazna — zgodovina treningov pri tem ostane nedotaknjena.
-    measurements: Array.isArray(raw.measurements) ? raw.measurements : base.measurements,
+    // Verzija 4: meritev ima enoto, vnos pa polje `value` namesto `valueCm`.
+    measurements: Array.isArray(raw.measurements)
+      ? raw.measurements.map(cleanMeasurement)
+      : base.measurements,
     measurementEntries: Array.isArray(raw.measurementEntries)
-      ? raw.measurementEntries
+      ? raw.measurementEntries.map(cleanMeasurementEntry).filter(Boolean)
       : base.measurementEntries,
     draft: raw.draft && typeof raw.draft === 'object' ? raw.draft : null
   };
@@ -67,6 +74,29 @@ function cleanExercise(exercise) {
   if (!exercise || typeof exercise !== 'object') return exercise;
   if (typeof exercise.usesBodyweight === 'boolean') return exercise;
   return Object.assign({}, exercise, { usesBodyweight: false });
+}
+
+// Verzija 4: meritev ima enoto. Do zdaj so bile vse meritve telesa v centimetrih,
+// zato stare dobijo 'cm' — s tem se na grafu ne spremeni nič.
+function cleanMeasurement(measurement) {
+  if (!measurement || typeof measurement !== 'object') return measurement;
+  if (UNITS.includes(measurement.unit)) return measurement;
+  return Object.assign({}, measurement, { unit: 'cm' });
+}
+
+// Verzija 4: vrednost vnosa ni več nujno v centimetrih, zato se polje `valueCm`
+// preimenuje v `value`. Vnos brez uporabne številke se zavrže — takega ni mogoče
+// niti narisati niti popraviti.
+function cleanMeasurementEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  if (Number.isFinite(entry.value)) return entry;
+
+  const value = Number(entry.valueCm);
+  if (!Number.isFinite(value)) return null;
+
+  const clean = Object.assign({}, entry, { value });
+  delete clean.valueCm;
+  return clean;
 }
 
 function read() {
@@ -119,14 +149,66 @@ function search(items, query) {
     .sort((a, b) => normalizeName(a.name).indexOf(needle) - normalizeName(b.name).indexOf(needle));
 }
 
+// Abecedno, po slovensko (č, š, ž pridejo na svoje mesto in ne na konec).
+// Registri vaj in meritev se s tem berejo kot imenik: veš, kje iskati, tudi ko
+// je vpisov petdeset. Predloge treningov namenoma niso urejene abecedno — tam
+// je vrstni red nastanka (Push, Pull, Legs) sam po sebi smiseln.
+function byName(a, b) {
+  return String(a.name).localeCompare(String(b.name), 'sl');
+}
+
 // --- Vaje ------------------------------------------------------------------
 
 export function searchExercises(query) {
-  return search(read().exercises, query);
+  return search(read().exercises, query).sort(byName);
 }
 
 export function getExercise(id) {
   return read().exercises.find((exercise) => exercise.id === id) || null;
+}
+
+// Vaje, ki spadajo k treningu s tem imenom: tiste iz njegove predloge in tiste,
+// ki so se v treningu s tem imenom kdaj pojavile.
+//
+// Zakaj po imenu in ne kar cel register: "Pull" ne rabi ponujati vaj, ki jih
+// delaš pri "Push". Register je skupen — ista vaja je ista vaja, ne glede na to,
+// v katerem treningu se pojavi — filter pa je stvar tega, kaj se ponudi.
+//
+// Ime treninga, ki še nikoli ni bilo shranjeno, vrne prazen seznam. Kaj s tem
+// naredi zaslon, je njegova odločitev.
+export function exercisesForWorkoutName(name) {
+  const needle = normalizeName(name);
+  if (!needle) return [];
+
+  const ids = new Set();
+
+  const template = findTemplateByName(name);
+  if (template) template.exerciseIds.forEach((id) => ids.add(id));
+
+  for (const workout of read().workouts) {
+    if (normalizeName(workout.name) !== needle) continue;
+    for (const entry of workout.exercises || []) ids.add(entry.exerciseId);
+  }
+
+  return read().exercises.filter((exercise) => ids.has(exercise.id)).sort(byName);
+}
+
+// Popravek imena vaje (tipkarska napaka). Vaja se povsod naslavlja z `id`, zato
+// se preimenovanje samo od sebe pozna v zgodovini, predlogah in na grafih.
+//
+// Ime, ki ga ima že druga vaja, se zavrne: dve vaji z istim imenom bi bili v
+// šepetalniku nerazločljivi. Vrne `true`, če je uspelo.
+export function renameExercise(id, name) {
+  const exercise = getExercise(id);
+  const clean = String(name).trim();
+  if (!exercise || !clean) return false;
+
+  const other = findExerciseByName(clean);
+  if (other && other.id !== id) return false;
+
+  exercise.name = clean;
+  write();
+  return true;
 }
 
 export function findExerciseByName(name) {
@@ -395,7 +477,7 @@ export function searchTrainedExercises(query) {
   }
 
   const trained = read().exercises.filter((exercise) => counts.has(exercise.id));
-  return search(trained, query).map((exercise) =>
+  return search(trained, query).sort(byName).map((exercise) =>
     Object.assign({}, exercise, { workoutCount: counts.get(exercise.id) })
   );
 }
@@ -504,7 +586,7 @@ export function removeBodyweight(id) {
 // Register meritev nastane enako kot register vaj: iz imen, ki jih Timon vpiše.
 // Vnaprej pripravljenega seznama delov telesa ni. Meritev je vedno v centimetrih.
 export function searchMeasurements(query) {
-  return search(read().measurements, query);
+  return search(read().measurements, query).sort(byName);
 }
 
 export function getMeasurement(id) {
@@ -520,13 +602,17 @@ export function findMeasurementByName(name) {
 }
 
 // "Roka", "roka" in "ROKA" so ista meritev — primerjava gre skozi normalizeName().
-export function createMeasurement(name) {
+// Enota se izbere ob nastanku; obseg roke je v cm, telesna maščoba v kg. Meritev,
+// ki že obstaja, enote ne zamenja — stare točke na grafu bi bile takrat v drugi
+// enoti kot nove.
+export function createMeasurement(name, unit) {
   const existing = findMeasurementByName(name);
   if (existing) return existing;
 
   const measurement = {
     id: newId(),
     name: String(name).trim(),
+    unit: UNITS.includes(unit) ? unit : 'cm',
     createdAt: new Date().toISOString()
   };
   read().measurements.push(measurement);
@@ -540,8 +626,10 @@ export function getMeasurementEntries(measurementId) {
   );
 }
 
-export function addMeasurementEntry(measurementId, valueCm, date) {
-  const value = Number(valueCm);
+// Vrednost je v enoti svoje meritve (`measurement.unit`), zato se polje imenuje
+// `value` in ne `valueCm`.
+export function addMeasurementEntry(measurementId, newValue, date) {
+  const value = Number(newValue);
   if (!measurementId || !Number.isFinite(value)) return null;
 
   const day = cleanDay(date);
@@ -551,12 +639,12 @@ export function addMeasurementEntry(measurementId, valueCm, date) {
     (entry) => entry.measurementId === measurementId && entry.date === day
   );
   if (existing) {
-    existing.valueCm = value;
+    existing.value = value;
     write();
     return existing;
   }
 
-  const entry = { id: newId(), measurementId, date: day, valueCm: value };
+  const entry = { id: newId(), measurementId, date: day, value };
   entries.push(entry);
   write();
   return entry;

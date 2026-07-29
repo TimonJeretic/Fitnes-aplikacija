@@ -2,7 +2,7 @@
 // Njegova naloga tukaj: shrani datoteke aplikacije, da dela tudi brez interneta.
 
 // Ime predpomnilnika. Ob spremembah incrementaj verzijo
-const CACHE = 'aplikacija-v3';
+const CACHE = 'aplikacija-v5';
 
 // POZOR: aplikacija je razdeljena na module. 
 // Vsak modul je svoja datoteka in mora biti naštet spodaj. 
@@ -29,6 +29,7 @@ const FILES = [
   './js/dom.js',
   './js/chart.js',
   './js/icons.js',
+  './js/sheet.js',
 
   './js/screens/training.js',
   './js/screens/weight.js',

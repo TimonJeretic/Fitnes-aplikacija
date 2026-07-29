@@ -1,7 +1,8 @@
 # Podatkovni model
 
 > **Status: POTRJEN in implementiran** v `aplikacija/js/store.js`.
-> Trenutna `schemaVersion` je **3** (2026-07-29, dodano `usesBodyweight` pri vaji).
+> Trenutna `schemaVersion` je **4** (2026-07-29, meritev je dobila `unit`,
+> `valueCm` se je preimenoval v `value`).
 > Vsaka nadaljnja sprememba strukture zahteva migracijo v `migrate()` in dvig
 > `schemaVersion` — na telefonu so pravi podatki.
 
@@ -11,7 +12,7 @@ Vse je **en JSON objekt v `localStorage`** pod ključem `fitnes`:
 
 ```js
 {
-  schemaVersion: 3,
+  schemaVersion: 4,
   exercises: [],           // register vaj
   templates: [],           // predloge treningov
   workouts: [],            // zgodovina
@@ -124,11 +125,16 @@ ostane samo tisto, kar si vpisal.
 |---|---|---|
 | `id` | string | |
 | `name` | string | kot ga je Timon vpisal, npr. "Roka" |
+| `unit` | string | `'cm'` ali `'kg'` — glej `store.UNITS` |
 | `createdAt` | string | ISO datum |
 
 Register nastane enako kot register vaj: iz imen, vpisanih na zaslonu TEŽA.
-Vnaprej pripravljenega seznama delov telesa ni. Meritev **nima polja za enoto** —
-vse meritve so v centimetrih.
+Vnaprej pripravljenega seznama delov telesa ni.
+
+**Enota se izbere ob nastanku meritve in se ne menja.** Obseg roke je v cm,
+telesna maščoba v kg. Če bi se enota dala zamenjati, bi bile stare in nove točke
+na istem grafu v različnih enotah, kar bi izgledalo kot skok. Zato tudi
+`createMeasurement(name, unit)` pri obstoječi meritvi enote **ne** popravi.
 
 ### `measurementEntry` — izmerjena vrednost
 
@@ -137,7 +143,7 @@ vse meritve so v centimetrih.
 | `id` | string | |
 | `measurementId` | string | katera meritev |
 | `date` | string | ISO **dan** |
-| `valueCm` | number | vedno centimetri |
+| `value` | number | v enoti svoje meritve (`measurement.unit`) |
 
 ### Datum in pravilo "en vnos na dan"
 
@@ -166,11 +172,23 @@ Zasloni ne brskajo po podatkih sami. Kar rabijo, je v `store.js`:
 - `lastSetsFor(exerciseId)` — serije iz **zadnjega treninga kjerkoli v zgodovini**,
   v katerem se je ta vaja pojavila, ne glede na ime treninga. To je številka,
   ki jo hočeš prekositi.
+- `exercisesForWorkoutName(name)` — vaje, ki spadajo k treningu s tem imenom
+  (iz njegove predloge in iz zgodovine treningov z istim imenom). Zaslon TRENING
+  z njo napolni izbirnik vaj: pri "Pull" se ne ponujajo vaje s "Push". Ime, ki ga
+  še ni bilo, vrne prazen seznam.
+- `renameExercise(id, name)` — popravek tipkarske napake v imenu vaje. Vrne
+  `false`, če je ime prazno ali ga ima že druga vaja. Preimenovanje je varno:
+  vse ostalo vajo naslavlja z `id`, zato se popravek pozna v zgodovini in na grafih.
 - `upsertTemplate(name, exerciseIds)`, `saveWorkout(draft)`.
 - `getBodyweightEntries()`, `addBodyweight(weightKg, date)`, `removeBodyweight(id)`.
-- `searchMeasurements(query)`, `findMeasurementByName(name)`, `createMeasurement(name)`,
-  `getMeasurementEntries(measurementId)`, `addMeasurementEntry(measurementId, valueCm, date)`,
-  `removeMeasurementEntry(id)`.
+- `searchMeasurements(query)`, `findMeasurementByName(name)`,
+  `createMeasurement(name, unit)`, `getMeasurementEntries(measurementId)`,
+  `addMeasurementEntry(measurementId, value, date)`, `removeMeasurementEntry(id)`.
+- `removeTemplate(id)` — zbriše predlogo, zgodovine se ne dotakne.
+- `UNITS` — dovoljeni enoti meritve (`['kg', 'cm']`).
+- **Registra vaj in meritev se vračata po abecedi** (`searchExercises`,
+  `searchTrainedExercises`, `searchMeasurements`), predloge treningov pa v vrstnem
+  redu nastanka: tam je Push, Pull, Legs smiselno zaporedje, abeceda pa ne.
 - `todayIso()` — današnji dan v **lokalnem** času. `new Date().toISOString()` vzame
   UTC in bi tik po polnoči ponudil včerajšnji datum.
 - `setExerciseBodyweight(id, value)` — preklop "vaja z lastno težo".

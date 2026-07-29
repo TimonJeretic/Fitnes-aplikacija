@@ -46,9 +46,9 @@ export function parseNumber(text) {
   return Number.isFinite(number) ? number : null;
 }
 
-// Kar se sme znajti v številskem polju: največ štiri števke in največ ena
-// decimalka — torej "1234" ali "123,4". Več kot 999,9 kg ali 9999 ponovitev
-// ni resnično, ozko polje pa daljšega vnosa itak ne pokaže do konca.
+// Kar se sme znajti v številskem polju: največ tri števke in največ ena
+// decimalka — torej "123" ali "123,4". Nihče ne dvigne 1000 kg in nihče ne naredi
+// 1000 ponovitev, daljša številka pa v škatlici ni več berljiva.
 //
 // Ločilo na zaslonu je vejica, ker se tako piše po slovensko. Pika se sproti
 // prepiše vanjo: numerična tipkovnica na računalniku ponuja piko in vnos zaradi
@@ -57,17 +57,15 @@ export function limitNumber(text, decimals) {
   const clean = String(text).replace(/\./g, ',').replace(/[^0-9,]/g, '');
 
   // Ponovitev ni pol: pri celih številih ločilo enostavno izpade.
-  if (!decimals) return clean.replace(/,/g, '').slice(0, 4);
+  if (!decimals) return clean.replace(/,/g, '').slice(0, 3);
 
   const cut = clean.indexOf(',');
-  if (cut < 0) return clean.slice(0, 4);
+  if (cut < 0) return clean.slice(0, 3);
 
   // Ostale vejice so tipkarska napaka in ne novo ločilo, zato se pobrišejo.
-  const whole = clean.slice(0, cut).slice(0, 4);
+  const whole = clean.slice(0, cut).slice(0, 3);
   const fraction = clean.slice(cut + 1).replace(/,/g, '');
 
-  // Štiri števke pred vejico so že cela dovoljena dolžina; vejica takrat odpade.
-  if (whole.length >= 4) return whole;
   return whole + ',' + fraction.slice(0, 1);
 }
 

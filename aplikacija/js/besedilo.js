@@ -34,7 +34,11 @@ export const TEXT = {
 
     exerciseName: 'Ime vaje',
     addExercise: 'Dodaj vajo',
-    newExercise: '+ Nova vaja',
+    pickExercise: 'Izberi vajo',
+    newExercise: 'Nova vaja',
+    noExercisesYet: 'Registra vaj še ni. Vpiši prvo vajo spodaj.',
+    allAdded: 'Vse vaje tega treninga so že dodane. Novo vpiši spodaj.',
+    nameTaken: 'Vaja s tem imenom že obstaja, zato ime ni shranjeno.',
 
     note: 'Zapisek',
     notePlaceholder: 'Nastavitev stola, elastika, oprijem …',
@@ -59,8 +63,11 @@ export const TEXT = {
     heading: 'Meritve',
     picked: 'Meritev:',
     bodyweight: 'Telesna teža',
+    pickMeasurement: 'Izberi meritev',
     measurementName: 'Ime meritve',
-    newMeasurement: '+ Nova meritev',
+    newMeasurement: 'Nova meritev',
+    unit: 'Enota',
+    confirm: 'Potrdi',
     close: 'Zapri',
 
     value: 'Vrednost',
@@ -77,8 +84,8 @@ export const TEXT = {
     year: 'Leto',
     noData: 'Ni podatkov.',
 
-    unitWeight: 'kg',
-    unitMeasurement: 'cm'
+    // Enota telesne teže. Meritve telesa imajo svojo enoto zapisano v podatkih.
+    unitWeight: 'kg'
   },
 
   // Zaslon STATISTIKA.
