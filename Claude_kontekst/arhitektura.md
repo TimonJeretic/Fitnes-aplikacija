@@ -105,6 +105,7 @@ vpisanega seta.
 
 ```
 Fitnes aplikacija/
+├── index.html             samo preusmeritev na aplikacija/ (GitHub Pages strezi koren)
 ├── CLAUDE.md              indeks za Clauda
 ├── Claude_kontekst/       podrobni kontekst (ta mapa)
 ├── aplikacija/            PRAVA APLIKACIJA

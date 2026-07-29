@@ -14,12 +14,14 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   `https://timonjeretic.github.io/Fitnes-aplikacija/prototip/`.
   Vsi pogoji za namestitev PWA so torej izpolnjeni.
 - **Kontekstna dokumentacija** — `CLAUDE.md` kot indeks in ta mapa.
-- **Ogrodje prave aplikacije** (`aplikacija/`) — prazen zaslon, spodaj štirje kvadratni
-  gumbi T / W / S / A. Klik odpre zaslon svoje barve z napisom TRENING / TEŽA /
-  STATISTIKA / RAČUN. Vsebine še ni; namen je bil postaviti razširljivo ogrodje.
-  Preverjeno lokalno: vsi štirje zasloni, naslov `#/...` in gumb *nazaj*, nesmiseln
+- **Ogrodje prave aplikacije** (`aplikacija/`) — prazen zaslon, spodaj kvadratni
+  gumbi T / W / S. Klik odpre zaslon svoje barve z napisom TRENING / TEŽA /
+  STATISTIKA. Vsebine še ni; namen je bil postaviti razširljivo ogrodje.
+  Preverjeno lokalno: vsi zasloni, naslov `#/...` in gumb *nazaj*, nesmiseln
   naslov pade na TRENING, service worker se registrira, aplikacija se naloži tudi
-  z ugasnjenim strežnikom. Razširljivost preizkušena s petim, začasnim zaslonom.
+  z ugasnjenim strežnikom. Razširljivost preizkušena z začasnim dodatnim zaslonom.
+  (Četrti gumb A — RAČUN — je obstajal do 2026-07-29, ko je bil odstranjen;
+  glej [odlocitve.md](odlocitve.md).)
 
 - **Podatkovni model potrjen in implementiran** — `aplikacija/js/store.js` je edina
   pot do `localStorage`. Oblika in razlogi so v [podatkovni-model.md](podatkovni-model.md),
@@ -37,6 +39,15 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   prepis predloge, zavrži, trening brez imena in brez vaj, iskanje brez ozira
   na šumnike in velike črke. Postavitev izmerjena pri 390 px — nič se ne preliva
   čez rob.
+  **Popravki 2026-07-29:** vlečena kartica gre pod lepljivo vrstico *Zavrži / Shrani*
+  (`z-index` 1 proti 2), ne več čeznjo. Ko se prst med vlečenjem približa zgornjemu
+  ali spodnjemu robu (pas 90 px), seznam sam odrsa v to smer, hitreje bližje robu;
+  odrsano je všteto v lego kartice, zato ta ostane pod prstom. Polji za težo in
+  ponovitve sprejmeta največ štiri števke in eno decimalko (`1234` ali `123,4`),
+  pika se prepiše v vejico. Preverjeno s 31 samodejnimi preizkusi (omejitev vnosa,
+  `z-index`, drsenje ob robu, kartica se drži prsta pri 360 px odrsanega, zapisan
+  vrstni red). Opomba za preizkuse: v brezglavem brskalniku `requestAnimationFrame`
+  nikoli ne sproži, zato ga je bilo treba v preizkusu nadomestiti s časovnikom.
 - **Zaslon TEŽA dela.** En sam izbirnik na vrhu določa, kaj vpisuješ **in** kaj je na
   grafu: telesna teža (kg) ali katera od meritev telesa (cm). Meritev nastane iz
   vpisanega imena, tako kot vaja. Pod izbirnikom sta polje za vrednost in datum,
@@ -98,8 +109,8 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   popraviti pa je še ni mogoče, ko je enkrat shranjena.
 - Ali prototip po prehodu na pravo aplikacijo ostane v repozitoriju ali se izbriše.
   Zaenkrat ostaja.
-- Kaj sploh pride na zaslon **RAČUN**. Aplikacija namenoma nima prijave
-  ([produkt.md](produkt.md)); najbolj verjetna vsebina je izvoz/uvoz JSON in
-  brisanje podatkov.
+- Kam pride **izvoz/uvoz JSON in brisanje podatkov**. Zaslon RAČUN, ki je bil za to
+  najbolj verjetno mesto, je odstranjen; najbolj verjetno je zdaj podpot pod
+  STATISTIKA ali novo okno.
 - Ali aplikacija ostane v podmapi `aplikacija/` ali se kdaj preseli na koren
   zaradi lepšega naslova.

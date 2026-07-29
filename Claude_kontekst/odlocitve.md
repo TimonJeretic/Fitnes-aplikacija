@@ -7,6 +7,53 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Zaslon RAČUN je odstranjen
+
+**Odločitev:** četrti zaslon (gumb A, `js/screens/account.js`) je izbrisan. Ostanejo
+trije: TRENING, TEŽA, STATISTIKA.
+
+**Zakaj:** zaslon je stal prazen, odkar je nastalo ogrodje, in za njegovo edino
+verjetno vsebino (izvoz/uvoz JSON) ni bilo odločeno, da spada prav tja. Prazen gumb
+v vrstici je stalna tarča za napačen dotik in zožuje tri prave gumbe.
+
+**Posledica:** izvoz/uvoz podatkov rabi novo mesto — glej odprta vprašanja v
+[stanje.md](stanje.md).
+
+**Kaj bi jo ovrglo:** dovolj vsebine za svoj zaslon (izvoz, uvoz, brisanje, nastavitve
+skupaj). Nov zaslon je ena datoteka in ena vrstica v registru, zato vrnitev ni draga.
+
+---
+
+## 2026-07-29 — Številsko polje sprejme največ štiri števke in eno decimalko
+
+**Odločitev:** `limitNumber()` v `js/dom.js` sproti počisti vnos v polja za težo in
+ponovitve: dovoljeno je `1234` ali `123,4`. Ločilo na zaslonu je **vejica**; pika se
+pri tipkanju prepiše vanjo, `parseNumber()` pa razume oboje.
+
+**Zakaj:** polje je široko 46 px in daljšega vnosa ne pokaže do konca — vpisal bi
+številko, ki je ne vidiš. Nad 999,9 kg ali 9999 ponovitev ni resnične meritve, zato
+omejitev ne odreže ničesar pravega. Popravlja se sproti in ne šele ob shranjevanju:
+v polju vedno piše natanko to, kar bo šlo v podatke.
+
+**Kaj bi jo ovrglo:** teža v gramih ali druga enota, kjer so štiri števke premalo.
+
+---
+
+## 2026-07-29 — Koren repozitorija preusmeri na `aplikacija/`
+
+**Odločitev:** `index.html` v korenu je samo preusmeritev na `aplikacija/`
+(`<meta refresh>` + `location.replace`). Aplikacija ostane v podmapi.
+
+**Zakaj:** GitHub Pages streže koren, ta pa ni imel `index.html` in je vrnil 404 —
+naslov je bilo treba vsakič popraviti na roko. Selitev aplikacije v koren bi
+spremenila obseg service workerja in pot v `manifest.json`, nameščene aplikacije na
+telefonu pa bi bilo treba dodati na novo.
+
+**Kaj bi jo ovrglo:** želja po čistem naslovu brez preskoka. Takrat se aplikacija
+preseli v koren in ta datoteka izgine.
+
+---
+
 ## 2026-07-29 — Formula moči: koren ponovitev
 
 **Odločitev:** graf moči riše oceno 1RM po Timonovi formuli

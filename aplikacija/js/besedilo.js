@@ -9,8 +9,7 @@ export const TEXT = {
   screens: {
     training: 'TRENING',
     weight: 'TEŽA',
-    stats: 'STATISTIKA',
-    account: 'RAČUN'
+    stats: 'STATISTIKA'
   },
 
   // Zaslon TRENING.

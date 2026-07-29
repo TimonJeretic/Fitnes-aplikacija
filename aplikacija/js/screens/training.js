@@ -12,7 +12,7 @@
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
-import { el, button, icon, withLabel, parseNumber, formatNumber, formatDate } from '../dom.js';
+import { el, button, icon, withLabel, parseNumber, limitNumber, formatNumber, formatDate } from '../dom.js';
 
 const T = TEXT.training;
 
@@ -324,6 +324,12 @@ function enableDrag(handle, card) {
   });
 }
 
+// Pas ob robu drsečega okna, v katerem se stran začne sama pomikati, in
+// največja hitrost tega pomika. Pas je širok kot palec: pri dolgem treningu
+// vaje ni mogoče odnesti na drug konec, če se mora prst ustaviti pri robu.
+const SCROLL_EDGE = 90;    // px
+const SCROLL_SPEED = 16;   // px na sličico, pri samem robu
+
 function startDrag(event, card) {
   const cards = Array.from(root.querySelectorAll('.exercise'));
   const from = cards.indexOf(card);
@@ -332,18 +338,29 @@ function startDrag(event, card) {
   event.preventDefault();
 
   // Pozicije izmerimo enkrat, na začetku. Med vlečenjem se kartice premikajo
-  // samo z zamikom (transform), zato ostanejo te meritve veljavne.
+  // samo z zamikom (transform), zato ostanejo te meritve veljavne — dokler jih
+  // gledamo v istem okviru, v katerem so bile izmerjene. Zato se pri drsenju
+  // vsemu prišteje `scrolled`.
   const rects = cards.map((node) => node.getBoundingClientRect());
   const gap = Math.max(0, rects[1].top - rects[0].bottom);
   const step = rects[from].height + gap;
+
+  const scroller = root.closest('.screen') || root.parentElement;
+  const startScroll = scroller ? scroller.scrollTop : 0;
   const startY = event.clientY;
+
+  let pointerY = event.clientY;   // zadnja znana lega prsta
   let to = from;
+  let frame = 0;
 
   card.classList.add('is-dragging');
   root.classList.add('is-reordering');
 
-  const move = (moveEvent) => {
-    const shift = moveEvent.clientY - startY;
+  // Ena sama pot za izris: kliče jo prst, ki se premakne, in drsenje, ki se
+  // zgodi, ko prst miruje ob robu.
+  const update = () => {
+    const scrolled = scroller ? scroller.scrollTop - startScroll : 0;
+    const shift = pointerY - startY + scrolled;
     card.style.transform = 'translateY(' + shift + 'px)';
 
     // Sosed se umakne, ko ga sredina vlečene kartice prehodi do polovice.
@@ -357,7 +374,34 @@ function startDrag(event, card) {
     shiftOthers(cards, from, to, step);
   };
 
+  // Bližje kot je prst robu, hitreje drsi. Pri robu samem je hitrost polna,
+  // na notranji meji pasu pa nič — brez skoka, ko vanj zapelješ.
+  const tick = () => {
+    frame = requestAnimationFrame(tick);
+    if (!scroller) return;
+
+    const box = scroller.getBoundingClientRect();
+    let delta = 0;
+    if (pointerY > box.bottom - SCROLL_EDGE) {
+      delta = SCROLL_SPEED * ratio(pointerY - (box.bottom - SCROLL_EDGE));
+    } else if (pointerY < box.top + SCROLL_EDGE) {
+      delta = -SCROLL_SPEED * ratio(box.top + SCROLL_EDGE - pointerY);
+    }
+    if (!delta) return;
+
+    // Ko je seznam že do konca odrsan, se scrollTop ne premakne in ni česa risati.
+    const before = scroller.scrollTop;
+    scroller.scrollTop = before + delta;
+    if (scroller.scrollTop !== before) update();
+  };
+
+  const move = (moveEvent) => {
+    pointerY = moveEvent.clientY;
+    update();
+  };
+
   const end = () => {
+    cancelAnimationFrame(frame);
     window.removeEventListener('pointermove', move);
     window.removeEventListener('pointerup', end);
     window.removeEventListener('pointercancel', end);
@@ -378,6 +422,12 @@ function startDrag(event, card) {
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', end);
   window.addEventListener('pointercancel', end);
+  frame = requestAnimationFrame(tick);
+}
+
+// Koliko globoko v pasu ob robu je prst: 0 na notranji meji, 1 pri robu in naprej.
+function ratio(depth) {
+  return Math.min(1, depth / SCROLL_EDGE);
 }
 
 function middle(rect) {
@@ -436,7 +486,15 @@ function numberField(value, mode, onChange) {
   input.type = 'text';        // text + inputMode: številska tipkovnica, brez puščic
   input.inputMode = mode;
   input.value = formatNumber(value);
-  input.addEventListener('input', () => onChange(parseNumber(input.value)));
+
+  // Vnos se popravi sproti in ne šele ob shranjevanju: v polju vedno piše
+  // natanko to, kar bo šlo v podatke. Odvečna tipka se enostavno ne pozna.
+  input.addEventListener('input', () => {
+    const limited = limitNumber(input.value, mode === 'decimal');
+    if (limited !== input.value) input.value = limited;
+    onChange(parseNumber(limited));
+  });
+
   return input;
 }
 

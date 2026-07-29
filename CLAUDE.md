@@ -15,7 +15,7 @@ register vaj, serije s stolpcem "zadnjič", zapiski pri vajah, premikanje vaj
 z vlečenjem, shrani/zavrži. Dela tudi zaslon **TEŽA**: vnos telesne teže in meritev
 telesa, zgodovina vnosov in graf napredka (`js/chart.js`, ročno napisan SVG).
 Zaslon **STATISTIKA** ima arhiv treningov (`#/statistika/arhiv`) in graf moči po
-vaji. Zaslon RAČUN je še prazen.
+vaji. Zaslonov je troje; prazni zaslon RAČUN je odstranjen.
 Podrobnosti: `Claude_kontekst/stanje.md`
 
 ## TODO

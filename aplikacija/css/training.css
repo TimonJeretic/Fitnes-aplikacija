@@ -263,9 +263,11 @@
   transition: transform .15s ease;
 }
 
+/* Vlečena kartica se dvigne nad sosede, a ostane pod lepljivo vrstico z
+   Zavrži/Shrani (z-index 2): gumba morata biti vidna tudi sredi premikanja. */
 .exercise.is-dragging {
   position: relative;
-  z-index: 3;
+  z-index: 1;
   transition: none;
   box-shadow: 0 12px 26px rgba(0, 0, 0, .55);
 }

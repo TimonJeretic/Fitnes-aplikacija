@@ -32,7 +32,6 @@ const FILES = [
   './js/screens/training.js',
   './js/screens/weight.js',
   './js/screens/stats.js',
-  './js/screens/account.js',
 
   './icons/icon-192.png',
   './icons/icon-512.png',

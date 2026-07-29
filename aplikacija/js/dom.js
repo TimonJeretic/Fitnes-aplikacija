@@ -1,5 +1,4 @@
 // Document Object Model (dom)
-
 // Splošne funkcije ki jih rabi vsak ekran, da ni koda podvojena
 // Skripta nima nobenih podatkov o vsebini aplikacije
 
@@ -45,6 +44,31 @@ export function parseNumber(text) {
   if (clean === '') return null;
   const number = Number(clean);
   return Number.isFinite(number) ? number : null;
+}
+
+// Kar se sme znajti v številskem polju: največ štiri števke in največ ena
+// decimalka — torej "1234" ali "123,4". Več kot 999,9 kg ali 9999 ponovitev
+// ni resnično, ozko polje pa daljšega vnosa itak ne pokaže do konca.
+//
+// Ločilo na zaslonu je vejica, ker se tako piše po slovensko. Pika se sproti
+// prepiše vanjo: numerična tipkovnica na računalniku ponuja piko in vnos zaradi
+// tega ne sme pasti skozi. V izračune gre oboje isto — glej parseNumber().
+export function limitNumber(text, decimals) {
+  const clean = String(text).replace(/\./g, ',').replace(/[^0-9,]/g, '');
+
+  // Ponovitev ni pol: pri celih številih ločilo enostavno izpade.
+  if (!decimals) return clean.replace(/,/g, '').slice(0, 4);
+
+  const cut = clean.indexOf(',');
+  if (cut < 0) return clean.slice(0, 4);
+
+  // Ostale vejice so tipkarska napaka in ne novo ločilo, zato se pobrišejo.
+  const whole = clean.slice(0, cut).slice(0, 4);
+  const fraction = clean.slice(cut + 1).replace(/,/g, '');
+
+  // Štiri števke pred vejico so že cela dovoljena dolžina; vejica takrat odpade.
+  if (whole.length >= 4) return whole;
+  return whole + ',' + fraction.slice(0, 1);
 }
 
 export function formatNumber(value) {
