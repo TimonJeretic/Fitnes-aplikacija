@@ -42,7 +42,7 @@ zamenjava ene datoteke.
 
 | Polje | Tip | Opomba |
 |---|---|---|
-| `id` | string | `crypto.randomUUID()` |
+| `id` | string | `newId()`: `crypto.randomUUID()`, sicer rezervni niz |
 | `name` | string | kot ga je Timon vpisal, npr. "BB bench press" |
 | `note` | string | trajni zapisek: nastavitev stola, elastika, oprijem |
 | `usesBodyweight` | boolean | vaja z lastno težo (zgibi, sklece, dipsi) |
@@ -165,56 +165,54 @@ zaklene in sistem aplikacijo ubije — ob vrnitvi mora biti trening cel. Prisotn
 
 ## Poizvedbe
 
-Zasloni ne brskajo po podatkih sami. Kar rabijo, je v `store.js`:
+Zasloni ne brskajo po podatkih sami — kar rabijo, vprašajo `store.js`. Popoln
+seznam je v datoteki; tukaj so tiste, katerih obnašanje ni razvidno iz imena.
 
-- `searchTemplates(query)`, `searchExercises(query)` — šepetalnik; prazno iskanje
-  vrne vse, ujemanja na začetku imena so prva.
-- `lastSetsFor(exerciseId)` — serije iz **zadnjega treninga kjerkoli v zgodovini**,
-  v katerem se je ta vaja pojavila, ne glede na ime treninga. To je številka,
-  ki jo hočeš prekositi.
-- `exercisesForWorkoutName(name)` — vaje, ki spadajo k treningu s tem imenom
-  (iz njegove predloge in iz zgodovine treningov z istim imenom). Zaslon TRENING
-  z njo napolni izbirnik vaj: pri "Pull" se ne ponujajo vaje s "Push". Ime, ki ga
-  še ni bilo, vrne prazen seznam.
-- `removeExercise(id)` — zbriše vajo iz **vseh** zapisov: iz registra, iz predlog,
-  iz shranjenih treningov in iz treninga v teku. Trening, ki mu s tem ne ostane
-  nobena vaja, se ne briše — da je bil ta dan trening, ostane dejstvo.
-- `personalRecord(exerciseId)` — najtežja serija te vaje v zgodovini (pri isti
-  teži tista z več ponovitvami). Namenoma **ni** ocena 1RM: rekord je tisto, kar
-  si res dvignila, ne izračun. Uporablja ga arhiv vaj.
-- `renameExercise(id, name)` — popravek tipkarske napake v imenu vaje. Vrne
-  `false`, če je ime prazno ali ga ima že druga vaja. Preimenovanje je varno:
-  vse ostalo vajo naslavlja z `id`, zato se popravek pozna v zgodovini in na grafih.
-- `upsertTemplate(name, exerciseIds)`, `saveWorkout(draft)`.
-- `getBodyweightEntries()`, `addBodyweight(weightKg, date)`, `removeBodyweight(id)`.
-- `searchMeasurements(query)`, `findMeasurementByName(name)`,
-  `createMeasurement(name, unit)`, `getMeasurementEntries(measurementId)`,
-  `addMeasurementEntry(measurementId, value, date)`, `removeMeasurementEntry(id)`.
-- `removeTemplate(id)` — zbriše predlogo, zgodovine se ne dotakne.
-- `UNITS` — dovoljeni enoti meritve (`['kg', 'cm']`).
-- **Registra vaj in meritev se vračata po abecedi** (`searchExercises`,
-  `searchTrainedExercises`, `searchMeasurements`), predloge treningov pa v vrstnem
-  redu nastanka: tam je Push, Pull, Legs smiselno zaporedje, abeceda pa ne.
-- `todayIso()` — današnji dan v **lokalnem** času. `new Date().toISOString()` vzame
-  UTC in bi tik po polnoči ponudil včerajšnji datum.
-- `setExerciseBodyweight(id, value)` — preklop "vaja z lastno težo".
+**Iskanje in registri.** `searchExercises`, `searchTemplates`, `searchMeasurements`,
+`searchTrainedExercises`: prazno iskanje vrne vse, ujemanja na začetku imena so prva,
+primerjava gre prek `normalizeName()`. Registra vaj in meritev se vračata **po abecedi**
+(slovensko), predloge treningov pa v vrstnem redu nastanka — Push, Pull, Legs je
+smiselno zaporedje, abeceda pa ne.
 
-Za zaslon STATISTIKA:
+**Vaje.**
+
+- `lastSetsFor(id)` — serije iz **zadnjega treninga kjerkoli v zgodovini**, v katerem
+  se je vaja pojavila, ne glede na ime treninga. To je številka, ki jo hočeš prekositi.
+- `exercisesForWorkoutName(name)` — vaje, ki spadajo k treningu s tem imenom (iz
+  predloge in iz zgodovine treningov z istim imenom). Napolni izbirnik vaj: pri "Pull"
+  se ne ponujajo vaje s "Push". Ime, ki ga še ni bilo, vrne prazen seznam.
+- `searchTrainedExercises(query)` — samo vaje, ki so vsaj enkrat v zgodovini, s
+  številom treningov. Vaja, ki je bila samo dodana v predlogo, nima česa na graf.
+- `removeExercise(id)` — zbriše vajo iz **vseh** zapisov: registra, predlog, shranjenih
+  treningov in treninga v teku. Trening, ki mu ne ostane nobena vaja, se ne briše —
+  da je bil ta dan trening, ostane dejstvo.
+- `renameExercise(id, name)` — popravek tipkarske napake. Vrne `false`, če je ime
+  prazno ali zasedeno. Varno je, ker vajo vse ostalo naslavlja z `id`.
+- `personalRecord(id)` — najtežja serija v zgodovini (pri isti teži tista z več
+  ponovitvami). Namenoma **ni** ocena 1RM: rekord je tisto, kar si res dvignil.
+
+**Zgodovina.**
 
 - `listWorkouts()`, `searchWorkouts(query)` — arhiv, **najnovejši prvi**. Iskanje teče
-  čez ime in datum hkrati: iskalni niz treninga vsebuje ime, ISO dan in slovenski
-  zapis datuma, zato `push`, `2026` in `29.7` najdejo isto stvar brez posebne logike.
-- `getWorkoutView(id)` — shranjen trening z **razrešenimi imeni vaj**. Trening hrani
-  samo `exerciseId`; razrešitev pripada sem, ker zaslon ne sme brskati po registru.
-  `name: null` pomeni, da vaje v registru ni več.
-- `searchTrainedExercises(query)` — samo vaje, ki so vsaj enkrat v zgodovini, s
-  številom treningov. Vaja, ki je bila samo dodana v predlogo, nima česa pokazati.
-- `strengthSeries(exerciseId)` — najboljša ocena 1RM po treningih, **najstarejši prvi**.
-  Vrne `{ points, needsBodyweight }`; drugo pove, da je vaja z lastno težo in tehtanja
-  še ni. Prehod čez vse treninge je sprejeta cena gnezdenega zapisa ([odlocitve.md](odlocitve.md)).
+  čez ime in datum hkrati: iskalni niz vsebuje ime, ISO dan in slovenski zapis datuma,
+  zato `push`, `2026` in `29.7` najdejo isto stvar brez razčlenjevanja datumov.
+- `getWorkoutView(id)` — trening z **razrešenimi imeni vaj** in najboljšo serijo.
+  Trening hrani samo `exerciseId`; razrešitev pripada sem, ker zaslon ne sme brskati
+  po registru. `name: null` pomeni, da vaje v registru ni več.
+- `saveWorkout(draft)` — vpis v zgodovino in prepis predloge gresta skozi to eno pot.
+
+**Moč in teža.**
+
 - `estimate1RM(weightKg, reps)` — formula moči, zapisana natanko enkrat, tukaj.
-- `bodyweightAt(day)` — zadnje tehtanje na ta dan ali pred njim; brez enega samega
-  tehtanja `null`.
+- `strengthSeries(id)` — najboljša ocena 1RM po treningih, **najstarejši prvi**. Vrne
+  `{ points, needsBodyweight }`; drugo pove, da je vaja z lastno težo in tehtanja še ni,
+  da zaslon namesto praznega grafa izpiše razlog. Prehod čez vse treninge je sprejeta
+  cena gnezdenega zapisa ([odlocitve.md](odlocitve.md)).
+- `bodyweightAt(day)` — zadnje tehtanje na ta dan ali pred njim. Če se je tehtanje
+  začelo šele kasneje, vzame prvo znano: groba ocena je boljša od praznega grafa.
+  Brez enega samega tehtanja `null`.
+- `todayIso()` — današnji dan v **lokalnem** času. `new Date().toISOString()` vzame
+  UTC in bi tik po polnoči ponudil včerajšnji datum.
 
 Vsi seznami vnosov pridejo **najstarejši prvi**, ker graf riše od leve proti desni.
 Izjema je arhiv treningov: tam iščeš skoraj vedno zadnje, zato so najnovejši prvi.
@@ -246,6 +244,24 @@ polja se nadomestijo s praznimi, da aplikacija ne obstane.
 ## Varnostna kopija
 
 Podatki živijo samo v brskalniku na telefonu. Če Timon odstrani aplikacijo ali
-iOS počisti shrambo, jih ni več. Zato je **izvoz v JSON datoteko obvezna funkcija v1**,
-ne dodatek za kasneje. Uvoz iste datoteke mora podatke vrniti. Ker je vse en objekt
-pod enim ključem, je izvoz `JSON.stringify` celotne shrambe. **Še ni narejeno.**
+iOS počisti shrambo, jih ni več. Zato je izvoz v JSON obvezna funkcija in ne dodatek
+za kasneje. Ker je vse en objekt pod enim ključem, je izvoz `JSON.stringify` celotne
+shrambe. **Narejeno** — glej `js/backup.js` in okno pod zobnikom (`js/settings.js`).
+
+Pot do podatkov je v `store.js`, ker do njih drugače ne gre nihče:
+
+| Funkcija | Kaj naredi |
+|---|---|
+| `exportJson()` | cel zapis kot besedilo; natanko to gre v datoteko |
+| `readBackup(text)` | prebere in **preveri** kopijo, a je še ne uveljavi; vrne `{ data, counts }` |
+| `applyBackup(data)` | uveljavi prebrano kopijo; stara vsebina je s tem izgubljena |
+| `summary()` | števila za primerjavo pred uvozom |
+
+`readBackup()` gre skozi isti `migrate()` kot običajno branje, zato kopija s starejšo
+`schemaVersion` po uvozu dobi manjkajoča polja. Datoteka brez polja `workouts` je
+zavrnjena z napako — brez te kontrole bi `migrate()` iz tuje datoteke JSON naredil
+veljavne prazne podatke in tiho pobrisal zgodovino.
+
+**Stanje kopije živi pod svojim ključem `fitnes-kopija`** (`getBackupState()` /
+`setBackupState()`) in ni del podatkov. Če bi bilo polje v `fitnes`, bi ga uvoz
+starejše kopije povozil in aplikacija bi trdila, da kopije ni bilo mesece.

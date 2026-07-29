@@ -4,9 +4,9 @@
 // sicer neha delovati brez interneta (Claude_kontekst/odlocitve.md). Graf, ki ga
 // rabiva, je ena črta s časovno osjo — to je manj kode kot vendorana knjižnica.
 //
-// Datoteka ne ve nič o teži ali meritvah. Dobi točke oblike
+// Datoteka ne ve nič o teži, meritvah ali moči. Dobi točke oblike
 // { date: 'YYYY-MM-DD', value: number } in enoto, vrne element za na zaslon.
-// Zato jo bo lahko uporabil tudi zaslon STATISTIKA za graf moči.
+// Zato jo uporabljata oba grafa: teža in meritve (TEŽA) ter moč (STATISTIKA).
 
 const NS = 'http://www.w3.org/2000/svg';
 

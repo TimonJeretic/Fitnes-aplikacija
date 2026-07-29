@@ -4,12 +4,15 @@
 // grafu. Namenoma ni dveh iskalnih polj — gledaš graf tiste meritve, ki si jo
 // pravkar vpisal.
 //
-// Privzeta izbira je telesna teža (kg). Vse ostalo so meritve telesa (cm), ki
+// Privzeta izbira je telesna teža (vedno kg). Vse ostalo so meritve telesa, ki
 // nastanejo iz imen, kot jih Timon vpiše — vnaprej pripravljenega seznama ni.
+// Vsaka meritev ima svojo enoto (cm ali kg), izbrano ob nastanku.
 // Podatkov zaslon ne bere sam, ampak jih vpraša js/store.js.
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
+import * as backup from '../backup.js';
+import { settingsButton } from '../settings.js';
 import { aggregate, lineChart } from '../chart.js';
 import { ICON_WEIGHT, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
@@ -94,6 +97,7 @@ function brandRow() {
   const row = el('div', 'brand');
   row.append(icon('brand__logo', ICON_WEIGHT));
   row.append(el('h1', 'brand__title', T.heading));
+  row.append(settingsButton());
   return row;
 }
 
@@ -209,6 +213,10 @@ function save() {
 
   if (selectedId === null) store.addBodyweight(number, day);
   else store.addMeasurementEntry(selectedId, number, day);
+
+  // Varnostna kopija, enako kot ob shranjenem treningu. Napake ne vrže — vnos je
+  // shranjen ne glede na to, kako se kopija konča.
+  backup.afterSave();
 
   // Datum ostane, kot je: če vpisuješ za nazaj, gre naslednji vnos na isti dan.
   value = '';

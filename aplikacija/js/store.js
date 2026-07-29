@@ -10,6 +10,11 @@
 const KEY = 'fitnes';
 const SCHEMA_VERSION = 4;
 
+// Kdaj je nazadnje nastala varnostna kopija. Ločen ključ in ne polje v podatkih:
+// uvoz stare kopije bi ta podatek povozil in aplikacija bi mislila, da kopije ni
+// bilo mesece, čeprav je pravkar nastala.
+const BACKUP_KEY = 'fitnes-kopija';
+
 // Enote, v katerih se meri telo. Meritev si enoto izbere ob nastanku in je ne
 // menja — sicer bi bile stare in nove točke na istem grafu v različnih enotah.
 export const UNITS = ['kg', 'cm'];
@@ -644,7 +649,8 @@ export function removeBodyweight(id) {
 }
 
 // Register meritev nastane enako kot register vaj: iz imen, ki jih Timon vpiše.
-// Vnaprej pripravljenega seznama delov telesa ni. Meritev je vedno v centimetrih.
+// Vnaprej pripravljenega seznama delov telesa ni. Enoto meritev dobi ob nastanku
+// (glej createMeasurement) in je ne menja.
 export function searchMeasurements(query) {
   return search(read().measurements, query).sort(byName);
 }
@@ -762,4 +768,72 @@ export function saveWorkout(draft) {
   read().draft = null;
   write();
   return workout;
+}
+
+// --- Varnostna kopija ------------------------------------------------------
+//
+// Kopija je cel zapis kot besedilo. Kam gre datoteka in kdaj, ve js/backup.js —
+// tukaj je samo pot do podatkov, ker drugače do njih ne gre nihče.
+
+export function exportJson() {
+  return JSON.stringify(read(), null, 2);
+}
+
+// Prebere kopijo, a je še ne uveljavi: uvoz povozi celotno zgodovino, zato mora
+// uporabnik prej videti, kaj menja za kaj. Vrne podatke in števila za potrditev.
+// Ob nerazumljivi datoteki vrže napako — tiho prazno stanje bi bilo huje.
+export function readBackup(text) {
+  const parsed = JSON.parse(text);
+
+  // Kopija te aplikacije ima vsaj seznam treningov. Brez tega je to neka druga
+  // datoteka JSON in migrate() bi iz nje naredil prazne podatke.
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.workouts)) {
+    throw new Error('Datoteka ni kopija te aplikacije.');
+  }
+
+  const clean = migrate(parsed);
+  return { data: clean, counts: countOf(clean) };
+}
+
+// Uveljavi kopijo, ki jo je pred tem prebral readBackup(). Stara vsebina je s tem
+// izgubljena — klicatelj mora imeti potrditev za sabo.
+export function applyBackup(clean) {
+  data = clean;
+  write();
+}
+
+export function summary() {
+  return countOf(read());
+}
+
+function countOf(source) {
+  return {
+    workouts: source.workouts.length,
+    exercises: source.exercises.length,
+    bodyweightEntries: source.bodyweightEntries.length,
+    measurementEntries: source.measurementEntries.length
+  };
+}
+
+// Stanje zadnje kopije: { at, day, folder, error }. Živi pod svojim ključem,
+// zato ga uvoz kopije ne povozi — glej BACKUP_KEY na vrhu datoteke.
+export function getBackupState() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BACKUP_KEY));
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+export function setBackupState(patch) {
+  const next = Object.assign(getBackupState(), patch);
+  try {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(next));
+  } catch (error) {
+    // Shramba je polna ali izklopljena. Kopija je vseeno nastala, samo zapisa o
+    // njej ni — to ne sme podreti shranjevanja.
+    console.warn('Stanja kopije ni bilo mogoče shraniti.', error);
+  }
+  return next;
 }

@@ -12,6 +12,8 @@
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
+import * as backup from '../backup.js';
+import { settingsButton } from '../settings.js';
 import { ICON_TRAINING, ICON_TRASH } from '../icons.js';
 import { el, button, icon, withLabel, parseNumber, limitNumber, formatNumber, formatDate } from '../dom.js';
 
@@ -754,6 +756,13 @@ function save() {
   }
 
   store.saveWorkout(draft);
+
+  // Varnostna kopija takoj za shranjevanjem. Klic stoji tu in ne v store.js, ker se
+  // osnutek shranjuje ob vsakem dotiku — kopija ob vsaki seriji bi bila nesmisel.
+  // Napake ne vrže: trening je shranjen ne glede na to, kako se kopija konča,
+  // kaj je šlo narobe pa piše v nastavitvah.
+  backup.afterSave();
+
   draft = null;
   query = '';
   picking = false;
@@ -762,13 +771,15 @@ function save() {
 
 // --- Skupni deli obeh stanj ------------------------------------------------
 
-// Vrstica z ikono in naslovom oziroma poljem za ime.
+// Vrstica z ikono in naslovom oziroma poljem za ime. Skrajno desno zobnik, na
+// vseh treh zaslonih isti in na istem mestu.
 function brandRow(titleOrInput) {
   const row = el('div', 'brand');
   row.append(icon('brand__logo', ICON_TRAINING));
   row.append(typeof titleOrInput === 'string'
     ? el('h1', 'brand__title', titleOrInput)
     : titleOrInput);
+  row.append(settingsButton());
   return row;
 }
 

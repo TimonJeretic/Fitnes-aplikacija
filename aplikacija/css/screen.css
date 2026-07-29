@@ -60,6 +60,44 @@ body[data-screen="stats"] .screen {
   font-weight: 700;
 }
 
+/* Zobnik skrajno desno v isti vrstici, na vseh treh zaslonih na istem mestu.
+   `margin-left: auto` ga potisne v desni rob tudi tam, kjer naslov ni raztegnjen.
+   Siv in brez ozadja: nastavitve so redko opravilo in ne smejo tekmovati z
+   naslovom zaslona za pozornost. */
+.brand__settings {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: transform .12s ease, color .15s ease;
+}
+
+.brand__settings:active {
+  transform: scale(0.9);
+  color: var(--accent-text);
+}
+
+.brand__settings-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.brand__settings-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* Naslov razdelka znotraj zaslona ("Pretekli treningi", "Statistika"). */
 .section__title {
   margin: 0;

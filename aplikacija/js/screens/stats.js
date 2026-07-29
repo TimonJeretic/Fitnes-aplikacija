@@ -13,6 +13,7 @@
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
+import { settingsButton } from '../settings.js';
 import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
 import { ICON_STATS, ICON_TRASH } from '../icons.js';
@@ -61,6 +62,7 @@ function brandRow() {
   const row = el('div', 'brand');
   row.append(icon('brand__logo', ICON_STATS));
   row.append(el('h1', 'brand__title', titles[view] || T.heading));
+  row.append(settingsButton());
   return row;
 }
 

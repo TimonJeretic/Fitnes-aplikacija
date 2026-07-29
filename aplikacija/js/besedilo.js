@@ -34,7 +34,6 @@ export const TEXT = {
     removeSetConfirm: 'Odstranim to serijo? Vpisana teža in ponovitve bodo izgubljene.',
 
     exerciseName: 'Ime vaje',
-    addExercise: 'Dodaj vajo',
     pickExercise: 'Izberi vajo',
     newExercise: 'Nova vaja',
     noExercisesYet: 'Registra vaj še ni. Vpiši prvo vajo spodaj.',
@@ -104,7 +103,6 @@ export const TEXT = {
     searchWorkouts: 'Ime treninga ali datum',
     noWorkouts: 'Ni še nobenega shranjenega treninga.',
     noMatches: 'Ni zadetkov.',
-    exerciseCount: 'vaj',
     removedExercise: '(zbrisana vaja)',
     set: 'Set',
 
@@ -131,7 +129,47 @@ export const TEXT = {
     record: 'Rekord',
     change: 'Sprememba',
 
-    topSets: 'Najboljša serija po obdobjih',
-    plusBodyweight: 'z lastno težo'
+    topSets: 'Najboljša serija po obdobjih'
+  },
+
+  // Okno pod zobnikom: varnostna kopija podatkov.
+  settings: {
+    open: 'Nastavitve',
+    title: 'Nastavitve',
+    close: 'Zapri',
+
+    importAction: 'Uvoz kopije',
+    exportAction: 'Izvozi zdaj',
+    folderAction: 'Določi mapo za kopije',
+    folderChange: 'Zamenjaj mapo',
+
+    // Kaj se dogaja s kopijami na tej napravi. Kateri napis velja, se ne ugiba iz
+    // imena brskalnika, ampak iz tega, kaj naprava zna — glej js/backup.js.
+    modeDirectory: 'Kopija nastane sama ob vsakem shranjevanju.',
+    modeUnset: 'Mapa še ni določena, zato se kopija ne dela sama.',
+    modeShare: 'Ob shranjevanju se odpre okno za deljenje. '
+      + 'Izberi Shrani v Datoteke ali svoj oblak.',
+    modeDownload: 'Ta brskalnik zna samo prenos v mapo Prenosi.',
+
+    folderLabel: 'Mapa: ',
+    lastLabel: 'Zadnja kopija: ',
+    never: 'Kopije še ni.',
+    problemLabel: 'Zadnja napaka: ',
+
+    // Uvoz povozi vse; potrditev mora pokazati, kaj gre za kaj.
+    importIntro: 'Uvoz povozi vse podatke v aplikaciji.',
+    importIncoming: 'V datoteki: ',
+    importCurrent: 'Zdaj v aplikaciji: ',
+    importAsk: 'Nadaljujem?',
+    workoutsUnit: ' treningov, ',
+    entriesUnit: ' vnosov teže in meritev',
+
+    importBad: 'Te datoteke ne znam prebrati. Ali je to res kopija te aplikacije?',
+    importDone: 'Kopija je uvožena. Aplikacija se bo osvežila.',
+
+    folderDone: 'Mapa je izbrana, prva kopija je narejena.',
+    folderFailed: 'Mape ni bilo mogoče uporabiti.',
+    exportDone: 'Kopija je narejena.',
+    exportFailed: 'Kopije ni bilo mogoče narediti.'
   }
 };

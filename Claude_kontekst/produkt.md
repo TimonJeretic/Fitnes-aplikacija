@@ -13,14 +13,19 @@ Osebni dnevnik treningov.
 
 ## Sklopi treninga
 
-`push`, `pull`, `legs`, `upper`
+V praksi `push`, `pull`, `legs`, `upper`. Aplikacija jih **ne pozna kot seznam**:
+ime treninga je prosto besedilo in predloga nastane iz njega. Sklop je s tem že
+ime treninga, zato vaja ne rabi polja `category` — glej [odlocitve.md](odlocitve.md).
 
 ## Grafi
 
-- **Napredek moči po vaji** — linijski graf teže skozi čas za izbrano vajo.
-  Namen: na prvi pogled videti, ali moč raste ali pada.
-- **Telesna teža** — linijski graf telesne teže skozi čas. Samostojen vnos,
-  ni vezan na noben trening.
+- **Napredek moči po vaji** — linijski graf **ocene 1RM** skozi čas za izbrano vajo,
+  ne vpisane teže: sicer `100 × 3` in `100 × 8` izgledata enako. Formula in razlog
+  sta v [podatkovni-model.md](podatkovni-model.md). Namen: na prvi pogled videti,
+  ali moč raste ali pada.
+- **Telesna teža in meritve telesa** — linijski graf skozi čas. Samostojen vnos,
+  ni vezan na noben trening. Telesna teža je hkrati tisto, kar graf moči prišteje
+  pri vajah z lastno težo.
 
 ## Slovar
 
@@ -30,8 +35,9 @@ Osebni dnevnik treningov.
 | BB | barbell — drog |
 | DB | dumbbell — ročka |
 
-Kratice se uporabljajo v vmesniku. V kodi se pišejo s polnimi imeni
-(`bodyweight`, `barbell`, `dumbbell`) — glej [arhitektura.md](arhitektura.md).
+Kratice živijo v **imenih vaj, ki jih vpiše Timon** ("BB bench press"), aplikacija
+sama jih ne uporablja. V kodi se pišejo s polnimi imeni (`bodyweight`, `barbell`,
+`dumbbell`) — glej [arhitektura.md](arhitektura.md).
 
 ## Česa aplikacija namenoma NE dela
 

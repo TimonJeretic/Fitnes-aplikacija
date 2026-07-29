@@ -4,6 +4,11 @@ Zakaj so stvari take, kot so. Namen: da se o istem ne razpravlja dvakrat.
 Vsak vpis ima **kaj**, **zakaj** in **kaj bi ga ovrglo**.
 
 Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
+Ko odločitev pade, starega vpisa **ne brišem**: označim ga kot ovrženega in
+povem, kaj ga je ovrglo. Prav to, kar je bilo predvideno kot razlog za spremembo,
+je največ vredno naslednjič.
+
+Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
@@ -435,9 +440,10 @@ svoj naslov. Brez tega bi sistemski gumb *nazaj* iz arhiva vrgel ven iz aplikaci
 namesto nazaj na graf. Aplikacija se uporablja na telefonu, kjer je *nazaj* sistemska
 kretnja in ne gumb na zaslonu.
 
-**Posledica:** `DEFAULT_SCREEN` v `router.js` se bere šele ob klicu in ne ob nalaganju
-modula. Zaslon, ki hoče `navigate()`, uvozi router, ta pa uvozi register — v takem
-krogu register ob nalaganju routerja še ni izpolnjen.
+**Posledica:** privzeti zaslon se v `router.js` bere skozi funkcijo `defaultScreen()`
+in ne iz konstante ob nalaganju modula, `navigate()` pa je izločen v svojo datoteko
+`js/startup/navigate.js`. Zaslon, ki hoče spremeniti naslov, bi sicer uvozil router,
+ta pa register — v takem krogu register ob nalaganju routerja še ni izpolnjen.
 
 **Kaj bi jo ovrglo:** nič. Če bi zaslon rabil več ravni, se isto pravilo ponovi globlje.
 
@@ -446,7 +452,8 @@ krogu register ob nalaganju routerja še ni izpolnjen.
 ## 2026-07-29 — Skupni pomočniki v js/dom.js
 
 **Odločitev:** `el()`, `button()`, `icon()`, `withLabel()`, `parseNumber()`,
-`formatNumber()`, `formatDate()`, `formatDay()` živijo v `aplikacija/js/dom.js`.
+`limitNumber()`, `formatNumber()`, `formatRounded()`, `formatDate()` in `formatDay()`
+živijo v `aplikacija/js/dom.js`.
 
 **Zakaj:** prva dva zaslona sta imela vsak svojo kopijo, kar je bilo še sprejemljivo —
 `weight.js` je to celo zapisal kot namen ("ko jih bo rabil še tretji zaslon, se
@@ -653,8 +660,8 @@ vendorati kot eno datoteko.
 **Odločitev:** prava aplikacija živi v `aplikacija/`, naslov je
 `https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`.
 
-**Zakaj:** koren repozitorija je skupen z `CLAUDE.md`, `Claude_kontekst/`, `prototip/`
-in `.docx`. Če se mednje vsujejo še `index.html`, `css/`, `js/` in `icons/`, na prvi
+**Zakaj:** koren repozitorija je skupen s `CLAUDE.md`, `Claude_kontekst/` in `.docx`
+(takrat tudi s `prototip/`). Če se mednje vsujejo še `index.html`, `css/`, `js/` in `icons/`, na prvi
 pogled ni več jasno, kaj je aplikacija in kaj so zapiski. Ta odločitev prepiše prejšnji
 zapis v [arhitektura.md](arhitektura.md), da gre aplikacija na koren.
 
@@ -703,15 +710,18 @@ polje za enoto vseeno potrebno. Takrat je teža lahko ena od njih.
 
 ---
 
-## 2026-07-29 — Meritve vedno v centimetrih
+## 2026-07-29 — Meritve vedno v centimetrih ~~(OVRŽENO isti dan)~~
+
+> **Ovrženo** z vpisom *Meritev ima svojo enoto (`schemaVersion: 4`)* zgoraj.
+> Ostaja zapisano, ker pove, zakaj polja `unit` sprva ni bilo in kaj ga je prineslo.
 
 **Odločitev:** `measurement` nima polja za enoto. Vse meritve so v cm, teža v kg.
 
 **Zakaj:** isti razlog kot pri vaji brez `category` — vsako polje je en korak več ob
 prvem vnosu. Obseg roke in pasu se meri s trakom, drugih enot ni.
 
-**Kaj bi jo ovrglo:** merjenje odstotka maščobe ali kožne gube v mm. Dodati
-neobvezno polje `unit` z privzeto vrednostjo `'cm'` je poceni.
+**Kaj jo je ovrglo:** meritve, ki niso obsegi (telesna maščoba v kg). Predvideno je
+bilo pravilno — dodano je bilo natanko neobvezno polje `unit` s privzeto `'cm'`.
 
 ---
 
@@ -759,3 +769,56 @@ GitHub Pages tega ne zna in strežnika nimava. Lojtra zastonj prinese delujoč s
 gumb *nazaj* in to, da po osvežitvi ostaneš na istem zaslonu.
 
 **Kaj bi jo ovrglo:** selitev na gostovanje, ki zna preusmeritve. Ni na obzorju.
+
+---
+
+## 2026-07-29 — Varnostna kopija: kam in kdaj
+
+**Odločitev:** kopija nastane **ob shranjenem treningu in ob shranjenem vnosu teže**,
+ne ob vsaki spremembi. Kam gre, se ne določi v kodi, ampak z mapo, ki jo Timon izbere
+enkrat; ročaj te mape živi v IndexedDB.
+
+**Zakaj ob shranjevanju in ne v `store.write()`:** osnutek treninga se shranjuje ob
+vsakem dotiku (telefon se zaklene sredi serije). Kopija na tej ravni bi pomenila
+štirideset zapisov na trening, pri načinu s prenosom pa štirideset datotek v mapi
+Prenosi. Klic zato stoji v `save()` obeh zaslonov, kjer je "shranil sem nekaj" res
+dogodek in ne vmesno stanje.
+
+**Zakaj mapa in ne pot v kodi:** spletna aplikacija poti na disk ne dobi in je ne sme
+dobiti. `showDirectoryPicker()` je edini način, da uporabnik enkrat pokaže mesto,
+aplikacija pa nato piše brez spraševanja. Poti kot niza brskalnik ne izda nikoli —
+zato v nastavitvah piše samo ime mape.
+
+**Zakaj dve datoteki:** `fitnes-kopija.json` se prepisuje in je vedno zadnje stanje;
+`fitnes-YYYY-MM-DD.json` nastane enkrat na dan. Ena sama datoteka ne bi imela koraka
+nazaj ob skvarjenem zapisu, nova datoteka ob vsakem shranjevanju pa bi v letu naredila
+par sto datotek. Dnevna kopija je sredina, ki je Timon izrecno izbral.
+
+**Zakaj trije načini in ne en:** iPhone `showDirectoryPicker()` nima in ga ne bo imel,
+zato tam kopija gre skozi okno za deljenje (Timon je izbral, da se odpre ob vsakem
+shranjevanju). Kaj naprava zna, se ugotovi iz obstoja funkcij — nikoli iz imena
+brskalnika, ker se ta lažejo in se seznami starajo.
+
+**Podrobnost, ki je bila odločitev in ne slučaj:** na poti do `navigator.share()` ni
+nobenega `await`. Brskalnik deljenje dovoli samo neposredno iz dotika; en sam `await`
+pred klicem to dovoljenje porabi in klic zavrne. Zato `afterSave()` najprej sinhrono
+pogleda, ali je izbira mape sploh mogoča, in šele nato gre po eni ali drugi poti.
+
+**Kaj bi jo ovrglo:** prava sinhronizacija (Google Drive API) — a ta pomeni prijavo,
+`client_id` v javnem repozitoriju in odvisnost od interneta v telovadnici. Za dnevnik
+treningov nesorazmerno.
+
+---
+
+## 2026-07-29 — Nastavitve so okno pod zobnikom, ne zaslon
+
+**Odločitev:** izvoz, uvoz in izbira mape živijo v oknu, ki ga odpre zobnik desno
+zgoraj na vseh treh zaslonih. Četrtega zaslona ni.
+
+**Zakaj:** spodnja vrstica je za palec v telovadnici in mora ostati pri treh velikih
+tarčah. Varnostna kopija ni opravilo, ki bi ga delal med serijami — je nekaj, kar
+nastane samo od sebe, uporabnik pa se tja spusti enkrat na začetku. Zobnik je poleg
+tega na istem mestu na vseh treh zaslonih, zato ga ni treba iskati.
+
+**Kaj bi jo ovrglo:** če bi se v nastavitvah nabralo toliko stvari, da okno ne bi bilo
+več pregledno. Takrat postane podpot (`#/statistika/nastavitve`), ne pa četrti gumb.

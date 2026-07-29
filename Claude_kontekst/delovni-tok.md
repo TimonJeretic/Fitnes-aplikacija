@@ -17,10 +17,7 @@ V mapi projekta (na korenu, ne v podmapi):
 python -m http.server 5500
 ```
 
-Nato v Chromu:
-
-- prava aplikacija: `http://localhost:5500/aplikacija/`
-- prototip: `http://localhost:5500/prototip/`
+Nato v Chromu: `http://localhost:5500/aplikacija/`
 
 Ustavi se s `Ctrl + C`. Če pisalo javi, da je vrata 5500 zasedena, teče strežnik že od prej
 — ali ga ugasni ali uporabi drugo številko (`5501`).
@@ -41,8 +38,8 @@ git push
 GitHub Pages je nastavljen na vejo `main`, mapa `/ (root)`. Objava traja minuto ali dve,
 napredek je viden v zavihku **Actions** na GitHubu.
 
-- Prava aplikacija: `https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`
-- Prototip: `https://timonjeretic.github.io/Fitnes-aplikacija/prototip/`
+Naslov: `https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`
+(koren repozitorija nanj samo preusmeri).
 
 Datoteka `.nojekyll` na korenu prepreči, da bi GitHub Pages spustil datoteke skozi Jekyll
 in preskočil tiste, ki se začnejo s podčrtajem.
@@ -50,19 +47,18 @@ in preskočil tiste, ki se začnejo s podčrtajem.
 ## Pravilo predpomnilnika — najpogostejša past
 
 Service worker trmasto servira shranjeno različico. Po **vsaki** spremembi kode je treba
-povečati verzijo v tistem `sw.js`, ki mu spremenjena datoteka pripada:
+povečati verzijo v `aplikacija/sw.js`:
 
 ```js
-const CACHE = 'aplikacija-v1';   // v1 -> v2 -> v3 ...   (aplikacija/sw.js)
-const CACHE = 'prototip-v2';     // (prototip/sw.js)
+const CACHE = 'aplikacija-v7';   // v7 -> v8 -> v9 ...
 ```
 
-Prototip in aplikacija imata **ločena predpomnilnika** — sprememba v enem ne vpliva
-na drugega.
+To dvigne **Timon sam** — Claude ga na to samo opozori (glej `CLAUDE.md`).
 
 Druga past, ki jo prinese razdelitev na module: vsaka nova datoteka (`js/screens/*.js`,
 nov CSS) mora biti našteta v `FILES` v `aplikacija/sw.js`. Če je ni, se aplikacija
-z internetom odpre normalno, brez interneta pa se sesuje.
+z internetom odpre normalno, brez interneta pa se sesuje. Nujne datoteke gredo v
+`FILES`, uvodni posnetki v `OPTIONAL` — ta ob manjkajoči datoteki ne podre namestitve.
 
 Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Service workers**
 → obkljukaj **Update on reload**.
@@ -72,12 +68,21 @@ Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Servi
 Node.js ni nameščen, zato zaslone preverjava z brezglavim Edgeom. Strežnik mora teči.
 
 ```
-msedge.exe --headless --disable-gpu --virtual-time-budget=8000 --dump-dom <naslov>
-msedge.exe --headless --disable-gpu --window-size=780,940 --screenshot=<pot.png> <naslov>
+msedge.exe --headless --disable-gpu --user-data-dir=<polna pot> --virtual-time-budget=8000 --dump-dom <naslov>
 ```
 
-Dve pasti, ki sta obe stali eno napačno ugotovitev:
+**Posnetka zaslona ni.** `--screenshot` je Edge 150 opustil — datoteka preprosto ne
+nastane, brez sporocila o napaki. Preveriti je torej mogoce le zgradbo izpisa
+(`--dump-dom`), ne pa videza. Kako je nekaj videti, se vidi sele v pravem brskalniku.
 
+Štiri pasti, ki so vse stale eno napačno ugotovitev:
+
+- **`--user-data-dir` mora biti absolutna pot.** Relativne (`./p_1890`) Chromium ne
+  razreši glede na mapo, iz katere ga zaženeš, ampak glede na svojo —
+  `C:\Program Files (x86)\Microsoft\Edge\Application`, kamor pisati ne sme. Zagon se
+  ne konča z napako v konzoli, ampak odpre **okno z opozorilom** in obvisi: `--headless`
+  ga ne prepreči. Proces potem straši čez zaslon, dokler ga ne ubiješ. Profil zato
+  vedno v začasno mapo s polno potjo.
 - **Okno ne gre pod ~490 px.** `--window-size=390,844` naredi sliko 390 px široko,
   stran pa se vseeno postavi pri ~488 px — slika je torej **odrezana**, ne ozka.
   Postavitev pri 320 / 360 / 390 px se zato preveri tako, da se aplikacija naloži

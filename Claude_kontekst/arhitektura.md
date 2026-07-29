@@ -22,10 +22,15 @@ teče brez naslovne vrstice brskalnika. Zakaj ravno to, piše v [odlocitve.md](o
 | `sw.js` | service worker: predpomni datoteke, omogoča delovanje brez interneta |
 | `icons/` | 192 px, 512 px in maskable različica za Android |
 
-`sw.js` ima dve poti do odgovora. Navadna zahteva dobi datoteko iz predpomnilnika,
-sicer z interneta. Zahteva z glavo `Range` (posnetek, ki ga predvajalnik jemlje po
-kosih) pa gre skozi `partial()`, ki iz shranjene datoteke izreže kos in ga vrne s
-statusom **206** — Safari cel odgovor na tako zahtevo zavrne in predvajanje odpove.
+`sw.js` ima dva seznama datotek. `FILES` so nujne: `cache.addAll()` pade v celoti,
+če ena sama manjka, zato mora biti vsaka nova datoteka dopisana vanj. `OPTIONAL` so
+posnetki uvodne animacije — nalagajo se vsak zase in manjkajoča datoteka namestitve
+ne podre.
+
+Do odgovora vodita dve poti. Navadna zahteva dobi datoteko iz predpomnilnika, sicer
+z interneta. Zahteva z glavo `Range` (posnetek, ki ga predvajalnik jemlje po kosih)
+pa gre skozi `partial()`, ki iz shranjene datoteke izreže kos in ga vrne s statusom
+**206** — Safari cel odgovor na tako zahtevo zavrne in predvajanje odpove.
 
 Vse tri prve datoteke morajo obstajati, sicer brskalnik ne ponudi namestitve.
 Zahtevan je tudi HTTPS — zato GitHub Pages, glej [delovni-tok.md](delovni-tok.md).
@@ -89,16 +94,21 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 
 | Datoteka | Kaj je notri |
 |---|---|
-| `base.css` | barvni tokeni (`--accent`, `--accent-gradient`, `--accent-glow`), reset, postavitev strani |
+| `base.css` | barvni tokeni (`--accent`, `--accent-gradient`, `--accent-glow`, varno območje), reset, postavitev strani |
 | `splash.css` | zastor z uvodno animacijo (nad vsem, `z-index: 100`) |
 | `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, vrstica `.listrow` (ime + koš), spustni seznam `.sheet`, izbira `.choice` |
 | `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
-| `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal`, `.picked` |
-| `weight.css`, `stats.css` | samo tisto, česar v training.css še ni |
+| `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal` |
+| `weight.css` | zaslon TEŽA in gradniki grafa, ki jih uporablja tudi STATISTIKA: `.picked` (izbirnik), `.graph`, `.chart`, `.steps` |
+| `stats.css` | samo tisto, česar ni ne v training.css ne v weight.css |
+| `settings.css` | okno pod zobnikom (`.settings`); gumb `.brand__settings` je v screen.css, ker spada v `.brand` |
 
-Gradnik, ki ga rabi drugi zaslon, se **ne prepiše** — uporabi se isti razred.
-Ko se skupnih gradnikov v `training.css` nabere preveč, gredo v svojo datoteko;
-zaenkrat je selitev dražja od koristi.
+Gradnik, ki ga rabi drugi zaslon, se **ne prepiše** — uporabi se isti razred, tudi
+če stoji v datoteki tujega zaslona. Ko se skupnih gradnikov nabere preveč, gredo v
+svojo datoteko; zaenkrat je selitev dražja od koristi.
+
+Barvni tokeni, ki jih rabi samo en zaslon (`--training-card`, `--training-field` …),
+živijo v njegovem CSS in ne v `base.css`.
 
 ## Konvencije
 
@@ -117,10 +127,11 @@ zaenkrat je selitev dražja od koristi.
 
 ### Slovenski nizi
 
-Besedilo za uporabnika naj ne bo raztreseno po kodi. Ko aplikacija preraste eno datoteko,
-gredo vsi nizi v en objekt (`js/besedilo.js`, izvoz `TEXT`), da se popravek zapiše
-na enem mestu. Ime datoteke je edina izjema od pravila "koda angleško" — tako je
-na prvi pogled jasno, da notri ni logike, ampak samo slovenski napisi.
+Besedilo za uporabnika ni raztreseno po kodi: vsi nizi so v enem objektu
+(`js/besedilo.js`, izvoz `TEXT`), razdeljeni po zaslonih. Zaslon si na vrhu vzame
+svoj kos (`const T = TEXT.training;`). Popravek napisa je s tem ena vrstica na enem
+mestu. Ime datoteke je edina izjema od pravila "koda angleško" — tako je na prvi
+pogled jasno, da notri ni logike, ampak samo slovenski napisi.
 
 ## Ciljni napravi
 
@@ -141,32 +152,37 @@ Fitnes aplikacija/
 ├── index.html             samo preusmeritev na aplikacija/ (GitHub Pages strezi koren)
 ├── CLAUDE.md              indeks za Clauda
 ├── Claude_kontekst/       podrobni kontekst (ta mapa)
-├── aplikacija/            PRAVA APLIKACIJA
-│   ├── index.html         ogrodje: <main> za zaslon, <nav> za gumbe
+├── aplikacija/            CELA APLIKACIJA
+│   ├── index.html         ogrodje: <main> za zaslon, <nav> za gumbe, zastor animacije
 │   ├── manifest.json
-│   ├── sw.js              CACHE verzija + seznam vseh datotek
-│   ├── css/               base.css (tokeni), screen.css (skupni deli), tabbar.css
-│   │                      + ena datoteka na zaslon
+│   ├── sw.js              CACHE verzija + seznama FILES in OPTIONAL
+│   ├── css/               base.css (tokeni), screen.css (skupni deli), tabbar.css,
+│   │                      splash.css + ena datoteka na zaslon
 │   ├── js/
 │   │   ├── startup/       ogrodje aplikacije: zagon, usmerjanje, seznam zaslonov
 │   │   │   ├── app.js              zagon: zgradi gumbe, prizge router, registrira SW
-│   │   │   ├── router.js           naslov #/... -> zaslon
+│   │   │   ├── router.js           naslov #/... -> zaslon (+ podpot)
 │   │   │   ├── navigate.js         samo sprememba naslova (brez uvozov, da ni kroga)
 │   │   │   ├── screen_register.js  seznam zaslonov; edino mesto za nov zaslon
 │   │   │   └── splash.js           uvodna animacija ob zagonu
 │   │   ├── besedilo.js    vsi slovenski nizi (izvoz TEXT)
-│   │   ├── store.js       edina pot do localStorage
-│   │   ├── chart.js       crtni graf iz SVG, brez knjiznice
+│   │   ├── store.js       edina pot do localStorage + poizvedbe in ocena 1RM
+│   │   ├── chart.js       crtni graf iz SVG in zdruzevanje po obdobjih, brez knjiznice
 │   │   ├── icons.js       ikone kot nizi (izvor: icons/*.svg)
 │   │   ├── sheet.js       spustni seznam cez zaslon (izbira meritve, izbira vaje)
+│   │   ├── backup.js      varnostna kopija v datoteko (mapa / deljenje / prenos)
+│   │   ├── settings.js    zobnik in okno pod njim (uvoz, izvoz, izbira mape)
 │   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
-│   │   └── screens/       ena datoteka na zaslon
+│   │   └── screens/       ena datoteka na zaslon: training.js, weight.js, stats.js
 │   ├── icons/             ikone aplikacije (iz zadnje slicice uvodnega posnetka)
 │   └── media/             uvodna animacija (mp4 pokoncna in lezeca) + poster
-├── prototip/              testna PWA (barvni gumbi) — dokaz, da veriga deluje
 ├── fitnes-aplikacija.docx Timonovi osebni zapiski
+├── .gitignore             Wordove zaklepne datoteke in navlaka OS
 └── .nojekyll              GitHub Pages naj ne poganja Jekylla
 ```
+
+Prototipne mape (`prototip/`) ni več — svoje delo, dokazati verigo koda → git →
+GitHub Pages → telefon, je opravila in bi zdaj le zavajala.
 
 Prava aplikacija živi v mapi `aplikacija/`, torej na naslovu
 `https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/`. Zakaj v podmapi
