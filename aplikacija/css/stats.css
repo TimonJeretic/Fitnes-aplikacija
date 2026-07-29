@@ -1,0 +1,340 @@
+/* Zaslon STATISTIKA: arhiv treningov in graf moči.
+   Iskalno polje, predlogi, izbirnik in graf so isti razredi kot pri treningu in
+   teži (.field, .suggest, .picked, .steps, .graph, .chart) — tukaj je samo
+   tisto, česar tam ni. */
+
+:root {
+  /* Iste ploskve kot drugod; zapisano prek spremenljivk, da je popravek na enem mestu. */
+  --stats-card: var(--training-card);
+  --stats-field: var(--training-field);
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 14px) 12px 16px;
+}
+
+/* Razlaga namesto vsebine: ni še treningov, ni izbrane vaje, ni telesne teže.
+   Prazen zaslon brez besedila izgleda kot okvara. */
+.stats__hint {
+  margin: 0;
+  padding: 28px 16px;
+
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* --- Pot v arhiv ---------------------------------------------------------- */
+
+.archive-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  min-height: 56px;
+  padding: 0 16px;
+
+  background: var(--stats-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.archive-link:active {
+  background: var(--stats-field);
+}
+
+.archive-link__text {
+  flex: 1;
+}
+
+.archive-link__caret {
+  flex: none;
+  color: var(--accent);
+  font-size: 20px;
+}
+
+/* Nazaj iz arhiva. Levo poravnan in ozek: ni glavno dejanje zaslona. */
+.back {
+  align-self: flex-start;
+
+  min-height: 44px;
+  padding: 0 14px 0 4px;
+
+  background: none;
+  border: none;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.back:active {
+  color: var(--text);
+}
+
+/* --- Seznam treningov ----------------------------------------------------- */
+
+/* Polje ostane na vrhu tudi med drsenjem: po nekaj mesecih je seznam dolg,
+   popravek iskanja pa ne sme zahtevati vrnitve na vrh. Ozadje je obvezno,
+   sicer se vrstice vidijo skozenj. */
+.archive__search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  padding: 6px 0;
+  background: var(--bg);
+}
+
+.archive {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Ena vrstica na trening: ime levo, datum desno. Višina je večja od
+   priporočenih 44 px — v seznam se pogosto zapelješ z eno roko. */
+.archive__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 56px;
+  padding: 0 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.archive__row:active {
+  background: var(--stats-field);
+}
+
+/* Razprta vrstica se spoji s podrobnostmi pod sabo v eno ploskev. */
+.archive__row.is-open {
+  border-color: var(--accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.archive__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.archive__date {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.archive__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 12px;
+  margin-top: -6px;   /* pobere razmik seznama, da se drži vrstice nad sabo */
+
+  background: var(--stats-card);
+  border: 1px solid var(--accent);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+}
+
+/* --- Vaja v shranjenem treningu ------------------------------------------- */
+
+.past {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.past__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.past__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.past__sets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.past__set {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 34px;
+  padding: 0 10px;
+
+  background: var(--stats-field);
+  border-radius: 8px;
+}
+
+.past__label {
+  flex: none;
+  min-width: 46px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.past__value {
+  flex: 1;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.past__best {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* --- Graf moči ------------------------------------------------------------ */
+
+.graph__title {
+  margin-bottom: 4px;
+  padding-left: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Tri številke pod grafom: kje si, koliko je bilo največ, kam gre. */
+.tiles {
+  display: flex;
+  gap: 8px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+
+  padding: 10px;
+
+  background: var(--stats-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tile__label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.tile__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smer je barvna, ker jo pogledaš prvo. Rdeča ni graja: teden po bolezni pade
+   vsakemu — pomembno je le, da se to takoj vidi. */
+.tile.is-up .tile__value {
+  color: #4cc38a;
+}
+
+.tile.is-down .tile__value {
+  color: #e08585;
+}
+
+/* --- Najboljše serije po obdobjih ----------------------------------------- */
+
+.tops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tops__title {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tops__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tops__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 40px;
+  padding: 0 12px;
+
+  background: var(--stats-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.tops__date {
+  flex: none;
+  min-width: 78px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tops__set {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ocena moči je izpeljanka, zato je zapisana v barvi zaslona in ne kot navadno
+   besedilo — da je ne bereš kot vpisano težo. */
+.tops__value {
+  flex: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

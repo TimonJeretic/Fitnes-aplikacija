@@ -1,0 +1,75 @@
+// Document Object Model (dom)
+
+// Splošne funkcije ki jih rabi vsak ekran, da ni koda podvojena
+// Skripta nima nobenih podatkov o vsebini aplikacije
+
+// --- DOM -------------------------------------------------------------------
+
+export function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+export function button(className, text, onClick) {
+  const node = el('button', className, text);
+  node.type = 'button';               // brez tega bi gumb v obrazcu pošiljal stran
+  node.addEventListener('click', onClick);
+  return node;
+}
+
+// Ikone so vrisane v kodo in ne naložene kot datoteke: ena zahteva manj in
+// barvo prevzamejo iz besedila (fill="currentColor"). Niz je vedno nespremenljiv
+// in zapisan v kodi — nikoli vnos uporabnika, zato je innerHTML tukaj varen.
+export function icon(className, svg) {
+  const node = el('span', className);
+  node.innerHTML = svg;
+  return node;
+}
+
+// Gumb je pogosto majhen in brez besedila, zato mu ime povemo posebej:
+// aria-label za bralnike zaslona, title za namig z miško.
+export function withLabel(node, label) {
+  node.setAttribute('aria-label', label);
+  node.title = label;
+  return node;
+}
+
+// --- Številke --------------------------------------------------------------
+// V polje se piše besedilo, v podatke gre število. Prazno polje je `null`:
+// pri teži to pomeni vajo z lastno težo, pri ponovitvah neizpolnjeno serijo.
+
+export function parseNumber(text) {
+  const clean = String(text).replace(',', '.').trim();
+  if (clean === '') return null;
+  const number = Number(clean);
+  return Number.isFinite(number) ? number : null;
+}
+
+export function formatNumber(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace('.', ',');   // slovensko decimalno ločilo
+}
+
+// Za izračunane vrednosti (ocena 1RM), kjer bi cel double pokazal 118,90000000001.
+export function formatRounded(value, decimals) {
+  if (value === null || value === undefined) return '';
+  const factor = Math.pow(10, decimals === undefined ? 1 : decimals);
+  return formatNumber(Math.round(value * factor) / factor);
+}
+
+// --- Datumi ----------------------------------------------------------------
+
+// Poln časovni žig (trening: new Date().toISOString()) v slovenski zapis.
+export function formatDate(iso) {
+  const date = iso ? new Date(iso) : new Date();
+  return date.toLocaleDateString('sl-SI');
+}
+
+// Dan je niz 'YYYY-MM-DD' (teža, meritve, točke na grafu). Razstavimo ga sami;
+// new Date(niz) bi ga razumel kot UTC polnoč in bi datum znal pokazati za dan nazaj.
+export function formatDay(day) {
+  const parts = String(day).split('-');
+  return Number(parts[2]) + '. ' + Number(parts[1]) + '. ' + parts[0];
+}

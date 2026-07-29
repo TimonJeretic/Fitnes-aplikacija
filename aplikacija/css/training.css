@@ -80,10 +80,40 @@
   border-color: #d05050;
 }
 
+/* Datum levo, ponudba "Ponovi zadnji trening" desno. */
+.training__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 0 44px;   /* poravnano pod ime, ne pod ikono */
+}
+
 .training__date {
-  margin: 2px 0 0 44px;   /* poravnano pod ime, ne pod ikono */
+  flex: 1;
+  min-width: 0;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+.repeat {
+  flex: none;
+  min-height: 38px;
+  padding: 0 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.repeat:active {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 /* --- Iskalno polje in predlogi -------------------------------------------- */
@@ -228,6 +258,22 @@
   padding: 12px;
   background: var(--training-card);
   border-radius: 14px;
+
+  /* Sosedje se med vlečenjem umaknejo mehko, vlečena kartica pa se drži prsta. */
+  transition: transform .15s ease;
+}
+
+.exercise.is-dragging {
+  position: relative;
+  z-index: 3;
+  transition: none;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, .55);
+}
+
+/* Med vlečenjem se ne sme nič izbirati ali drseti pod prstom. */
+.training.is-reordering {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .exercise__head {
@@ -237,10 +283,14 @@
 }
 
 /* Ime vaje na barvni ploščici: pri drsanju po dolgem treningu takoj vidiš,
-   kje se ena vaja konča in začne druga. */
+   kje se ena vaja konča in začne druga. Hkrati je to ročaj za premikanje vaje,
+   zato `touch-action: none` — brez tega bi prst namesto vaje premikal stran. */
 .exercise__name {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 14px;
 
   background: linear-gradient(100deg, var(--accent), #591515);
@@ -250,9 +300,37 @@
   font-size: 18px;
   font-weight: 600;
 
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.exercise.is-dragging .exercise__name {
+  cursor: grabbing;
+}
+
+.exercise__label {
+  flex: 1;
+  min-width: 0;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Pike na desni: edini namig, da se ploščica da prijeti. */
+.exercise__grip {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  opacity: .55;
+}
+
+.exercise__grip svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .exercise__note {
@@ -398,6 +476,14 @@
   color: var(--text-muted);
 }
 
+/* Odstranitev vaje: čisto desno, najdlje od plusa za novo serijo. */
+.mini--remove {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #6b2b2b;
+  color: #e08585;
+}
+
 .mini:active {
   transform: scale(0.94);
 }
@@ -530,6 +616,47 @@
   margin: 8px 0 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* Stikalo "vaja z lastno težo". Cela vrstica je <label>, zato jo preklopi dotik
+   kjerkoli po njej — kljukica sama bi bila premajhna tarča za palec. */
+.modal__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-top: 14px;
+  padding: 12px;
+
+  background: var(--training-field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.modal__checkbox {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.modal__toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal__toggle-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modal__toggle-hint {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .modal__actions {

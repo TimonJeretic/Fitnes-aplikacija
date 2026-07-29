@@ -2,7 +2,7 @@
 // Opomba: aplikacija namenoma nima prijave (glej Claude_kontekst/produkt.md).
 // Ta zaslon je zaenkrat prazen; kaj bo v njem, se še odloči.
 
-import { TEXT } from '../ui.js';
+import { TEXT } from '../besedilo.js';
 
 export default {
   id: 'account',

@@ -1,0 +1,281 @@
+/* Zaslon TEŽA: izbirnik meritve, vnos in graf.
+   Iskalno polje, predloge, gumbi in okno so isti razredi kot pri treningu
+   (.field, .suggest, .btn, .modal) — tukaj je samo tisto, česar tam ni. */
+
+:root {
+  /* Isti ploskvi kot pri treningu. Zapisani prek spremenljivk in ne prepisani,
+     da se ob morebitnem izluščenju skupnih delov popravi eno mesto. */
+  --weight-card: var(--training-card);
+  --weight-field: var(--training-field);
+}
+
+.weight {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 14px) 12px 16px;
+}
+
+/* --- Izbrana meritev ------------------------------------------------------ */
+
+/* Zaprt izbirnik: ena sama široka tarča čez ves zaslon. Pove, kaj vpisuješ in
+   kaj je na grafu — oboje hkrati, ker je izbira ena sama. */
+.picked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  min-height: 60px;
+  padding: 0 14px;
+
+  background: var(--weight-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.picked:active {
+  background: var(--weight-field);
+}
+
+.picked__label {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.picked__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.picked__caret {
+  flex: none;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+/* Razprt izbirnik nima svojega ozadja: polje in predlogi so že oblikovani. */
+.picker .field {
+  margin-top: 0;
+}
+
+/* --- Vnos ----------------------------------------------------------------- */
+
+.entry__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Glavna tarča zaslona: vanjo greš takoj, ko odpreš zaslon. */
+.entry__value {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 14px;
+
+  background: var(--weight-field);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.entry__value:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.entry__value.is-error {
+  border-color: #d9534f;
+}
+
+.entry__unit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.entry__date {
+  flex: none;
+  min-height: 56px;
+  padding: 0 12px;
+
+  background: var(--weight-field);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 16px;
+
+  /* Brez tega je sistemski koledar svetel sredi temne aplikacije. */
+  color-scheme: dark;
+}
+
+.entry__date:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.entry__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* --- Graf ----------------------------------------------------------------- */
+
+.steps {
+  display: flex;
+  gap: 8px;
+}
+
+.steps__button {
+  flex: 1;
+  min-height: 44px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.steps__button.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.graph {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.graph__box {
+  padding: 10px 6px;
+  background: var(--weight-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* SVG se raztegne na širino, razmerje ohrani viewBox v js/chart.js. */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+
+.chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart__label,
+.chart__unit {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.chart__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart__dot {
+  fill: var(--accent);
+}
+
+.chart__value {
+  fill: var(--text);
+  font-size: 9px;
+}
+
+.chart__empty {
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+/* --- Okno s starimi meritvami --------------------------------------------- */
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  /* Po nekaj mesecih tehtanja je vnosov veliko; okno naj ne preraste zaslona. */
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.history__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 48px;
+  padding: 0 4px 0 12px;
+
+  background: var(--weight-field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.history__date {
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.history__value {
+  flex: none;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.history__remove {
+  flex: none;
+  width: 40px;
+  height: 40px;
+
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-muted);
+
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.history__remove:active {
+  background: var(--weight-card);
+  color: var(--text);
+}

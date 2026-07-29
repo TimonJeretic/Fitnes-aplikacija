@@ -23,7 +23,9 @@
    Router postavi body[data-screen], zato lahko tak zaslon izklopi sredinjenje in
    polnobarvno ozadje — ostali trije ostanejo nedotaknjeni. Ko bodo predelani vsi,
    se pravila zgoraj lahko poenostavijo. */
-body[data-screen="training"] .screen {
+body[data-screen="training"] .screen,
+body[data-screen="weight"] .screen,
+body[data-screen="stats"] .screen {
   display: block;
   background: var(--bg);
   color: var(--text);

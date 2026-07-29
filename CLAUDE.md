@@ -11,20 +11,41 @@ moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 
 Prava aplikacija stoji v `aplikacija/`. Podatkovni model je potrjen in
 implementiran (`js/store.js`), zaslon **TRENING** dela: predloge treningov,
-register vaj, serije s stolpcem "zadnjič", zapiski pri vajah, shrani/zavrži.
-Zasloni TEŽA, STATISTIKA in RAČUN so še prazni.
+register vaj, serije s stolpcem "zadnjič", zapiski pri vajah, premikanje vaj
+z vlečenjem, shrani/zavrži. Dela tudi zaslon **TEŽA**: vnos telesne teže in meritev
+telesa, zgodovina vnosov in graf napredka (`js/chart.js`, ročno napisan SVG).
+Zaslon **STATISTIKA** ima arhiv treningov (`#/statistika/arhiv`) in graf moči po
+vaji. Zaslon RAČUN je še prazen.
 Podrobnosti: `Claude_kontekst/stanje.md`
+
+## TODO
+
+- **Označi vaje z lastno težo.** Migracija na `schemaVersion: 3` je vse obstoječe
+  vaje postavila na `usesBodyweight: false`. Zgibi, sklece in dipsi rabijo preklop
+  v oknu pod svinčnikom na zaslonu TRENING — brez tega graf moči pri njih upošteva
+  samo dodano težo in ne telesne.
+- **Vpiši telesno težo na zaslonu TEŽA.** Dokler ni nobenega tehtanja, vaje z
+  lastno težo grafa nimajo; namesto njega piše razlog.
+- **Preizkusi na telefonu.** Vse je preverjeno v brskalniku na računalniku.
+  Tipkovnica, velikost tarč in drsenje arhiva se pokažejo šele v roki.
+
+**Preizkusi brez Node.js:** brezglavi Edge zna pognati stran in izpisati DOM —
+`msedge.exe --headless --disable-gpu --virtual-time-budget=8000 --dump-dom <naslov>`,
+ob tem pa `python -m http.server 5500` iz korena. Tako so bili preverjeni zasloni.
 
 ## Stalna pravila
 
 - **Koda angleško, vmesnik slovensko.** Identifikatorji, polja in CSS razredi angleško
   (`weightKg`, `addSet()`), besedilo na zaslonu slovensko ("Dodaj serijo").
   V kodi nikoli šumnikov; v UI besedilu so normalni.
-- **Po vsaki spremembi kode povečaj `CACHE` verzijo v `sw.js`.** Sicer telefon servira
-  staro različico in izgleda, kot da koda ne deluje. To je najpogostejša past v projektu.
-  Vsaka nova datoteka mora biti tudi našteta v `FILES` v `aplikacija/sw.js`, sicer
-  aplikacija brez interneta ne dela.
-- **Nov zaslon = nova datoteka v `aplikacija/js/screens/` + ena vrstica v `register.js`.**
+- **Verzije `CACHE` v `sw.js` ne spreminjam — to dela Timon sam.** Nikoli je ne
+  popravim na svojo pest, tudi če sem kodo pravkar spremenil. Ko končam spremembo,
+  ga samo **opozorim, da jo je treba dvigniti**, sicer telefon servira staro
+  različico in izgleda, kot da koda ne deluje.
+  Vsako novo datoteko pa **moram** sam dopisati v `FILES` v `aplikacija/sw.js`,
+  sicer aplikacija brez interneta ne dela. To ni verzija in ni Timonovo delo.
+- **Nov zaslon = nova datoteka v `aplikacija/js/screens/` + ena vrstica v
+  `aplikacija/js/startup/screen_register.js`.**
   Gumb, barva in naslov se naredijo sami. Podrobnosti: `Claude_kontekst/arhitektura.md`.
 - **Do podatkov samo prek `aplikacija/js/store.js`.** Noben zaslon ne kliče
   `localStorage` neposredno in ne brska po poljih sam — kar rabi, vpraša store.

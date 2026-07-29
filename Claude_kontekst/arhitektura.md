@@ -25,6 +25,11 @@ teče brez naslovne vrstice brskalnika. Zakaj ravno to, piše v [odlocitve.md](o
 Vse tri prve datoteke morajo obstajati, sicer brskalnik ne ponudi namestitve.
 Zahtevan je tudi HTTPS — zato GitHub Pages, glej [delovni-tok.md](delovni-tok.md).
 
+**`sw.js` mora ostati v korenu `aplikacija/`.** Service worker nadzoruje samo svojo
+mapo in vse pod njo; iz podmape ne bi videl `index.html`. Zato tudi klic
+`navigator.serviceWorker.register('sw.js')` v `js/startup/app.js` ostane brez `../`:
+ta pot se bere glede na `index.html`, ne glede na datoteko, v kateri je zapisana.
+
 ## Zasloni: pogodba in register
 
 Aplikacija je razdeljena na **zaslone**. Vsak zaslon je svoja datoteka v
@@ -35,13 +40,18 @@ export default {
   id: 'training',                 // interni kljuc
   route: 'trening',               // kar pise v naslovu: #/trening (brez sumnikov)
   tab: 'T',                       // crka na kvadratku spodaj
-  title: TEXT.screens.training,   // napis; besedilo je v js/ui.js
+  title: TEXT.screens.training,   // napis; nizi so v js/besedilo.js
   accent: '#e05a3a',              // barva tega zaslona
-  render() { /* vrne DOM element */ }
+  render(sub) { /* vrne DOM element; `sub` je podpot iz naslova, lahko '' */ }
 };
 ```
 
-`js/screens/register.js` je **edino mesto, kjer se doda nov zaslon**. Iz tega seznama
+**Podpoti.** Prvi kos naslova je zaslon, ostanek dobi zaslon kot argument:
+`#/statistika/arhiv` pomeni zaslon `stats` in `sub === 'arhiv'`. Zaslon, ki podpoti
+ne pozna, argument preprosto ignorira. Namen je sistemski gumb *nazaj* na telefonu —
+brez svojega naslova bi podpogled ob *nazaj* vrgel ven iz aplikacije.
+
+`js/startup/screen_register.js` je **edino mesto, kjer se doda nov zaslon**. Iz tega seznama
 se sama zgradita spodnja vrstica gumbov in usmerjanje; `index.html` ostane nedotaknjen.
 Prvi zaslon v seznamu je privzeti.
 
@@ -75,7 +85,9 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 ### Slovenski nizi
 
 Besedilo za uporabnika naj ne bo raztreseno po kodi. Ko aplikacija preraste eno datoteko,
-gredo vsi nizi v en objekt (npr. `ui.js`), da se popravek zapiše na enem mestu.
+gredo vsi nizi v en objekt (`js/besedilo.js`, izvoz `TEXT`), da se popravek zapiše
+na enem mestu. Ime datoteke je edina izjema od pravila "koda angleško" — tako je
+na prvi pogled jasno, da notri ni logike, ampak samo slovenski napisi.
 
 ## Ciljni napravi
 
@@ -99,12 +111,18 @@ Fitnes aplikacija/
 │   ├── index.html         ogrodje: <main> za zaslon, <nav> za gumbe
 │   ├── manifest.json
 │   ├── sw.js              CACHE verzija + seznam vseh datotek
-│   ├── css/               base.css (tokeni), screen.css, tabbar.css
+│   ├── css/               base.css (tokeni), screen.css, tabbar.css + ena na zaslon
 │   ├── js/
-│   │   ├── app.js         zagon: zgradi gumbe, prizge router, registrira SW
-│   │   ├── router.js      naslov #/... -> zaslon
-│   │   ├── ui.js          vsi slovenski nizi
-│   │   └── screens/       register.js + ena datoteka na zaslon
+│   │   ├── startup/       ogrodje aplikacije: zagon, usmerjanje, seznam zaslonov
+│   │   │   ├── app.js              zagon: zgradi gumbe, prizge router, registrira SW
+│   │   │   ├── router.js           naslov #/... -> zaslon
+│   │   │   ├── navigate.js         samo sprememba naslova (brez uvozov, da ni kroga)
+│   │   │   └── screen_register.js  seznam zaslonov; edino mesto za nov zaslon
+│   │   ├── besedilo.js    vsi slovenski nizi (izvoz TEXT)
+│   │   ├── store.js       edina pot do localStorage
+│   │   ├── chart.js       crtni graf iz SVG, brez knjiznice
+│   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
+│   │   └── screens/       ena datoteka na zaslon
 │   └── icons/
 ├── prototip/              testna PWA (barvni gumbi) — dokaz, da veriga deluje
 ├── fitnes-aplikacija.docx Timonovi osebni zapiski
