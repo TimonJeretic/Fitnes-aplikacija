@@ -171,8 +171,15 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   vztraja pri delnem odgovoru. `sw.js` zdaj take zahteve prestreže in vrne **206**;
   preverjeno v brezglavem brskalniku (`bytes 0-99/644769`, `video/mp4`), navadne
   zahteve pa še naprej dobijo cel odgovor. Ob zavrnjenem predvajanju (varčevanje z
-  baterijo) zastor počaka 1,4 s, da se vidi `media/intro-poster.jpg` — zadnja
+  baterijo) zastor počaka 1,8 s, da se vidi `media/intro-poster.jpg` — zadnja
   sličica posnetka z logotipom.
+  **Popravek 2026-07-29 (drugič):** posnetek se na telefonu še vedno ni predvajal,
+  ker je bilo vklopljeno **varčevanje z baterijo** (rumena ikona baterije na
+  posnetku zaslona) — takrat iPhone samodejno predvajanje ustavi tudi pri utišanem
+  posnetku in čez `poster` nariše svoj gumb za predvajanje. Zato je slika zdaj svoj
+  element pod posnetkom, posnetek pa je prosojen, dokler ne steče. Brez varčevanja
+  z baterijo se predvaja normalno; preverjeno v brezglavem brskalniku, kjer se
+  posnetek predvaja in prekrije sliko.
 
 - **Ikona aplikacije (2026-07-29).** `icons/icon-192.png`, `icon-512.png` in
   `icon-512-maskable.png` niso več začasne: narejene so iz zadnje sličice uvodnega
@@ -180,11 +187,16 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   `manifest.json` in `apple-touch-icon` v `index.html` ostaneta nespremenjena.
   Postopek za nov logotip je v [delovni-tok.md](delovni-tok.md).
 
-- **Prazen pas pod spodnjimi gumbi (2026-07-29).** Odmik spodaj je zdaj
-  `max(calc(var(--safe-bottom) - 14px), 10px)`: iPhone javi 34 px varnega območja,
-  črtica za domov pa je narisana ob samem robu, zato je ves pas izgledal kot
-  prazen prostor. Če se pas vidi tudi po tem, aplikacija ni nameščena na domači
-  zaslon in gre za vrstico Safarija, ki je aplikacija ne more odstraniti.
+- **Prazen pas pod spodnjimi gumbi (2026-07-29).** Odmik spodaj je zdaj ravnih 8 px,
+  brez varnega območja: pas 34 px za črtico za domov je bil videti kot napaka,
+  črtica pa se itak skrije sama. Večji del praznine pa ni bil naš — na iPhonu se je
+  nad črnim pasom končal tudi zastor z animacijo, ki je `position: fixed; inset: 0`,
+  kar pomeni, da okno aplikacije ni segalo do roba zaslona. Izmerjeno z začasno
+  merilno črto ob dnu okna, potrjeno na telefonu; črta je odstranjena.
+  **Vzrok:** `black-translucent` v `index.html` — iOS pri tej nastavitvi vsebino
+  potisne pod uro, okna pa ne poveča, zato spodaj ostane pas v višini vrstice z uro.
+  Nastavitev je zamenjana za `black`. Čaka preizkus na telefonu; z njo se vsebina
+  zgoraj ne razliva več pod uro, naslov zaslona pa se pomakne 14 px podnjo.
 
 ## V teku
 

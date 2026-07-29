@@ -23,10 +23,10 @@ const MAX_WAIT = 9000;
 // potem, sicer bi izginil s poskokom.
 const FADE = 350;
 
-// Če se posnetek ne da predvajati, ostane na zaslonu njegova sličica (poster).
-// Toliko časa naj se vidi, preden gremo naprej: brez tega zastor le za trenutek
-// pogleda ven in izgine, kar je videti kot napaka.
-const HOLD = 1400;
+// Če se posnetek ne da predvajati, ostane na zaslonu slika logotipa. Toliko časa
+// naj se vidi, preden gremo naprej — dovolj, da se njen prelet izteče. Brez tega
+// zastor le za trenutek pogleda ven in izgine, kar je videti kot napaka.
+const HOLD = 1800;
 
 export function playIntro() {
   const splash = document.getElementById('splash');
@@ -49,8 +49,12 @@ export function playIntro() {
   // da se vpiše serija — kdor tega ne mara čakati, gre naprej.
   splash.addEventListener('click', finish);
 
-  // Namesto takojšnjega umika: pokaži sličico logotipa in šele nato naprej.
+  // Namesto takojšnjega umika: pokaži sliko logotipa in šele nato naprej.
   const hold = () => setTimeout(finish, HOLD);
+
+  // Posnetek je do tega trenutka prosojen, spodaj se vidi slika. Pokažemo ga
+  // šele, ko res teče — sicer iPhone čez sliko nariše svoj gumb za predvajanje.
+  video.addEventListener('playing', () => video.classList.add('is-playing'));
 
   video.addEventListener('ended', finish);
   video.addEventListener('error', hold);
@@ -59,9 +63,19 @@ export function playIntro() {
   video.src = source();
 
   // Samodejno predvajanje je lahko zavrnjeno — varčevanje z baterijo na iPhonu
-  // ga ustavi tudi pri utišanem posnetku. Takrat obvelja poster.
-  const started = video.play();
-  if (started && typeof started.catch === 'function') started.catch(hold);
+  // ga ustavi tudi pri utišanem posnetku. Takrat obvelja slika logotipa.
+  const play = () => {
+    const started = video.play();
+    if (started && typeof started.catch === 'function') started.catch(hold);
+  };
+
+  // Drugi poskus, ko je posnetek naložen: prvi klic je lahko prezgoden, če se
+  // datoteka takrat še prenaša.
+  video.addEventListener('canplay', () => {
+    if (video.paused && !finished) play();
+  });
+
+  play();
 }
 
 // Pokončen zaslon dobi različico za telefon, ležeč tisto za računalnik.

@@ -7,6 +7,29 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Vrstica z uro je `black`, ne `black-translucent`
+
+**Odločitev:** `<meta name="apple-mobile-web-app-status-bar-style">` v `index.html`
+je `black`. Vsebina se torej začne **pod** vrstico z uro in ne pod njo.
+
+**Zakaj:** pri `black-translucent` iOS vsebino potisne navzgor pod vrstico z uro,
+okna pa ne poveča. Spodaj zato ostane pas, visok natanko toliko kot vrstica z uro
+(~59 px na iPhonu 15 Pro Max). Ta pas je **zunaj okna** aplikacije: vanj ne seže
+niti zastor z animacijo, ki je `position: fixed; inset: 0` — prav to je bil dokaz,
+da prazen prostor pod ikonami ni naš odmik. `viewport-fit=cover` tega ne odpravi,
+ker okno ni obrezano, ampak premaknjeno.
+
+**Cena:** vsebina se ne razliva več pod uro, kar je bilo lepše. V zameno je zaslon
+spodaj cel in gumbi sedijo tam, kjer je palec.
+
+**Posledica:** `--safe-top` je v nameščeni aplikaciji odslej 0. Zasloni imajo
+`calc(var(--safe-top) + 14px)`, zato se naslov pomakne tik pod uro — namerno.
+
+**Kaj bi jo ovrglo:** želja po vsebini pod uro. Takrat nazaj na `black-translucent`
+in prazen pas spodaj je cena, ki jo je treba sprejeti.
+
+---
+
 ## 2026-07-29 — Service worker odgovarja na zahteve po kosih (`Range`)
 
 **Odločitev:** `sw.js` prestreza zahteve z glavo `Range` posebej in iz shranjene
@@ -69,11 +92,17 @@ po štirih poteh — konec posnetka, napaka, **dotik** (preskok) in časovna var
 posnetka v `sw.js` v ločenem seznamu `OPTIONAL`, ki ob manjkajoči datoteki ne
 podre namestitve, kot bi jo `cache.addAll()`.
 
-**Dopolnjeno isti dan:** ob napaki ali zavrnjenem predvajanju zastor ne izgine
-takoj, ampak počaka 1,4 s (`HOLD`). Takrat obvelja `poster` — zadnja sličica
-posnetka z logotipom. Prej je zastor v takem primeru za trenutek pogledal ven in
-izginil, kar je izgledalo kot okvara. Varčevanje z baterijo na iPhonu samodejno
-predvajanje ustavi tudi pri utišanem posnetku, zato to ni robni primer.
+**Dopolnjeno isti dan:** pod posnetkom leži slika (`media/intro-poster.jpg`, zadnja
+sličica animacije), posnetek pa je prosojen, dokler res ne steče (`playing` →
+`is-playing`). Ob napaki ali zavrnjenem predvajanju zastor počaka 1,8 s (`HOLD`),
+da se slika s preletom pokaže in umakne.
+
+**Zakaj to ni robni primer:** v **varčevanju z baterijo** iPhone samodejno
+predvajanje ustavi tudi pri utišanem posnetku. Prej sta se takrat zgodili dve
+grdi stvari — iPhone je čez `poster` narisal svoj sivi gumb za predvajanje
+(videti kot okvara), zastor pa je izginil skoraj takoj. Zato `poster` na
+elementu ni več; slika je svoj element pod njim, gumba pa ni, ker je posnetek
+takrat neviden.
 
 **Kaj bi jo ovrglo:** če se izkaže, da čakanje pred vsakim vpisom serije moti bolj,
 kot animacija razveseli. Takrat se predvaja samo ob prvem odprtju v dnevu — to je
