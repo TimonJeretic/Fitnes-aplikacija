@@ -76,6 +76,11 @@ to tvoj Push. Zgodovina ostane nedotaknjena.
 Imena se primerjajo prek `normalizeName()`: brez velikih črk, brez šumnikov, brez
 odvečnih presledkov. "Počepi " in "pocepi" sta ista stvar.
 
+Predloga se **briše** s košem na zaslonu TRENING (`store.removeTemplate(id)`).
+Brisanje odstrani samo vrstico iz `templates`: shranjeni treningi hranijo svoje
+vaje sami, `templateId` v njih je le namig, iz česa je trening nastal. Zgodovina
+in grafi zato ostanejo nedotaknjeni, tudi če predloge ni več.
+
 ### `workout` — trening
 
 | Polje | Tip | Opomba |

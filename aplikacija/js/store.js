@@ -215,6 +215,16 @@ export function upsertTemplate(name, exerciseIds) {
   return template;
 }
 
+// Predloga s seznama na zaslonu TRENING. Zgodovina se pri tem NE dotakne:
+// shranjeni treningi hranijo svoje vaje sami, `templateId` pa je samo namig,
+// iz česa je trening nastal. Zato brisanje predloge ne more požreti podatkov —
+// samo pospravi seznam, ko se ime treninga ne uporablja več.
+export function removeTemplate(id) {
+  const all = read();
+  all.templates = all.templates.filter((template) => template.id !== id);
+  write();
+}
+
 // --- Zgodovina -------------------------------------------------------------
 
 function workoutsNewestFirst() {

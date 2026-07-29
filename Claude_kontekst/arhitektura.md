@@ -39,12 +39,19 @@ Aplikacija je razdeljena na **zaslone**. Vsak zaslon je svoja datoteka v
 export default {
   id: 'training',                 // interni kljuc
   route: 'trening',               // kar pise v naslovu: #/trening (brez sumnikov)
-  tab: 'T',                       // crka na kvadratku spodaj
+  icon: ICON_TRAINING,            // ikona na kvadratku spodaj; niz iz js/icons.js
   title: TEXT.screens.training,   // napis; nizi so v js/besedilo.js
-  accent: '#e05a3a',              // barva tega zaslona
+  accent: '#9d0f0b',              // barva tega zaslona
   render(sub) { /* vrne DOM element; `sub` je podpot iz naslova, lahko '' */ }
 };
 ```
+
+**Ikona** je vrisan SVG kot niz, ne pot do datoteke — glej `js/icons.js` in
+[odlocitve.md](odlocitve.md). Isti niz gre lahko na kvadratek spodaj in v vrstico
+z naslovom na vrhu zaslona (`.brand` v `css/screen.css`).
+
+**Barva** je danes pri vseh treh zaslonih ista (`#9d0f0b`). Polje kljub temu ostane
+pri zaslonu: pogodba se ne spreminja zaradi tega, ker so vrednosti trenutno enake.
 
 **Podpoti.** Prvi kos naslova je zaslon, ostanek dobi zaslon kot argument:
 `#/statistika/arhiv` pomeni zaslon `stats` in `sub === 'arhiv'`. Zaslon, ki podpoti
@@ -66,6 +73,20 @@ Dve stvari, ki nista očitni:
 
 Ko dodaš zaslon, ga **obvezno dopiši tudi v `FILES` v `sw.js`**. Sicer se aplikacija
 z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v telovadnici.
+
+## Kje živi kateri CSS
+
+| Datoteka | Kaj je notri |
+|---|---|
+| `base.css` | barvni tokeni (`--accent`, `--accent-gradient`, `--accent-glow`), reset, postavitev strani |
+| `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule` |
+| `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
+| `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal`, `.picked` |
+| `weight.css`, `stats.css` | samo tisto, česar v training.css še ni |
+
+Gradnik, ki ga rabi drugi zaslon, se **ne prepiše** — uporabi se isti razred.
+Ko se skupnih gradnikov v `training.css` nabere preveč, gredo v svojo datoteko;
+zaenkrat je selitev dražja od koristi.
 
 ## Konvencije
 
@@ -112,7 +133,8 @@ Fitnes aplikacija/
 │   ├── index.html         ogrodje: <main> za zaslon, <nav> za gumbe
 │   ├── manifest.json
 │   ├── sw.js              CACHE verzija + seznam vseh datotek
-│   ├── css/               base.css (tokeni), screen.css, tabbar.css + ena na zaslon
+│   ├── css/               base.css (tokeni), screen.css (skupni deli), tabbar.css
+│   │                      + ena datoteka na zaslon
 │   ├── js/
 │   │   ├── startup/       ogrodje aplikacije: zagon, usmerjanje, seznam zaslonov
 │   │   │   ├── app.js              zagon: zgradi gumbe, prizge router, registrira SW
@@ -122,6 +144,7 @@ Fitnes aplikacija/
 │   │   ├── besedilo.js    vsi slovenski nizi (izvoz TEXT)
 │   │   ├── store.js       edina pot do localStorage
 │   │   ├── chart.js       crtni graf iz SVG, brez knjiznice
+│   │   ├── icons.js       ikone kot nizi (izvor: icons/*.svg)
 │   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
 │   │   └── screens/       ena datoteka na zaslon
 │   └── icons/

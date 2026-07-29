@@ -6,12 +6,13 @@
 // js/startup/screen_register.js.
 //
 // Zaslon ima dve stanji, odvisno od tega, ali je v shrambi trening v teku:
-//   1. ni treninga  — polje za ime treninga s šepetalnikom in velik plus
+//   1. ni treninga  — seznam preteklih treningov in polje za novo ime
 //   2. trening teče — kartice vaj s serijami, spodaj Zavrži in Shrani
 // Podatkov ne bere sam, ampak jih vpraša js/store.js.
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
+import { ICON_TRAINING, ICON_TRASH } from '../icons.js';
 import { el, button, icon, withLabel, parseNumber, limitNumber, formatNumber, formatDate } from '../dom.js';
 
 const T = TEXT.training;
@@ -28,15 +29,8 @@ let nameInput = null; // polje z imenom treninga; rabimo ga za opozorilo ob shra
 
 // --- Ikone -----------------------------------------------------------------
 // Vrisane v kodo in ne naložene kot datoteke: ena zahteva manj in barvo
-// prevzamejo iz besedila (fill="currentColor").
-
-const ICON_DUMBBELL =
-  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
-  '<rect x="0.5" y="9" width="3" height="6" rx="1"/>' +
-  '<rect x="4" y="6.5" width="3" height="11" rx="1"/>' +
-  '<rect x="7.5" y="10.5" width="9" height="3"/>' +
-  '<rect x="17" y="6.5" width="3" height="11" rx="1"/>' +
-  '<rect x="20.5" y="9" width="3" height="6" rx="1"/></svg>';
+// prevzamejo iz besedila (fill="currentColor"). Ikone, ki jih uporablja več
+// zaslonov (utež, koš), živijo v js/icons.js.
 
 const ICON_PENCIL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -67,35 +61,64 @@ function paint() {
 
 // --- Stanje 1: ni treninga -------------------------------------------------
 
+// Zaslon brez treninga sta dva razdelka: zgoraj treningi, ki jih že poznaš
+// (devet dotikov od desetih se konča tukaj), spodaj polje za povsem nov trening.
+// Iskalnega polja nad seznamom ni: imen treninga je peščica in seznam je krajši
+// od tipkanja.
 function idleView() {
   const header = el('header', 'training__header');
   header.append(brandRow(T.newWorkout));
 
-  const list = el('div', 'suggest');
-
-  const field = searchField(T.workoutName, () => fillWorkoutSuggestions(list), () => startFromQuery());
-  header.append(field, list);
-
-  fillWorkoutSuggestions(list);
-
-  // Velik plus na sredini: največja tarča na zaslonu, ki jo zadeneš z eno roko.
-  // Ne naredi novega treninga sam od sebe — postavi kurzor v polje za ime,
-  // ker se vsak trening začne z imenom.
-  const empty = el('div', 'training__empty');
-  empty.append(button('bigplus', '+', () => field.querySelector('input').focus()));
-
-  return [header, empty];
+  return [header, pastSection(), el('div', 'rule'), createSection()];
 }
 
-function fillWorkoutSuggestions(list) {
-  const rows = store.searchTemplates(query).map((template) =>
-    suggestion(template.name, template.exerciseIds.length, () => startWorkout(template))
-  );
+function pastSection() {
+  const section = el('section', 'training__section');
+  section.append(el('h2', 'section__title', T.pastWorkouts));
 
-  // Zadnja vrstica je vedno tukaj: če se ne ujema nič, je edina.
-  rows.push(button('suggest__item suggest__item--new', T.startNew, () => startFromQuery()));
+  const templates = store.searchTemplates('');
+  if (!templates.length) {
+    section.append(el('p', 'templates__empty', T.noTemplates));
+    return section;
+  }
 
-  list.replaceChildren(...rows);
+  const list = el('div', 'templates');
+  templates.forEach((template) => list.append(templateRow(template)));
+  section.append(list);
+  return section;
+}
+
+// Vrstica ima dve tarči: ime odpre trening, koš predlogo zbriše.
+function templateRow(template) {
+  const row = el('div', 'template');
+
+  const open = button('template__open', '', () => startWorkout(template));
+  open.append(el('span', 'template__name', template.name));
+  open.append(el('span', 'template__count', String(template.exerciseIds.length)));
+  row.append(open);
+
+  const remove = button('template__remove', '', () => {
+    if (!confirm(T.removeTemplateConfirm)) return;
+    store.removeTemplate(template.id);
+    paint();
+  });
+  remove.append(icon('template__icon', ICON_TRASH));
+  withLabel(remove, T.removeTemplate);
+  row.append(remove);
+
+  return row;
+}
+
+function createSection() {
+  const section = el('section', 'training__section');
+  section.append(el('h2', 'section__title', T.createWorkout));
+
+  // Isto polje kot drugod, samo brez predlogov pod njim: seznam je že zgoraj.
+  const field = searchField(T.workoutName, () => {}, () => startFromQuery());
+  section.append(field);
+
+  section.append(button('btn btn--primary', T.confirm, () => startFromQuery()));
+  return section;
 }
 
 function startFromQuery() {
@@ -104,7 +127,17 @@ function startFromQuery() {
   const existing = store.findTemplateByName(query);
   if (existing) return startWorkout(existing);
 
-  if (!query.trim()) return;   // brez imena ni treninga
+  // Brez imena ni treninga. Namesto tihega nič se polje pobarva in dobi kurzor —
+  // sicer izgleda, kot da gumb ne dela.
+  if (!query.trim()) {
+    const field = root.querySelector('.field__input');
+    if (field) {
+      field.classList.add('is-error');
+      field.focus();
+    }
+    return;
+  }
+
   startWorkout(null);
 }
 
@@ -282,15 +315,9 @@ function exerciseCard(entry) {
     paint();
   }), T.addSet));
 
-  // Odstranjevanje se ponudi šele, ko je kaj odstraniti. Prazne serije se ob
-  // shranjevanju itak zavržejo, zato je ta gumb za popravek, ne za red.
-  if (entry.sets.length > 1) {
-    controls.append(withLabel(button('mini mini--muted', '−', () => {
-      entry.sets.pop();
-      persist();
-      paint();
-    }), T.removeSet));
-  }
+  // Gumba za odstranitev zadnje serije tukaj ni: koš na koncu vsake vrstice
+  // odstrani točno tisto serijo, kar je isto dejanje in brez ugibanja, katera
+  // bo šla.
 
   // Odstranitev vaje je čisto desno spodaj, najdlje od plusa nad njo.
   controls.append(withLabel(button('mini mini--remove', '×', () => removeExercise(entry)), T.removeExercise));
@@ -464,21 +491,45 @@ function setRow(entry, set, index, last) {
   inputs.append(weight, el('span', 'pair__times', '×'), reps);
   row.append(inputs);
 
-  row.append(el('div', 'set-row__divider'));
-
-  // Desni stolpec: zadnjič. Prazen, če vaje še ni bilo — takrat ni česa prepisati.
-  const reference = el('div', 'pair pair--ref');
+  // Desni stolpec: zadnjič. Pri novi vaji ga ni — in z njim odpade tudi njegova
+  // črta, sicer bi se ob črti pred košem videli dve črti druga ob drugi.
   if (last) {
+    row.append(el('div', 'set-row__divider'));
+
     const previous = last[index] || null;
+    const reference = el('div', 'pair pair--ref');
     reference.append(
       referenceBox(previous ? previous.weightKg : null, weight),
       el('span', 'pair__times', '×'),
       referenceBox(previous ? previous.reps : null, reps)
     );
+    row.append(reference);
   }
-  row.append(reference);
+
+  // Koš čisto desno, za svojo črto: odstrani natanko to serijo. Najpogostejši
+  // razlog je pomotoma pritisnjen plus, zato mora biti dosegljiv v vrstici sami.
+  row.append(el('div', 'set-row__divider'));
+
+  const remove = button('set-row__remove', '', () => removeSet(entry, index, set));
+  remove.append(icon('set-row__icon', ICON_TRASH));
+  withLabel(remove, T.removeSet);
+  // Vaja brez serij nima kaj pokazati: zadnja vrstica ostane, vaja pa se
+  // odstrani z × spodaj desno na kartici.
+  remove.disabled = entry.sets.length < 2;
+  row.append(remove);
 
   return row;
+}
+
+// Vprašamo samo, kadar je kaj izgubiti — prazna vrstica, ki je nastala ob
+// pomotoma pritisnjenem plusu, izgine z enim dotikom.
+function removeSet(entry, index, set) {
+  const filled = set.weightKg !== null || set.reps !== null;
+  if (filled && !confirm(T.removeSetConfirm)) return;
+
+  entry.sets.splice(index, 1);
+  persist();
+  paint();
 }
 
 function numberField(value, mode, onChange) {
@@ -626,10 +677,10 @@ function save() {
 
 // Vrstica z ikono in naslovom oziroma poljem za ime.
 function brandRow(titleOrInput) {
-  const row = el('div', 'training__brand');
-  row.append(icon('training__logo', ICON_DUMBBELL));
+  const row = el('div', 'brand');
+  row.append(icon('brand__logo', ICON_TRAINING));
   row.append(typeof titleOrInput === 'string'
-    ? el('h1', 'training__heading', titleOrInput)
+    ? el('h1', 'brand__title', titleOrInput)
     : titleOrInput);
   return row;
 }
@@ -649,6 +700,7 @@ function searchField(placeholder, onType, onEnter) {
 
   input.addEventListener('input', () => {
     query = input.value;
+    input.classList.remove('is-error');
     onType();
   });
   input.addEventListener('keydown', (event) => {
@@ -675,9 +727,9 @@ function suggestion(name, count, onClick) {
 export default {
   id: 'training',                 // interni ključ (angleško, brez šumnikov)
   route: 'trening',               // kar piše v naslovu: #/trening
-  tab: 'T',                       // črka na kvadratku spodaj
+  icon: ICON_TRAINING,            // ikona na kvadratku spodaj
   title: TEXT.screens.training,   // napis; nizi zivijo v js/besedilo.js
-  accent: '#8f2323',              // barva tega zaslona
+  accent: '#9d0f0b',              // barva tega zaslona
 
   // Router vsakič pokliče to funkcijo na novo, zato se stanje zaslona tukaj
   // postavi na začetek. Edini trajni spomin je shramba: če je v njej trening

@@ -16,6 +16,8 @@ z vlečenjem, shrani/zavrži. Dela tudi zaslon **TEŽA**: vnos telesne teže in 
 telesa, zgodovina vnosov in graf napredka (`js/chart.js`, ročno napisan SVG).
 Zaslon **STATISTIKA** ima arhiv treningov (`#/statistika/arhiv`) in graf moči po
 vaji. Zaslonov je troje; prazni zaslon RAČUN je odstranjen.
+Videz je poenoten: ena barva `#9d0f0b` za vso aplikacijo, ikone namesto črk na
+spodnjih gumbih (`js/icons.js`), dotik gumba ga pobarva.
 Podrobnosti: `Claude_kontekst/stanje.md`
 
 ## TODO
@@ -32,6 +34,8 @@ Podrobnosti: `Claude_kontekst/stanje.md`
 **Preizkusi brez Node.js:** brezglavi Edge zna pognati stran in izpisati DOM —
 `msedge.exe --headless --disable-gpu --virtual-time-budget=8000 --dump-dom <naslov>`,
 ob tem pa `python -m http.server 5500` iz korena. Tako so bili preverjeni zasloni.
+Dve pasti (okno ne gre pod ~490 px, service worker servira staro kodo) so opisane
+v `Claude_kontekst/delovni-tok.md`.
 
 ## Stalna pravila
 

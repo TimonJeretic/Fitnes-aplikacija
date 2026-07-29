@@ -28,6 +28,7 @@ const FILES = [
   './js/store.js',
   './js/dom.js',
   './js/chart.js',
+  './js/icons.js',
 
   './js/screens/training.js',
   './js/screens/weight.js',

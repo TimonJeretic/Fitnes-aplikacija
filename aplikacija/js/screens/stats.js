@@ -15,7 +15,8 @@ import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
 import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
-import { el, button, formatNumber, formatRounded, formatDay } from '../dom.js';
+import { ICON_STATS } from '../icons.js';
+import { el, button, icon, formatNumber, formatRounded, formatDay } from '../dom.js';
 
 const T = TEXT.stats;
 
@@ -40,7 +41,16 @@ let step = 'month';         // obdobje združevanja: 'week' | 'month' | 'year'
 // zgradbe. Med tipkanjem se NE kliče, sicer bi iskalno polje izgubilo kurzor —
 // takrat se osveži samo seznam pod njim.
 function paint() {
-  root.replaceChildren(...(archive ? archiveView() : statsView()));
+  root.replaceChildren(brandRow(), ...(archive ? archiveView() : statsView()));
+}
+
+// Ikona in naslov na vrhu, enako kot na ostalih dveh zaslonih. V arhivu piše
+// ime arhiva: pogleda sta dva in naslov je edino, kar ju loči na prvi pogled.
+function brandRow() {
+  const row = el('div', 'brand');
+  row.append(icon('brand__logo', ICON_STATS));
+  row.append(el('h1', 'brand__title', archive ? T.archive : T.heading));
+  return row;
 }
 
 // Iskalno polje je isto kot pri treningu in teži: tipkaš, spodaj se ožijo
@@ -169,16 +179,18 @@ function chartSection() {
 
   const wrap = el('div', 'graph');
 
+  const box = el('div', 'graph__box');
+  box.append(el('div', 'graph__title', T.strength));
+  box.append(lineChart(points, { unit: T.unit, step, empty: T.noData }));
+  wrap.append(box);
+
+  // Izbira obdobja je pod grafom, kot na zaslonu TEŽA: gledaš krivuljo, palec
+  // pa je itak spodaj.
   const steps = el('div', 'steps');
   steps.append(stepButton('week', T.week));
   steps.append(stepButton('month', T.month));
   steps.append(stepButton('year', T.year));
   wrap.append(steps);
-
-  const box = el('div', 'graph__box');
-  box.append(el('div', 'graph__title', T.strength));
-  box.append(lineChart(points, { unit: T.unit, step, empty: T.noData }));
-  wrap.append(box);
 
   wrap.append(tiles(points, series.points));
   wrap.append(topSets(points, exercise));
@@ -361,9 +373,9 @@ function workoutDetail(id) {
 export default {
   id: 'stats',
   route: 'statistika',
-  tab: 'S',
+  icon: ICON_STATS,
   title: TEXT.screens.stats,
-  accent: '#3fae7a',
+  accent: '#9d0f0b',
 
   // Router pokliče to funkcijo ob vsakem vstopu in ji poda podpot iz naslova.
   // Stanje se zato postavi na začetek: vsak obisk se začne brez izbrane vaje in

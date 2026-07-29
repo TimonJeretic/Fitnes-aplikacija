@@ -11,7 +11,8 @@
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
 import { aggregate, lineChart } from '../chart.js';
-import { el, button, withLabel, parseNumber, formatNumber, formatDay } from '../dom.js';
+import { ICON_WEIGHT, ICON_TRASH } from '../icons.js';
+import { el, button, icon, withLabel, parseNumber, formatNumber, formatDay } from '../dom.js';
 
 const T = TEXT.weight;
 
@@ -77,7 +78,22 @@ function removeEntry(id) {
 // shranjen ali zbrisan vnos, menjava obdobja). Med tipkanjem se NE kliče, sicer
 // bi polje izgubilo kurzor — vpisano živi v `value` in `day`.
 function paint() {
-  root.replaceChildren(pickerSection(), entrySection(), chartSection());
+  root.replaceChildren(
+    brandRow(),
+    pickerSection(),
+    entrySection(),
+    el('div', 'rule'),
+    chartSection()
+  );
+}
+
+// Ikona in naslov, enako kot na zaslonu TRENING — po vrhu zaslona takoj veš,
+// kje si, tudi ko aplikacijo odpreš sredi serije.
+function brandRow() {
+  const row = el('div', 'brand');
+  row.append(icon('brand__logo', ICON_WEIGHT));
+  row.append(el('h1', 'brand__title', T.heading));
+  return row;
 }
 
 // --- Izbirnik meritve ------------------------------------------------------
@@ -226,9 +242,10 @@ function entrySection() {
 
   row.append(valueInput, el('span', 'entry__unit', unit()), dateInput);
 
+  // Shrani stoji sam: to je edino dejanje zgornje polovice zaslona. Pot do
+  // starih meritev je spodaj pod grafom, kjer jo tudi iščeš.
   const actions = el('div', 'entry__actions');
-  actions.append(button('btn btn--primary', T.save, save));
-  actions.append(button('btn btn--ghost', T.history, openHistory));
+  actions.append(button('btn btn--primary entry__save', T.save, save));
 
   wrap.append(row, actions);
   return wrap;
@@ -299,10 +316,12 @@ function fillHistory(list) {
     row.append(el('span', 'history__value', formatNumber(entry.value) + ' ' + unit()));
 
     // Brez potrditve: v seznamu vidiš točno, kaj brišeš, ponoven vpis pa je en dotik.
-    row.append(withLabel(button('history__remove', '×', () => {
+    const remove = button('history__remove', '', () => {
       removeEntry(entry.id);
       fillHistory(list);
-    }), T.removeEntry));
+    });
+    remove.append(icon('history__icon', ICON_TRASH));
+    row.append(withLabel(remove, T.removeEntry));
 
     return row;
   });
@@ -312,14 +331,11 @@ function fillHistory(list) {
 
 // --- Graf ------------------------------------------------------------------
 
+// Graf, pod njim izbira obdobja in pot do starih meritev. Gumbi so pod grafom
+// in ne nad njim: gledaš krivuljo, palec pa je itak spodaj.
 function chartSection() {
   const wrap = el('div', 'graph');
-
-  const steps = el('div', 'steps');
-  steps.append(stepButton('week', T.week));
-  steps.append(stepButton('month', T.month));
-  steps.append(stepButton('year', T.year));
-  wrap.append(steps);
+  wrap.append(el('h2', 'section__title', T.statistics));
 
   const box = el('div', 'graph__box');
   box.append(lineChart(aggregate(points(), step), {
@@ -329,6 +345,13 @@ function chartSection() {
   }));
   wrap.append(box);
 
+  const steps = el('div', 'steps');
+  steps.append(stepButton('week', T.week));
+  steps.append(stepButton('month', T.month));
+  steps.append(stepButton('year', T.year));
+  wrap.append(steps);
+
+  wrap.append(button('btn btn--ghost', T.history, openHistory));
   return wrap;
 }
 
@@ -346,9 +369,9 @@ function stepButton(name, label) {
 export default {
   id: 'weight',
   route: 'teza',                  // v naslovu ni šumnikov, zato "teza"
-  tab: 'W',
+  icon: ICON_WEIGHT,
   title: TEXT.screens.weight,
-  accent: '#2f8fdd',
+  accent: '#9d0f0b',
 
   // Router vsakič pokliče to funkcijo na novo, zato se stanje zaslona tukaj
   // postavi na začetek. Zaslon nima ničesar, kar bi bilo vredno zapomniti med

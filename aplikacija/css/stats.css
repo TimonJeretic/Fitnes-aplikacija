@@ -53,7 +53,13 @@
 }
 
 .archive-link:active {
-  background: var(--stats-field);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.archive-link:active .archive-link__caret {
+  color: var(--on-accent);
 }
 
 .archive-link__text {
@@ -83,7 +89,7 @@
 }
 
 .back:active {
-  color: var(--text);
+  color: var(--accent);
 }
 
 /* --- Seznam treningov ----------------------------------------------------- */
@@ -128,7 +134,13 @@
 }
 
 .archive__row:active {
-  background: var(--stats-field);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.archive__row:active .archive__date {
+  color: var(--on-accent);
 }
 
 /* Razprta vrstica se spoji s podrobnostmi pod sabo v eno ploskev. */

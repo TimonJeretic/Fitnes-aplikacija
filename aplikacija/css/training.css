@@ -5,9 +5,13 @@
 :root {
   --training-card: #1a1e25;    /* kartica vaje */
   --training-field: #0d0f13;   /* vnosno polje: temnejše od kartice, da je vidno */
-  --training-ref: #e4e7ec;     /* stolpec "zadnjič": svetel, ker ni za vpisovanje */
-  --training-ref-text: #14171c;
-  --training-ref-off: #2a2f38; /* prazna škatlica v stolpcu "zadnjič" */
+
+  /* Stolpec "zadnjič" je samo podatek, ne tarča za oči: za spoznanje svetlejši
+     od vnosnega polja levo, številka v njem pa siva. Bel stolpec je prej vlekel
+     pogled nase, čeprav se vanj ne piše. */
+  --training-ref: #1c212a;
+  --training-ref-text: var(--text-muted);
+  --training-ref-off: #14181f; /* prazna škatlica v stolpcu "zadnjič" */
 }
 
 .training {
@@ -24,31 +28,9 @@
   flex: none;
 }
 
-.training__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+/* Vrstica z ikono in naslovom je skupna vsem zaslonom — glej .brand v screen.css.
 
-.training__logo {
-  flex: none;
-  width: 34px;
-  height: 34px;
-}
-
-.training__logo svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.training__heading {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-/* Ime treninga je polje in ne napis, da ga popraviš z enim dotikom.
+   Ime treninga je polje in ne napis, da ga popraviš z enim dotikom.
    Videti mora biti kot naslov, dokler se ga ne dotakneš. */
 .training__name {
   flex: 1;
@@ -144,6 +126,12 @@
   border-color: var(--accent);
 }
 
+/* Prazno polje ob dotiku gumba: rdeč rob pove isto kot okno s sporočilom,
+   brez dotika za potrditev. */
+.field__input.is-error {
+  border-color: #d05050;
+}
+
 .suggest {
   display: flex;
   flex-direction: column;
@@ -174,8 +162,18 @@
   cursor: pointer;
 }
 
+/* Dotik pobarva vrstico v barvo aplikacije: v telovadnici je zaslon pogosto
+   mokri prst in pol pogleda — barva je edini takojšen odgovor, da je gumb res
+   sprejel dotik. Isto pravilo velja povsod, kjer se da kaj izbrati. */
 .suggest__item:active {
-  background: var(--training-card);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.suggest__item:active .suggest__count {
+  background: rgba(0, 0, 0, .25);
+  color: var(--on-accent);
 }
 
 .suggest__name {
@@ -214,35 +212,119 @@
   cursor: pointer;
 }
 
-/* --- Prazno stanje: velik plus -------------------------------------------- */
+/* --- Zaslon brez treninga: pretekli treningi in nov trening ---------------- */
 
-.training__empty {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: 30px 0 60px;
+/* Dva razdelka, en pod drugim: zgoraj tisto, kar boš izbral devetkrat od desetih
+   (trening, ki ga že poznaš), spodaj tisto, kar narediš redko (nov trening). */
+.training__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
 }
 
-.bigplus {
-  width: 96px;
-  height: 96px;
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-  background: var(--training-card);
-  border: 2px solid var(--border);
-  border-radius: 28px;
+/* Vrstica ima dve tarči: ime odpre trening, koš ga zbriše. Zato nista en gumb
+   z dvema območjema, ampak dva gumba drug ob drugem. */
+.template {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.template__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 56px;
+  padding: 0 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   color: var(--text);
 
   font: inherit;
-  font-size: 46px;
-  font-weight: 300;
-  line-height: 1;
+  font-size: 17px;
+  text-align: left;
   cursor: pointer;
-
-  transition: transform .12s ease;
 }
 
-.bigplus:active {
-  transform: scale(0.94);
+.template__open:active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.template__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Koliko vaj ima predloga — namig, ali si zadel pravo. */
+.template__count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--training-field);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.template__open:active .template__count {
+  background: rgba(0, 0, 0, .25);
+  color: var(--on-accent);
+}
+
+/* Koš je siv in brez ozadja: brisanje ne sme biti enako vidno kot izbira. */
+.template__remove {
+  flex: none;
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: transform .12s ease, color .15s ease;
+}
+
+.template__remove:active {
+  transform: scale(0.9);
+  color: #e08585;
+}
+
+.template__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.template__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.templates__empty {
+  margin: 0;
+  padding: 10px 2px;
+  color: var(--text-muted);
+  font-size: 15px;
 }
 
 /* --- Kartica vaje --------------------------------------------------------- */
@@ -295,7 +377,7 @@
   gap: 8px;
   padding: 12px 14px;
 
-  background: linear-gradient(100deg, var(--accent), #591515);
+  background: var(--accent-gradient);
   border-radius: 10px;
   color: var(--on-accent);
 
@@ -378,22 +460,30 @@
   margin-top: 10px;
 }
 
+/* V vrstici so štirje stolpci: napis, vpisana teža, zadnjič in koš. Razmiki so
+   ožji od ostalih, ker mora vse to na 360 px širok telefon. */
 .set-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
+/* Napis se stisne prvi: številke in koš so tarče za palec in se ne smejo ožiti,
+   "Set 1" pa je samo oznaka. */
 .set-row__label {
   flex: 1;
   min-width: 0;
-  padding: 12px 14px;
+  padding: 12px 8px;
 
   background: var(--training-field);
   border-radius: 10px;
   color: var(--text);
 
-  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 14px;
 }
 
 .set-row__divider {
@@ -407,17 +497,19 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pair__times {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
-/* Vnosno polje in škatlica "zadnjič" imata isto velikost, da se stolpca ujemata. */
+/* Vnosno polje in škatlica "zadnjič" imata isto velikost, da se stolpca ujemata.
+   42 px je ožje od priporočenih 44, a je polje visoko 46 — tarča je zato dovolj
+   velika, v vrstico pa gresta oba stolpca in koš tudi na ožjem telefonu. */
 .numbox {
-  width: 46px;
+  width: 42px;
   height: 46px;
 
   background: var(--training-field);
@@ -435,22 +527,64 @@
   outline-offset: -2px;
 }
 
-/* Stolpec "zadnjič": svetel in drugačen od vnosnih polj, da je na prvi pogled
-   jasno, da to niso polja za vpisovanje. Klik prepiše vrednost v polje levo. */
+/* Stolpec "zadnjič": za spoznanje svetlejši od vnosnih polj in s sivo številko —
+   pove, koliko si dvignil zadnjič, ne kliče pa nase. Klik prepiše vrednost v
+   polje levo, zato se ob dotiku pobarva v barvo zaslona. */
 .numbox--ref {
   background: var(--training-ref);
   color: var(--training-ref-text);
-  font-weight: 600;
   cursor: pointer;
 }
 
 .numbox--ref:active {
   transform: scale(0.92);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .numbox--ref:disabled {
   background: var(--training-ref-off);
   cursor: default;
+}
+
+/* Koš na koncu vrstice: odstrani natanko to serijo. Siv in brez ozadja, ker
+   brisanje ne sme biti enako vidno kot vpisovanje. Pri edini seriji je ugasnjen —
+   vaja brez serij nima kaj pokazati, odstrani se z × spodaj na kartici. */
+.set-row__remove {
+  flex: none;
+  width: 34px;
+  height: 46px;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: transform .12s ease, color .15s ease;
+}
+
+.set-row__remove:active {
+  transform: scale(0.9);
+  color: #e08585;
+}
+
+.set-row__remove:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+.set-row__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.set-row__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .exercise__controls {
@@ -488,6 +622,15 @@
 
 .mini:active {
   transform: scale(0.94);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Odstranitev vaje ostane rdečkasto obrobljena in ne prevzame barve zaslona:
+   ta gumb ni izbira, ampak brisanje. */
+.mini--remove:active {
+  background: #6b2b2b;
+  color: var(--on-accent);
 }
 
 /* Plus pod zadnjo vajo: doda novo vajo v trening. */
@@ -507,7 +650,9 @@
 }
 
 .addbar:active {
-  background: var(--training-card);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
 }
 
 /* --- Zavrži in shrani ----------------------------------------------------- */
@@ -549,9 +694,21 @@
   color: var(--on-accent);
 }
 
+/* Glavni gumb ob dotiku potemni v spodnji konec preliva — ne posvetli, ker bi
+   pri tako nasičeni rdeči izgledal kot druga barva. */
+.btn--primary:active {
+  background: var(--accent-deep);
+}
+
 .btn--ghost {
   background: var(--surface);
   color: var(--text-muted);
+}
+
+.btn--ghost:active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
 }
 
 .btn--danger {

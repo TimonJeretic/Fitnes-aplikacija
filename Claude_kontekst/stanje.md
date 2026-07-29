@@ -83,6 +83,31 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   `#/teza` in nesmiseln naslov. Preizkusi so tekli v brezglavem Edgeu, ker Node.js
   na tem računalniku ni nameščen.
 
+- **Videz je poenoten (2026-07-29).** Vsi trije zasloni imajo isto barvo `#9d0f0b`,
+  preliv gre iz nje v `#661714` in pobarva ploščico z imenom vaje. Na kvadratkih
+  spodaj so Timonove ikone namesto črk (`js/icons.js`, izvor `icons/*.svg`); ikona
+  je vedno bela, pobarva se kvadratek za njo, aktivni ima še komaj opazen sij.
+  Vsak zaslon ima na vrhu isto ikono in naslov (`.brand`). Dotik gumba, s katerim
+  se nekaj izbere, ga pobarva v barvo aplikacije; glavni gumb ob dotiku potemni.
+  Stolpec "zadnjič" ni več bel, ampak komaj svetlejši od vnosnega polja s sivo
+  številko — je podatek, ne tarča.
+  **Zaslon TRENING brez treninga** je zdaj seznam preteklih treningov (vsak s
+  številom vaj in košem za brisanje predloge) in pod črto polje za novo ime z
+  gumbom *Potrdi*. Šepetalnika in velikega plusa ni več.
+  **Zaslon TEŽA** je dobil naslov *Meritve*, gumb *Shrani* stoji sam, pod črto je
+  razdelek *Statistika*: graf, pod njim Teden / Mesec / Leto in *Prikaži pretekle
+  meritve*. Isti vrstni red (graf, pod njim obdobja) ima zdaj tudi STATISTIKA.
+  Odločitve so v [odlocitve.md](odlocitve.md).
+  Preverjeno v brezglavem Edgeu z izrisom vseh poti (`#/trening` prazen in s
+  treningom v teku, `#/teza`, `#/statistika`, `#/statistika/arhiv`) na polni shrambi;
+  posnetki zaslona pregledani pri 488 px (glej opombo o brezglavem oknu v
+  [delovni-tok.md](delovni-tok.md)).
+- **Serija se odstrani s košem v svoji vrstici (2026-07-29).** Vsaka vrstica ima
+  čisto desno, za svojo črto, koš, ki odstrani natanko to serijo; gumba `−` za
+  zadnjo serijo ni več. Pri edini seriji je koš ugasnjen. Zaradi četrtega stolpca
+  so se polja zožila na 42 px (višina ostaja 46). Preverjeno pri **360 in 390 px**
+  z aplikacijo v okvirju prave širine.
+
 ## V teku
 
 - **Namestitev prototipa na telefon (Android).** Zataknilo se je pri tem, da je

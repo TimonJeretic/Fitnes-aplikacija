@@ -42,7 +42,14 @@
 }
 
 .picked:active {
-  background: var(--weight-field);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.picked:active .picked__label,
+.picked:active .picked__caret {
+  color: var(--on-accent);
 }
 
 .picked__label {
@@ -138,6 +145,14 @@
   margin-top: 12px;
 }
 
+/* Shrani je edini gumb v vrstici, zato naj ne bo raztegnjen čez ves zaslon —
+   sredinski gumb pade pod palec, robovi pa ostanejo prazni. */
+.entry__save {
+  flex: none;
+  min-width: 200px;
+  margin: 0 auto;
+}
+
 /* --- Graf ----------------------------------------------------------------- */
 
 .steps {
@@ -157,6 +172,12 @@
   font: inherit;
   font-size: 15px;
   cursor: pointer;
+}
+
+.steps__button:active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
 }
 
 .steps__button.is-active {
@@ -264,18 +285,30 @@
   width: 40px;
   height: 40px;
 
+  display: grid;
+  place-items: center;
+
   background: none;
   border: none;
   border-radius: 10px;
   color: var(--text-muted);
-
-  font: inherit;
-  font-size: 22px;
-  line-height: 1;
   cursor: pointer;
+
+  transition: transform .12s ease, color .15s ease;
 }
 
 .history__remove:active {
-  background: var(--weight-card);
-  color: var(--text);
+  transform: scale(0.9);
+  color: #e08585;
+}
+
+.history__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.history__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

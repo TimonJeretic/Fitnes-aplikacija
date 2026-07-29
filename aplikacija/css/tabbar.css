@@ -1,10 +1,10 @@
 /* Spodnja vrstica s kvadratnimi gumbi. Gumbe zgradi JavaScript iz seznama zaslonov,
-   zato tukaj ni nobenega pravila, ki bi predpostavljalo štiri gumbe. */
+   zato tukaj ni nobenega pravila, ki bi predpostavljalo tri gumbe. */
 
 .tabbar {
   flex: none;
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   gap: 12px;
 
   padding: 12px 12px calc(var(--safe-bottom) + 12px);
@@ -20,29 +20,45 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  color: var(--text-muted);
+
+  /* Ikona je vedno bela: pobarva se kvadratek za njo, ne ikona sama. */
+  color: var(--on-accent);
 
   font: inherit;
-  font-size: 22px;
-  font-weight: 700;
   cursor: pointer;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  transition: transform .12s ease, background .25s ease, color .25s ease;
+  transition: transform .12s ease, background .25s ease, box-shadow .25s ease;
+}
+
+/* Ikona se prilagodi kvadratku, ne obratno: viewBox v icons.js je pri vsaki
+   drugačen, zato višino omejimo tukaj in širino prepustimo razmerju. */
+.tabbar__icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.tabbar__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .tabbar__button:active {
   transform: scale(0.94);
+  background: var(--accent);
 }
 
-/* Aktivni gumb prevzame barvo svojega zaslona — takoj je jasno, kje si. */
+/* Aktivni gumb: rdeč kvadratek in komaj opazen sij okoli njega — dovolj, da
+   veš, kje si, premalo, da bi vleklo pogled stran od vsebine. */
 .tabbar__button.is-active {
   background: var(--accent);
   border-color: transparent;
-  color: var(--on-accent);
+  box-shadow: var(--accent-glow);
 }
 
 /* Vidna obroba pri tipkovnici; miška/dotik je ne dobita. */

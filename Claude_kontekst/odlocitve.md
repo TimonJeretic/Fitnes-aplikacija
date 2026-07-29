@@ -7,6 +7,112 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Koš pri vsaki seriji namesto gumba "−"
+
+**Odločitev:** vsaka vrstica serije ima čisto desno, za svojo črto, koš, ki odstrani
+**natanko tisto** serijo. Gumb `−`, ki je odstranil zadnjo serijo, je odstranjen.
+Koš je pri edini seriji ugasnjen (`disabled`): vaja brez serij nima kaj pokazati,
+odstrani se z `×` spodaj desno na kartici. Vprašanje za potrditev pride samo,
+kadar je v seriji kaj vpisanega.
+
+**Zakaj:** najpogostejši razlog za odstranjevanje je pomotoma pritisnjen plus, in
+takrat hočeš stran **to** vrstico. `−` je odstranil zadnjo — če si se zmotil na
+sredini, si moral brisati in znova vpisovati. Dva gumba za isto dejanje sta bila
+tudi eden preveč.
+
+**Cena:** vrstica ima zdaj štiri stolpce (napis, vpis, zadnjič, koš). Da gre to na
+360 px širok telefon, so se polja zožila s 46 na **42 px** (višina ostaja 46),
+razmiki s 8 na 6 px, napis "Set 1" pa s 16 na 14 px in se po potrebi skrajša s tremi
+pikami. Preverjeno pri 360 in 390 px.
+
+**Podrobnost:** pri vaji brez zgodovine odpade stolpec "zadnjič" **in z njim njegova
+črta** — sicer bi se ob črti pred košem videli dve črti druga ob drugi.
+
+**Kaj bi jo ovrglo:** telefon, ožji od 360 px. Takrat se najprej umakne napis
+"Set 1" (ostane samo številka), stolpca s številkami pa se ne dotikava.
+
+---
+
+## 2026-07-29 — Ena barva za vso aplikacijo (`#9d0f0b`)
+
+**Odločitev:** vsi trije zasloni imajo isti `accent`: rdečo `#9d0f0b`. Preliv gre iz
+nje v `#661714` (`--accent-gradient` v `css/base.css`) in pobarva ploščico z imenom
+vaje. Vsak zaslon barvo še vedno pove sam v svojem modulu — polje `accent` ostaja,
+samo vrednost je pri vseh treh ista.
+
+**Zakaj:** tri barve (rdeča, modra, zelena) so ogrodje iz časa, ko so bili zasloni
+prazni in je barva bila edino, kar jih je ločilo. Zdaj jih loči vsebina, ikona na
+vrhu in ikona spodaj — tri barve pa so pomenile, da aplikacija na vsakem zaslonu
+izgleda kot druga aplikacija.
+
+**Zakaj polje `accent` kljub temu ostane:** pogodba zaslona se ne spreminja zaradi
+tega, ker so vrednosti trenutno enake. Nov zaslon je še vedno ena datoteka, CSS pa
+še vedno pozna samo `var(--accent)`.
+
+**Kaj bi jo ovrglo:** zaslon, ki mora biti na pogled nevaren ali drugačen (brisanje
+podatkov, nastavitve). Takrat dobi svojo barvo in nič drugega se ne spremeni.
+
+---
+
+## 2026-07-29 — Dotik gumba ga pobarva v barvo aplikacije
+
+**Odločitev:** vsak gumb, s katerim se nekaj **izbere** (predloga treninga, vrstica
+predloga, vrstica arhiva, izbirnik meritve, škatlica v stolpcu "zadnjič", obdobje
+grafa), se ob `:active` pobarva v `--accent` z belim besedilom. Brisanje je izjema:
+tam ostane rdečkasta obroba, ne barva aplikacije. Glavni gumb (*Shrani*, *Potrdi*)
+ob dotiku **potemni** v `--accent-deep`.
+
+**Zakaj:** v telovadnici je dotik pogosto neroden, zaslon pa gledaš pol sekunde.
+Barva je edini odgovor, ki ga v tem času zaznaš — sprememba odtenka sive ni.
+Glavni gumb je že rdeč, zato svetlejša rdeča na njem ne bi bila viden odziv, temnejša
+pa je.
+
+**Kaj bi jo ovrglo:** nič na obzorju. Če bi se barva zaslona kdaj razlikovala od
+barve gumbov, bi bilo treba pravilo napisati z lastnim tokenom in ne z `--accent`.
+
+---
+
+## 2026-07-29 — Zaslon TRENING brez treninga: seznam namesto šepetalnika
+
+**Odločitev:** prazno stanje zaslona TRENING sta dva razdelka: **Pretekli treningi**
+(vse predloge, vsaka s številom vaj in košem za brisanje) in **Ustvari nov trening**
+(polje za ime + *Potrdi*). Iskalnega polja s predlogi nad seznamom ni več, velikega
+plusa na sredini tudi ne.
+
+**Zakaj:** predlog je peščica (Push, Pull, Legs, Upper) in vse gredo na zaslon hkrati —
+iskanje po štirih vrsticah je bilo tipkanje brez koristi. Velik plus ni delal ničesar
+sam po sebi, samo postavil je kurzor v polje, ki je bilo tako ali tako vidno.
+Koš je nov: predloga je do zdaj nastala sama ob shranjevanju in je ni bilo mogoče
+odstraniti, zato so se v seznamu nabirale tipkarske napake.
+
+**Posledica:** `store.removeTemplate(id)` briše **samo** predlogo. Shranjeni treningi
+hranijo svoje vaje sami, zato zgodovina in grafi ostanejo nedotaknjeni.
+
+**Kaj bi jo ovrglo:** toliko predlog, da seznam ne gre več na zaslon. Takrat se
+iskalno polje vrne — nad seznam, ne namesto njega.
+
+---
+
+## 2026-07-29 — Ikone namesto črk na spodnjih gumbih
+
+**Odločitev:** na kvadratkih spodaj so Timonove ikone (`aplikacija/icons/*.svg`),
+ne črke T / W / S. Zaslon jih pove prek polja `icon` v svojem modulu. Ikone so v kodo
+prilepljene kot nizi v `js/icons.js` in ne naložene kot datoteke.
+
+**Zakaj kot nizi:** `<img src="icons/trening.svg">` bi bila dodatna zahteva na zaslon
+in dodatna vrstica v `sw.js`, barve pa CSS pri `<img>` ne more spremeniti. Vrisan SVG
+z `fill="currentColor"` prevzame barvo besedila, zato je ista ikona bela spodaj in
+bela na vrhu zaslona, brez druge datoteke.
+
+**Videz:** ikona je **vedno bela**; ob dotiku in na odprtem zaslonu se pobarva samo
+kvadratek za njo. Aktivni kvadratek ima poleg barve še komaj opazen sij
+(`--accent-glow`) — dovolj, da veš, kje si, premalo, da bi vleklo pogled.
+
+**Kaj bi jo ovrglo:** ikona, ki bi rabila več barv hkrati (npr. dvobarvni logotip).
+Takrat gre ta ena ikona v datoteko, ostale ostanejo v kodi.
+
+---
+
 ## 2026-07-29 — Zaslon RAČUN je odstranjen
 
 **Odločitev:** četrti zaslon (gumb A, `js/screens/account.js`) je izbrisan. Ostanejo

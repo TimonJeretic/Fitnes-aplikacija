@@ -67,6 +67,29 @@ z internetom odpre normalno, brez interneta pa se sesuje.
 Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Service workers**
 → obkljukaj **Update on reload**.
 
+## Preizkus izrisa v brezglavem brskalniku
+
+Node.js ni nameščen, zato zaslone preverjava z brezglavim Edgeom. Strežnik mora teči.
+
+```
+msedge.exe --headless --disable-gpu --virtual-time-budget=8000 --dump-dom <naslov>
+msedge.exe --headless --disable-gpu --window-size=780,940 --screenshot=<pot.png> <naslov>
+```
+
+Dve pasti, ki sta obe stali eno napačno ugotovitev:
+
+- **Okno ne gre pod ~490 px.** `--window-size=390,844` naredi sliko 390 px široko,
+  stran pa se vseeno postavi pri ~488 px — slika je torej **odrezana**, ne ozka.
+  Postavitev pri 320 / 360 / 390 px se zato preveri tako, da se aplikacija naloži
+  v `<iframe width="360">` na začasni strani v korenu projekta (ime naj se začne s
+  podčrtajem, po preizkusu se pobriše).
+- **Service worker servira staro kodo.** Če se ista mapa `--user-data-dir` uporabi
+  dvakrat, drugi zagon dobi datoteke iz predpomnilnika in sprememb **ni videti**.
+  Za vsak zagon nova mapa profila (ali pa profil pobriši).
+
+Shramba se napolni z začasno stranjo, ki v `localStorage` zapiše ključ `fitnes` in
+jo naloži isti profil — zasloni brez podatkov povedo malo.
+
 ## Namestitev na telefon
 
 **Android / Chrome:** meni ⋮ → *Dodaj na domači zaslon* → izberi **Namesti**

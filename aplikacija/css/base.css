@@ -11,8 +11,18 @@
   --border: #2b323d;      /* obrobe */
   --on-accent: #ffffff;   /* besedilo na barvni podlagi */
 
-  /* Rezerva: če router še ni nastavil barve zaslona, ostane nevtralna. */
-  --accent: var(--surface);
+  /* Rezerva: če router še ni nastavil barve zaslona. Vsi trije zasloni imajo
+     danes isto barvo, a vsak jo še vedno pove sam — glej arhitektura.md. */
+  --accent: #9d0f0b;
+
+  /* Temnejši konec rdečega preliva (ime vaje, ploščice). Ni odvisen od zaslona:
+     preliv gre vedno iz barve zaslona v to. */
+  --accent-deep: #661714;
+  --accent-gradient: linear-gradient(100deg, var(--accent), var(--accent-deep));
+
+  /* Komaj opazen sij okoli aktivnega gumba spodaj. Nizka prosojnost je namerna:
+     v telovadnici je zaslon svetel in premočan sij bi bil packa. */
+  --accent-glow: 0 0 0 1px rgba(157, 15, 11, .55), 0 0 12px rgba(157, 15, 11, .45);
 
   --tab-size: 60px;       /* stranica kvadratka v spodnji vrstici */
   --radius: 16px;

@@ -2,6 +2,7 @@
 
 import { SCREENS } from './screen_register.js';
 import { start, navigate } from './router.js';
+import { icon } from '../dom.js';
 
 const container = document.getElementById('screen');
 const tabbar = document.getElementById('tabbar');
@@ -14,9 +15,9 @@ for (const screen of SCREENS) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'tabbar__button';
-  button.textContent = screen.tab;          // na gumbu je samo črka trenutno, kasneje bo ikona
+  button.append(icon('tabbar__icon', screen.icon));   // ikona pride iz modula zaslona
 
-  // Na gumbu piše samo črka, zato polno ime povemo posebej:
+  // Na gumbu je samo ikona brez besedila, zato ime povemo posebej:
   // aria-label za bralnike zaslona, title za namig na računalniku.
   button.setAttribute('aria-label', screen.title);
   button.title = screen.title;

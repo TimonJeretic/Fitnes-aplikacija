@@ -16,14 +16,21 @@ export const TEXT = {
   training: {
     newWorkout: 'Nov trening',
     workoutName: 'Ime treninga',
-    startNew: '+ Naredi nov trening',
-    startNewHint: 'Najprej vpiši ime treninga',
+
+    pastWorkouts: 'Pretekli treningi',
+    noTemplates: 'Ni še nobenega treninga. Vpiši ime spodaj in začni.',
+    createWorkout: 'Ustvari nov trening',
+    confirm: 'Potrdi',
+    removeTemplate: 'Zbriši trening',
+    removeTemplateConfirm: 'Zbrišem ta trening s seznama? '
+      + 'Shranjeni treningi in zgodovina ostanejo.',
 
     date: 'Datum:',
     repeatLast: 'Ponovi zadnji trening',
     set: 'Set',
     addSet: 'Dodaj serijo',
-    removeSet: 'Odstrani zadnjo serijo',
+    removeSet: 'Odstrani to serijo',
+    removeSetConfirm: 'Odstranim to serijo? Vpisana teža in ponovitve bodo izgubljene.',
 
     exerciseName: 'Ime vaje',
     addExercise: 'Dodaj vajo',
@@ -49,6 +56,7 @@ export const TEXT = {
 
   // Zaslon TEŽA.
   weight: {
+    heading: 'Meritve',
     picked: 'Meritev:',
     bodyweight: 'Telesna teža',
     measurementName: 'Ime meritve',
@@ -59,13 +67,14 @@ export const TEXT = {
     date: 'Datum',
     save: 'Shrani',
 
-    history: 'Stare meritve',
+    statistics: 'Statistika',
+    history: 'Prikaži pretekle meritve',
     historyEmpty: 'Ni vnosov.',
     removeEntry: 'Zbriši vnos',
 
-    week: 'Tedni',
-    month: 'Meseci',
-    year: 'Leta',
+    week: 'Teden',
+    month: 'Mesec',
+    year: 'Leto',
     noData: 'Ni podatkov.',
 
     unitWeight: 'kg',
@@ -74,6 +83,7 @@ export const TEXT = {
 
   // Zaslon STATISTIKA.
   stats: {
+    heading: 'Statistika',
     archive: 'Arhiv treningov',
     back: '← Nazaj',
     searchWorkouts: 'Ime treninga ali datum',
@@ -92,9 +102,9 @@ export const TEXT = {
     noTrainedExercises: 'Ko shraniš prvi trening, se vaje pojavijo tukaj.',
     pickExercise: 'Izberi vajo in poglej, kako gre moč skozi čas.',
 
-    week: 'Tedni',
-    month: 'Meseci',
-    year: 'Leta',
+    week: 'Teden',
+    month: 'Mesec',
+    year: 'Leto',
 
     strength: 'Moč (ocena 1RM)',
     unit: 'kg',
