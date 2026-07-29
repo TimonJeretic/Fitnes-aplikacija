@@ -15,22 +15,26 @@ import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
 import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
-import { ICON_STATS } from '../icons.js';
+import { ICON_STATS, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
 import { el, button, icon, formatNumber, formatRounded, formatDay } from '../dom.js';
 
 const T = TEXT.stats;
 
-const ARCHIVE = 'arhiv';   // kar piše v naslovu za poševnico
+// Kar piše v naslovu za poševnico. Vsak podpogled ima svojo, da sistemski gumb
+// "nazaj" pelje na graf in ne iz aplikacije.
+const ARCHIVE = 'arhiv';
+const EXERCISES = 'vaje';
 
 // --- Stanje zaslona --------------------------------------------------------
 // Kot pri ostalih zaslonih: živi na ravni modula in se ob vsakem vstopu postavi
 // na začetek v render().
 
 let root = null;
-let archive = false;        // kateri od obeh pogledov je odprt
+let view = 'graph';         // 'graph' | 'archive' | 'exercises'
 let workoutQuery = '';      // iskalnik v arhivu
 let openWorkoutId = null;   // razprta vrstica arhiva
+let openExerciseId = null;  // razprta vrstica arhiva vaj
 let selectedId = null;      // vaja, ki je na grafu
 let step = 'month';         // obdobje združevanja: 'week' | 'month' | 'year'
 
@@ -40,15 +44,23 @@ let step = 'month';         // obdobje združevanja: 'week' | 'month' | 'year'
 // zgradbe. Med tipkanjem se NE kliče, sicer bi iskalno polje izgubilo kurzor —
 // takrat se osveži samo seznam pod njim.
 function paint() {
-  root.replaceChildren(brandRow(), ...(archive ? archiveView() : statsView()));
+  root.replaceChildren(brandRow(), ...currentView());
 }
 
-// Ikona in naslov na vrhu, enako kot na ostalih dveh zaslonih. V arhivu piše
-// ime arhiva: pogleda sta dva in naslov je edino, kar ju loči na prvi pogled.
+function currentView() {
+  if (view === 'archive') return archiveView();
+  if (view === 'exercises') return exerciseArchiveView();
+  return statsView();
+}
+
+// Ikona in naslov na vrhu, enako kot na ostalih dveh zaslonih. V podpogledu piše
+// njegovo ime: naslov je edino, kar pogleda loči na prvi pogled.
 function brandRow() {
+  const titles = { archive: T.archive, exercises: T.exerciseArchive };
+
   const row = el('div', 'brand');
   row.append(icon('brand__logo', ICON_STATS));
-  row.append(el('h1', 'brand__title', archive ? T.archive : T.heading));
+  row.append(el('h1', 'brand__title', titles[view] || T.heading));
   return row;
 }
 
@@ -78,11 +90,21 @@ function hint(text) {
 // --- Pogled 1: graf moči ---------------------------------------------------
 
 function statsView() {
-  const link = button('archive-link', '', () => navigate('statistika/' + ARCHIVE));
-  link.append(el('span', 'archive-link__text', T.archive));
-  link.append(el('span', 'archive-link__caret', '›'));
+  return [
+    archiveLink(T.archive, ARCHIVE),
+    archiveLink(T.exerciseArchive, EXERCISES),
+    pickerSection(),
+    chartSection()
+  ];
+}
 
-  return [link, pickerSection(), chartSection()];
+// Pot v enega od obeh arhivov. Oba gumba sta enaka, ker sta enakovredna:
+// eden vodi v zgodovino treningov, drugi v register vaj.
+function archiveLink(label, sub) {
+  const link = button('archive-link', '', () => navigate('statistika/' + sub));
+  link.append(el('span', 'archive-link__text', label));
+  link.append(el('span', 'archive-link__caret', '›'));
+  return link;
 }
 
 function selected() {
@@ -247,6 +269,81 @@ function setText(set, usesBodyweight) {
   return weight + ' × ' + reps;
 }
 
+// --- Pogled 3: arhiv vaj ---------------------------------------------------
+//
+// Register vaj, kot je: kaj vse pozna aplikacija, kakšen je rekord pri vsaki in
+// možnost, da se vaja zbriše. Vaje nastajajo same od sebe med treningom, zato se
+// v registru sčasoma nabere tudi kaj, česar ne rabiš.
+
+function exerciseArchiveView() {
+  const back = button('back', T.back, () => navigate('statistika'));
+
+  const exercises = store.searchExercises('');
+  if (!exercises.length) return [back, hint(T.noExercises)];
+
+  const list = el('div', 'archive');
+  fillExerciseArchive(list);
+  return [back, list];
+}
+
+function fillExerciseArchive(list) {
+  const rows = [];
+
+  for (const exercise of store.searchExercises('')) {
+    const open = exercise.id === openExerciseId;
+
+    const row = el('div', 'listrow');
+
+    // Dotik po imenu razpre rekord pod vrstico. Ponoven dotik jo zapre.
+    const openButton = button('listrow__open', '', () => {
+      openExerciseId = open ? null : exercise.id;
+      fillExerciseArchive(list);
+    });
+    openButton.setAttribute('aria-expanded', String(open));
+    if (open) openButton.classList.add('is-open');
+    openButton.append(el('span', 'listrow__name', exercise.name));
+    row.append(openButton);
+
+    const remove = button('listrow__remove', '', () => {
+      if (!confirm(T.removeExerciseConfirm)) return;
+      store.removeExercise(exercise.id);
+      // Zbrisana vaja je lahko bila tista, ki je na grafu ali razprta.
+      if (selectedId === exercise.id) selectedId = null;
+      openExerciseId = null;
+      paint();
+    });
+    remove.append(icon('listrow__icon', ICON_TRASH));
+    remove.setAttribute('aria-label', T.removeExercise);
+    remove.title = T.removeExercise;
+    row.append(remove);
+
+    rows.push(row);
+    if (open) rows.push(recordDetail(exercise));
+  }
+
+  list.replaceChildren(...rows);
+}
+
+// Rekord vaje: najtežja serija, kar si jih naredila. Rdeč, ker je to edina
+// številka v arhivu, ki je dosežek in ne zapis.
+function recordDetail(exercise) {
+  const box = el('div', 'archive__detail');
+
+  const record = store.personalRecord(exercise.id);
+  if (!record) {
+    box.append(el('p', 'past__note', T.noRecord));
+    return box;
+  }
+
+  const line = el('div', 'record');
+  line.append(el('span', 'record__label', T.pr));
+  line.append(el('span', 'record__value', setText(record, exercise.usesBodyweight)));
+  box.append(line);
+
+  box.append(el('p', 'past__note', formatDay(record.day) + ' · ' + record.workoutName));
+  return box;
+}
+
 // --- Pogled 2: arhiv treningov ---------------------------------------------
 
 function archiveView() {
@@ -349,9 +446,13 @@ export default {
   // Stanje se zato postavi na začetek: vsak obisk se začne brez izbrane vaje in
   // z zaprtimi vrsticami arhiva.
   render(sub) {
-    archive = sub === ARCHIVE;
+    if (sub === ARCHIVE) view = 'archive';
+    else if (sub === EXERCISES) view = 'exercises';
+    else view = 'graph';
+
     workoutQuery = '';
     openWorkoutId = null;
+    openExerciseId = null;
     selectedId = null;
     step = 'month';
 

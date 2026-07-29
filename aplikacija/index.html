@@ -18,6 +18,7 @@
   <!-- Vse poti so relativne, ker aplikacija živi v podmapi /aplikacija/.
        Absolutna pot (/css/base.css) bi na GitHub Pages iskala napačno mesto. -->
   <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/splash.css">
   <link rel="stylesheet" href="css/screen.css">
   <link rel="stylesheet" href="css/tabbar.css">
   <link rel="stylesheet" href="css/training.css">
@@ -25,6 +26,17 @@
   <link rel="stylesheet" href="css/stats.css">
 </head>
 <body>
+
+  <!-- Uvodna animacija. Edina vsebina, ki je zapisana tukaj in ne zgrajena z
+       JavaScriptom: pokazati se mora takoj ob odprtju, torej še preden se
+       naložijo moduli. Kateri od obeh posnetkov se predvaja in kdaj se zastor
+       umakne, določi js/startup/splash.js.
+
+       Zakaj muted + playsinline: brez tega iPhone samodejnega predvajanja ne
+       dovoli, posnetek pa bi se odprl čez cel zaslon v svojem predvajalniku. -->
+  <div id="splash" class="splash">
+    <video class="splash__video" autoplay muted playsinline preload="auto"></video>
+  </div>
 
   <!-- Sem router vstavi trenutni zaslon. HTML je namenoma prazen: vsebino in
        gumbe zgradi JavaScript iz seznama zaslonov (js/startup/screen_register.js),

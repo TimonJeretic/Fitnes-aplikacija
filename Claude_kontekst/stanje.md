@@ -146,6 +146,26 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   enote. Preverjeno v brskalniku: "Pull" z že dodanim Veslanjem ponudi samo Zgibi,
   preimenovanje se zapiše, zasedeno ime pa ne.
 
+- **Arhiv vaj in ožja polja (2026-07-29).** Pod *Arhiv treningov* je enak gumb
+  *Arhiv vaj* (`#/statistika/vaje`): register po abecedi, dotik po imenu razpre
+  rekord vaje v rdeči (`PR: 102,5 kg × 5` z datumom in imenom treninga), koš vajo
+  zbriše — iz registra, predlog, shranjenih treningov in treninga v teku hkrati.
+  Preverjeno, da za zbrisano vajo ne ostane nobena sled.
+  Vrstica serije: polji za težo in ponovitve sta fiksni in enako veliki (52 px),
+  ob teži piše "kg", stolpec "zadnjič" je 30 px, koš 24 px ob desnem robu.
+  Izmerjeno pri 360 px: vrstica je široka natanko toliko, kolikor je prostora,
+  in se ob pomanjšanju pisave ne premakne.
+  Vrstica z imenom in košem je zdaj skupni `.listrow` v `css/screen.css`
+  (uporabljata jo zaslon TRENING in arhiv vaj).
+
+- **Uvodna animacija (2026-07-29).** Ob zagonu se čez cel zaslon predvaja Timonov
+  posnetek: pokončen na telefonu (`fitnes_aplikacija_start_mobile.mp4`, 3,4 s),
+  ležeč na računalniku (`fitnes_aplikacija_start_PC.mp4`, 5 s). Dotik ga preskoči.
+  Zastor se umakne ob koncu posnetka, ob napaki, ob dotiku ali po 9 s — preverjeno
+  je tudi, da se aplikacija normalno odpre, **kadar posnetkov ni**. Posnetka sta v
+  `sw.js` v seznamu `OPTIONAL`, ki ob manjkajoči datoteki ne podre namestitve.
+  Novi datoteki: `js/startup/splash.js`, `css/splash.css`, mapa `media/`.
+
 ## V teku
 
 - **Namestitev prototipa na telefon (Android).** Zataknilo se je pri tem, da je

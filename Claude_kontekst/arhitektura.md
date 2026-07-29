@@ -25,6 +25,11 @@ teče brez naslovne vrstice brskalnika. Zakaj ravno to, piše v [odlocitve.md](o
 Vse tri prve datoteke morajo obstajati, sicer brskalnik ne ponudi namestitve.
 Zahtevan je tudi HTTPS — zato GitHub Pages, glej [delovni-tok.md](delovni-tok.md).
 
+**`index.html` ni več čisto prazen.** Poleg `<main>` in `<nav>` je v njem zastor
+z uvodno animacijo (`#splash`). To je namerna izjema: zastor se mora pokazati
+takoj ob odprtju, torej še preden se naložijo moduli, ki sicer zgradijo vso
+vsebino. Vse ostalo še naprej dela JavaScript.
+
 **`sw.js` mora ostati v korenu `aplikacija/`.** Service worker nadzoruje samo svojo
 mapo in vse pod njo; iz podmape ne bi videl `index.html`. Zato tudi klic
 `navigator.serviceWorker.register('sw.js')` v `js/startup/app.js` ostane brez `../`:
@@ -54,7 +59,8 @@ z naslovom na vrhu zaslona (`.brand` v `css/screen.css`).
 pri zaslonu: pogodba se ne spreminja zaradi tega, ker so vrednosti trenutno enake.
 
 **Podpoti.** Prvi kos naslova je zaslon, ostanek dobi zaslon kot argument:
-`#/statistika/arhiv` pomeni zaslon `stats` in `sub === 'arhiv'`. Zaslon, ki podpoti
+`#/statistika/arhiv` pomeni zaslon `stats` in `sub === 'arhiv'`; enako
+`#/statistika/vaje` odpre arhiv vaj. Zaslon, ki podpoti
 ne pozna, argument preprosto ignorira. Namen je sistemski gumb *nazaj* na telefonu —
 brez svojega naslova bi podpogled ob *nazaj* vrgel ven iz aplikacije.
 
@@ -79,7 +85,8 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 | Datoteka | Kaj je notri |
 |---|---|
 | `base.css` | barvni tokeni (`--accent`, `--accent-gradient`, `--accent-glow`), reset, postavitev strani |
-| `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, spustni seznam `.sheet` in izbira `.choice` |
+| `splash.css` | zastor z uvodno animacijo (nad vsem, `z-index: 100`) |
+| `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, vrstica `.listrow` (ime + koš), spustni seznam `.sheet`, izbira `.choice` |
 | `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
 | `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal`, `.picked` |
 | `weight.css`, `stats.css` | samo tisto, česar v training.css še ni |
@@ -140,7 +147,8 @@ Fitnes aplikacija/
 │   │   │   ├── app.js              zagon: zgradi gumbe, prizge router, registrira SW
 │   │   │   ├── router.js           naslov #/... -> zaslon
 │   │   │   ├── navigate.js         samo sprememba naslova (brez uvozov, da ni kroga)
-│   │   │   └── screen_register.js  seznam zaslonov; edino mesto za nov zaslon
+│   │   │   ├── screen_register.js  seznam zaslonov; edino mesto za nov zaslon
+│   │   │   └── splash.js           uvodna animacija ob zagonu
 │   │   ├── besedilo.js    vsi slovenski nizi (izvoz TEXT)
 │   │   ├── store.js       edina pot do localStorage
 │   │   ├── chart.js       crtni graf iz SVG, brez knjiznice
@@ -148,7 +156,8 @@ Fitnes aplikacija/
 │   │   ├── sheet.js       spustni seznam cez zaslon (izbira meritve, izbira vaje)
 │   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
 │   │   └── screens/       ena datoteka na zaslon
-│   └── icons/
+│   ├── icons/
+│   └── media/             uvodna animacija (mp4, pokoncna in lezeca)
 ├── prototip/              testna PWA (barvni gumbi) — dokaz, da veriga deluje
 ├── fitnes-aplikacija.docx Timonovi osebni zapiski
 └── .nojekyll              GitHub Pages naj ne poganja Jekylla

@@ -176,6 +176,12 @@ Zasloni ne brskajo po podatkih sami. Kar rabijo, je v `store.js`:
   (iz njegove predloge in iz zgodovine treningov z istim imenom). Zaslon TRENING
   z njo napolni izbirnik vaj: pri "Pull" se ne ponujajo vaje s "Push". Ime, ki ga
   še ni bilo, vrne prazen seznam.
+- `removeExercise(id)` — zbriše vajo iz **vseh** zapisov: iz registra, iz predlog,
+  iz shranjenih treningov in iz treninga v teku. Trening, ki mu s tem ne ostane
+  nobena vaja, se ne briše — da je bil ta dan trening, ostane dejstvo.
+- `personalRecord(exerciseId)` — najtežja serija te vaje v zgodovini (pri isti
+  teži tista z več ponovitvami). Namenoma **ni** ocena 1RM: rekord je tisto, kar
+  si res dvignila, ne izračun. Uporablja ga arhiv vaj.
 - `renameExercise(id, name)` — popravek tipkarske napake v imenu vaje. Vrne
   `false`, če je ime prazno ali ga ima že druga vaja. Preimenovanje je varno:
   vse ostalo vajo naslavlja z `id`, zato se popravek pozna v zgodovini in na grafih.

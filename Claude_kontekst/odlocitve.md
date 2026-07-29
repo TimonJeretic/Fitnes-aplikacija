@@ -7,6 +7,58 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Uvodna animacija ob zagonu
+
+**Odločitev:** ob odprtju aplikacije se predvaja kratek posnetek čez cel zaslon
+(`aplikacija/media/*.mp4`, `js/startup/splash.js`). Posnetka sta **dva**: pokončen
+za telefon in ležeč za računalnik; kateri se predvaja, se odloči po obliki zaslona
+(`window.innerHeight >= window.innerWidth`).
+
+**Zakaj mp4 in ne GIF ali animacija v CSS:** na iPhonu je h.264 edini format, ki se
+zanesljivo predvaja, in je pri isti kakovosti večkrat manjši od GIF-a. Element ima
+`muted` in `playsinline` — brez tega iOS samodejnega predvajanja ne dovoli, posnetek
+pa bi se odprl v svojem predvajalniku čez cel zaslon.
+
+**Zakaj dva posnetka in ne en raztegnjen:** zaslon telefona je pokončen, zaslon
+računalnika ležeč. En sam posnetek bi bil na enem od njiju obrezan čez pol slike.
+Izbira je v JavaScriptu, ker `<source media="...">` pri videu ne dela zanesljivo.
+
+**Železno pravilo:** animacija ne sme nikoli zakleniti aplikacije. Zastor se umakne
+po štirih poteh — konec posnetka, napaka, **dotik** (preskok) in časovna varovalka
+(9 s). Če posnetka sploh ni na disku, se aplikacija odpre normalno; zato sta
+posnetka v `sw.js` v ločenem seznamu `OPTIONAL`, ki ob manjkajoči datoteki ne
+podre namestitve, kot bi jo `cache.addAll()`.
+
+**Kaj bi jo ovrglo:** če se izkaže, da čakanje pred vsakim vpisom serije moti bolj,
+kot animacija razveseli. Takrat se predvaja samo ob prvem odprtju v dnevu — to je
+ena vrstica v `splash.js` in en zapis v shrambi.
+
+---
+
+## 2026-07-29 — Arhiv vaj: rekord in brisanje
+
+**Odločitev:** pod *Arhiv treningov* je enak gumb *Arhiv vaj* (`#/statistika/vaje`).
+Notri je register vaj po abecedi; dotik po imenu razpre **rekord** vaje, koš jo
+zbriše. Rekord je **najtežja serija v zgodovini** (pri isti teži tista z več
+ponovitvami), izpisana rdeče: `PR: 102,5 kg × 5`.
+
+**Zakaj rekord in ne ocena 1RM:** graf moči že kaže oceno. Rekord je tisto, kar si
+res dvignila — številka, ki jo hočeš prekositi in ki je ne rabiš razlagati.
+
+**Brisanje odstrani vajo povsod:** iz registra, iz predlog, iz shranjenih treningov
+in iz treninga v teku. Vaja s tem izgine tudi z grafov in iz arhiva treningov.
+Trening, ki mu ne ostane nobena vaja, se **ne** zbriše: da je bil ta dan trening,
+ostane dejstvo. Zato ima brisanje potrditev, ki to pove.
+
+**Zakaj ne "skrij namesto zbriši":** skrita vaja bi ostala v podatkih in bi se
+prej ali slej pojavila tam, kjer je nihče ne pričakuje. Register nastaja sam od
+sebe med treningom, zato mora obstajati tudi način, da se ga pospravi.
+
+**Kaj bi jo ovrglo:** želja po vračanju pomotoma zbrisanega. Takrat rabi aplikacija
+košo za nedavno zbrisano ali izvoz podatkov pred brisanjem.
+
+---
+
 ## 2026-07-29 — Izbirnik vaj ponuja samo vaje tega treninga
 
 **Odločitev:** "Izberi vajo" ponudi vaje, ki spadajo k treningu **s tem imenom** —
@@ -119,16 +171,21 @@ takrat hočeš stran **to** vrstico. `−` je odstranil zadnjo — če si se zmo
 sredini, si moral brisati in znova vpisovati. Dva gumba za isto dejanje sta bila
 tudi eden preveč.
 
-**Cena:** vrstica ima zdaj štiri stolpce (napis, vpis, zadnjič, koš). Prostor si
-delijo tako, da dobi največ tisti stolpec, v katerega se piše:
+**Cena:** vrstica ima zdaj štiri stolpce (napis, vpis, zadnjič, koš):
 
-- napis je ozek in fiksen (46 px) — pove samo, katera serija po vrsti je to;
-- **polji za današnjo težo in ponovitve se raztegneta** čez ves prostor, ki ostane
-  (okoli 70 px na polje pri 390 px, več, kadar vaja nima zgodovine);
-- stolpec "zadnjič" je ozek (34 px, manjša pisava) — je podatek, ne tarča;
-- koš je 26 px in stoji ob desnem robu kartice.
+- napis je ozek in fiksen (44 px) — pove samo, katera serija po vrsti je to;
+- polji za težo in ponovitve sta **fiksni in enako veliki** (52 px), ob polju za
+  težo stoji "kg";
+- stolpec "zadnjič" je ozek (30 px, manjša pisava) — je podatek, ne tarča;
+- koš je 24 px; prostor, ki v vrstici ostane, pobere črta pred njim, zato je koš
+  vedno ob desnem robu.
 
-Preverjeno pri 360 in 390 px.
+**Zakaj fiksni in ne raztegljivi polji:** raztegljivi sta bili pri vaji brez
+zgodovine nesmiselno široki, predvsem pa se je vrstica ob pomanjšanju pisave
+premaknila za las. Fiksna širina pomeni, da se ob vpisovanju ne premakne nič.
+
+Preverjeno pri 360 in 390 px (izmerjeno, ne ocenjeno: vrstica je pri 360 px
+široka natanko toliko, kolikor je prostora).
 
 **Podrobnost:** pri vaji brez zgodovine odpade stolpec "zadnjič" **in z njim njegova
 črta** — sicer bi se ob črti pred košem videli dve črti druga ob drugi.

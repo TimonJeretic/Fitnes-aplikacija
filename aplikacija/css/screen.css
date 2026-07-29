@@ -74,6 +74,106 @@ body[data-screen="stats"] .screen {
   background: var(--border);
 }
 
+/* --- Vrstica z imenom in košem -------------------------------------------- */
+
+/* Uporabljata jo zaslon TRENING (pretekli treningi) in STATISTIKA (arhiv vaj).
+   Dve tarči v vrstici: ime odpre, koš zbriše. Zato nista en gumb z dvema
+   območjema, ampak dva gumba drug ob drugem. */
+.listrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.listrow__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 56px;
+  padding: 0 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.listrow__open:active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+/* Razprta vrstica se spoji s podrobnostmi pod sabo v eno ploskev. */
+.listrow__open.is-open {
+  border-color: var(--accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.listrow__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listrow__count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.listrow__open:active .listrow__count {
+  background: rgba(0, 0, 0, .25);
+  color: var(--on-accent);
+}
+
+/* Koš je siv in brez ozadja: brisanje ne sme biti enako vidno kot izbira. */
+.listrow__remove {
+  flex: none;
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: transform .12s ease, color .15s ease;
+}
+
+.listrow__remove:active {
+  transform: scale(0.9);
+  color: #e08585;
+}
+
+.listrow__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.listrow__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* --- Spustni seznam (js/sheet.js) ----------------------------------------- */
 
 /* Ozadje se zabriše: ko je seznam odprt, nič drugega ne dela in to se vidi.

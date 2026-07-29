@@ -2,7 +2,13 @@
 
 import { SCREENS } from './screen_register.js';
 import { start, navigate } from './router.js';
+import { playIntro } from './splash.js';
 import { icon } from '../dom.js';
+
+// --- Uvodna animacija ------------------------------------------------------
+// Prva stvar ob zagonu. Aplikacija se medtem zgradi za zastorom, zato je ob
+// koncu posnetka že pripravljena.
+playIntro();
 
 const container = document.getElementById('screen');
 const tabbar = document.getElementById('tabbar');

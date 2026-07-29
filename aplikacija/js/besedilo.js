@@ -28,6 +28,7 @@ export const TEXT = {
     date: 'Datum:',
     repeatLast: 'Ponovi zadnji trening',
     set: 'Set',
+    unit: 'kg',
     addSet: 'Dodaj serijo',
     removeSet: 'Odstrani to serijo',
     removeSetConfirm: 'Odstranim to serijo? Vpisana teža in ponovitve bodo izgubljene.',
@@ -92,6 +93,13 @@ export const TEXT = {
   stats: {
     heading: 'Statistika',
     archive: 'Arhiv treningov',
+    exerciseArchive: 'Arhiv vaj',
+    noExercises: 'Registra vaj še ni. Vaje nastanejo, ko jih vpišeš v trening.',
+    pr: 'PR:',
+    noRecord: 'Pri tej vaji ni nobene serije s ponovitvami.',
+    removeExercise: 'Zbriši vajo',
+    removeExerciseConfirm: 'Zbrišem to vajo? Izgine iz registra, iz predlog in iz '
+      + 'vseh shranjenih treningov — tudi z grafov.',
     back: '← Nazaj',
     searchWorkouts: 'Ime treninga ali datum',
     noWorkouts: 'Ni še nobenega shranjenega treninga.',

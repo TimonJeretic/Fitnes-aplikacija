@@ -193,6 +193,66 @@ export function exercisesForWorkoutName(name) {
   return read().exercises.filter((exercise) => ids.has(exercise.id)).sort(byName);
 }
 
+// Zbriše vajo iz **vseh** zapisov: iz registra, iz predlog, iz shranjenih
+// treningov in iz treninga v teku. Vaja s tem res izgine — z grafov, iz arhiva
+// in iz vseh izbirnikov.
+//
+// Trening, ki mu s tem ne ostane nobena vaja, se **ne** briše: da je bil ta dan
+// trening, ostane dejstvo, tudi če vaje v njem ni več. Brisanje treninga je svoje
+// opravilo in ima svoje mesto.
+export function removeExercise(id) {
+  const all = read();
+
+  all.exercises = all.exercises.filter((exercise) => exercise.id !== id);
+
+  all.templates.forEach((template) => {
+    template.exerciseIds = (template.exerciseIds || []).filter((item) => item !== id);
+  });
+
+  all.workouts.forEach((workout) => {
+    workout.exercises = (workout.exercises || []).filter((entry) => entry.exerciseId !== id);
+  });
+
+  if (all.draft && Array.isArray(all.draft.exercises)) {
+    all.draft.exercises = all.draft.exercises.filter((entry) => entry.exerciseId !== id);
+  }
+
+  write();
+}
+
+// Osebni rekord vaje: najtežja serija v zgodovini, pri isti teži tista z več
+// ponovitvami. Namenoma **ni** ocena 1RM kot na grafu moči — rekord je tisto,
+// kar si res dvignil, in ne izračun.
+//
+// Pri vaji z lastno težo je `weightKg` dodana teža; serije brez nje štejejo kot
+// nič dodanega, zato rekord takrat pomeni največ ponovitev.
+export function personalRecord(exerciseId) {
+  let best = null;
+
+  for (const workout of read().workouts) {
+    const entry = (workout.exercises || []).find((item) => item.exerciseId === exerciseId);
+    if (!entry) continue;
+
+    for (const set of entry.sets || []) {
+      if (!Number.isFinite(set.reps)) continue;
+
+      const weight = Number.isFinite(set.weightKg) ? set.weightKg : 0;
+      const better = !best || weight > best.weight || (weight === best.weight && set.reps > best.reps);
+      if (!better) continue;
+
+      best = {
+        weight,
+        weightKg: set.weightKg,
+        reps: set.reps,
+        day: localDay(workout.date),
+        workoutName: workout.name
+      };
+    }
+  }
+
+  return best;
+}
+
 // Popravek imena vaje (tipkarska napaka). Vaja se povsod naslavlja z `id`, zato
 // se preimenovanje samo od sebe pozna v zgodovini, predlogah in na grafih.
 //

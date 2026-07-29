@@ -236,6 +236,30 @@
   font-weight: 600;
 }
 
+/* --- Rekord v arhivu vaj -------------------------------------------------- */
+
+/* Edina številka v arhivu, ki je dosežek in ne zapis, zato edina barvna.
+   Barva je svetlejša od `--accent`: ta je za ploskve, na temni podlagi pa je
+   kot besedilo pretemna. */
+.record {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.record__label {
+  color: var(--accent-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.record__value {
+  color: var(--accent-text);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Graf moči ------------------------------------------------------------ */
 
 .graph__title {

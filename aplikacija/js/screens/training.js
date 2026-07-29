@@ -90,19 +90,19 @@ function pastSection() {
 
 // Vrstica ima dve tarči: ime odpre trening, koš predlogo zbriše.
 function templateRow(template) {
-  const row = el('div', 'template');
+  const row = el('div', 'listrow');
 
-  const open = button('template__open', '', () => startWorkout(template));
-  open.append(el('span', 'template__name', template.name));
-  open.append(el('span', 'template__count', String(template.exerciseIds.length)));
+  const open = button('listrow__open', '', () => startWorkout(template));
+  open.append(el('span', 'listrow__name', template.name));
+  open.append(el('span', 'listrow__count', String(template.exerciseIds.length)));
   row.append(open);
 
-  const remove = button('template__remove', '', () => {
+  const remove = button('listrow__remove', '', () => {
     if (!confirm(T.removeTemplateConfirm)) return;
     store.removeTemplate(template.id);
     paint();
   });
-  remove.append(icon('template__icon', ICON_TRASH));
+  remove.append(icon('listrow__icon', ICON_TRASH));
   withLabel(remove, T.removeTemplate);
   row.append(remove);
 
@@ -531,8 +531,10 @@ function setRow(entry, set, index, last) {
     persist();
   });
 
+  // "kg" stoji ob polju za težo: brez tega ni jasno, kaj se vpisuje v katero
+  // polje, ker sta obe škatlici enaki.
   const inputs = el('div', 'pair');
-  inputs.append(weight, el('span', 'pair__times', '×'), reps);
+  inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
   row.append(inputs);
 
   // Desni stolpec: zadnjič. Pri novi vaji ga ni — in z njim odpade tudi njegova
@@ -552,7 +554,7 @@ function setRow(entry, set, index, last) {
 
   // Koš čisto desno, za svojo črto: odstrani natanko to serijo. Najpogostejši
   // razlog je pomotoma pritisnjen plus, zato mora biti dosegljiv v vrstici sami.
-  row.append(el('div', 'set-row__divider'));
+  row.append(el('div', 'set-row__divider set-row__divider--end'));
 
   const remove = button('set-row__remove', '', () => removeSet(entry, index, set));
   remove.append(icon('set-row__icon', ICON_TRASH));
@@ -606,6 +608,8 @@ function fitText(input) {
 function referenceBox(value, target) {
   const box = el('button', 'numbox numbox--ref', formatNumber(value));
   box.type = 'button';
+  // Ista logika kot pri vnosnem polju: dolga številka se stisne, škatlica ostane.
+  if (box.textContent.length > 4) box.classList.add('is-long');
 
   if (value === null || value === undefined) {
     box.disabled = true;      // prazna škatlica ni tarča za palec
