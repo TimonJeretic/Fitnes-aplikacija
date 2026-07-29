@@ -22,6 +22,11 @@ teče brez naslovne vrstice brskalnika. Zakaj ravno to, piše v [odlocitve.md](o
 | `sw.js` | service worker: predpomni datoteke, omogoča delovanje brez interneta |
 | `icons/` | 192 px, 512 px in maskable različica za Android |
 
+`sw.js` ima dve poti do odgovora. Navadna zahteva dobi datoteko iz predpomnilnika,
+sicer z interneta. Zahteva z glavo `Range` (posnetek, ki ga predvajalnik jemlje po
+kosih) pa gre skozi `partial()`, ki iz shranjene datoteke izreže kos in ga vrne s
+statusom **206** — Safari cel odgovor na tako zahtevo zavrne in predvajanje odpove.
+
 Vse tri prve datoteke morajo obstajati, sicer brskalnik ne ponudi namestitve.
 Zahtevan je tudi HTTPS — zato GitHub Pages, glej [delovni-tok.md](delovni-tok.md).
 
@@ -156,8 +161,8 @@ Fitnes aplikacija/
 │   │   ├── sheet.js       spustni seznam cez zaslon (izbira meritve, izbira vaje)
 │   │   ├── dom.js         el(), button(), stevilke, datumi — skupno vsem zaslonom
 │   │   └── screens/       ena datoteka na zaslon
-│   ├── icons/
-│   └── media/             uvodna animacija (mp4, pokoncna in lezeca)
+│   ├── icons/             ikone aplikacije (iz zadnje slicice uvodnega posnetka)
+│   └── media/             uvodna animacija (mp4 pokoncna in lezeca) + poster
 ├── prototip/              testna PWA (barvni gumbi) — dokaz, da veriga deluje
 ├── fitnes-aplikacija.docx Timonovi osebni zapiski
 └── .nojekyll              GitHub Pages naj ne poganja Jekylla

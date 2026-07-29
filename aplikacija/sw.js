@@ -2,7 +2,7 @@
 // Njegova naloga tukaj: shrani datoteke aplikacije, da dela tudi brez interneta.
 
 // Ime predpomnilnika. Ob spremembah incrementaj verzijo
-const CACHE = 'aplikacija-v6';
+const CACHE = 'aplikacija-v7';
 
 // POZOR: aplikacija je razdeljena na module. 
 // Vsak modul je svoja datoteka in mora biti naštet spodaj. 
@@ -47,7 +47,8 @@ const FILES = [
 // aplikacija bi brez interneta nehala delati samo zato, ker posnetka še ni.
 const OPTIONAL = [
   './media/fitnes_aplikacija_start_mobile.mp4',
-  './media/fitnes_aplikacija_start_PC.mp4'
+  './media/fitnes_aplikacija_start_PC.mp4',
+  './media/intro-poster.jpg'
 ];
 
 // 1. Namestitev: prenesi in shrani vse datoteke aplikacije.
@@ -77,7 +78,44 @@ self.addEventListener('activate', (event) => {
 // 3. Vsaka zahteva: najprej poglej v predpomnilnik, šele nato na internet.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Posnetka ne zahteva brskalnik v celoti, ampak po kosih (glava `Range`).
+  // Safari na iPhonu vztraja, da mu na tako zahtevo odgovorimo z delnim
+  // odgovorom (206). Če mu vrnemo cel posnetek (200), predvajanje odpove —
+  // in prav to se je dogajalo: zastor je za trenutek pogledal ven in izginil.
+  if (event.request.headers.has('range')) {
+    event.respondWith(partial(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((hit) => hit || fetch(event.request))
   );
 });
+
+// Iz shranjenega posnetka izreži zahtevani kos in ga vrni kot 206.
+async function partial(request) {
+  const hit = await caches.match(request);
+  const asked = /^bytes=(\d+)-(\d*)$/.exec(request.headers.get('range') || '');
+
+  // Brez shranjene datoteke ali pri nenavadni obliki zahteve pusti brskalnik,
+  // da si pomaga sam prek interneta.
+  if (!hit || !asked) return fetch(request);
+
+  const whole = await hit.arrayBuffer();
+  const from = Number(asked[1]);
+  const to = asked[2] ? Math.min(Number(asked[2]), whole.byteLength - 1) : whole.byteLength - 1;
+
+  if (from >= whole.byteLength) return fetch(request);
+
+  const piece = whole.slice(from, to + 1);
+  return new Response(piece, {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: {
+      'Content-Type': hit.headers.get('Content-Type') || 'application/octet-stream',
+      'Content-Length': String(piece.byteLength),
+      'Content-Range': `bytes ${from}-${to}/${whole.byteLength}`
+    }
+  });
+}

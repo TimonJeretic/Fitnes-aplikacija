@@ -86,9 +86,31 @@ Dve pasti, ki sta obe stali eno napačno ugotovitev:
 - **Service worker servira staro kodo.** Če se ista mapa `--user-data-dir` uporabi
   dvakrat, drugi zagon dobi datoteke iz predpomnilnika in sprememb **ni videti**.
   Za vsak zagon nova mapa profila (ali pa profil pobriši).
+- **Izpis se zajame ob dogodku `load`, torej prezgodaj za vse, kar čaka.** Rezultata
+  `await`-a (na primer namestitve service workerja) v `--dump-dom` ni. `--virtual-time-budget`
+  tu ne pomaga, ampak škodi: ura teče pospešeno, service worker pa se namesti v pravem
+  času in ga zato nikoli ne dočaka. Rešitev: dogodek `load` zadrži nedosegljiva slika
+  (`<img src="http://10.255.255.1/x.png">`), izpis pa se zajame z `--timeout=15000`
+  v pravem času. Tako je bil preverjen odgovor 206 na zahtevo z glavo `Range`.
 
 Shramba se napolni z začasno stranjo, ki v `localStorage` zapiše ključ `fitnes` in
 jo naloži isti profil — zasloni brez podatkov povedo malo.
+
+## Ikone aplikacije
+
+Vse tri ikone v `aplikacija/icons/` so narejene iz zadnje sličice uvodnega posnetka.
+Ob novem logotipu se postopek ponovi (Pillow je nameščen, Node ni potreben):
+
+1. sličica iz posnetka:
+   `ffmpeg -sseof -0.3 -i media/fitnes_aplikacija_start_mobile.mp4 -frames:v 1 logo.png`
+2. iz nje se z odmikom svetlosti (`lum > 140`) izreže bel logotip s prosojnim ozadjem,
+   ta pa se položi na preliv `#9d0f0b → #661714`;
+3. tri datoteke: `icon-512.png` in `icon-192.png` z logotipom čez **68 %** stranice,
+   `icon-512-maskable.png` čez **50 %** — Android ikono izreže v svojo obliko in vse
+   zunaj notranjih 80 % lahko odpade.
+
+Ozadje mora biti polno, brez prosojnosti: iPhone prosojne dele ikone izriše črno.
+Ista sličica, pomanjšana na 540×960, je `media/intro-poster.jpg`.
 
 ## Namestitev na telefon
 

@@ -23,6 +23,11 @@ const MAX_WAIT = 9000;
 // potem, sicer bi izginil s poskokom.
 const FADE = 350;
 
+// Če se posnetek ne da predvajati, ostane na zaslonu njegova sličica (poster).
+// Toliko časa naj se vidi, preden gremo naprej: brez tega zastor le za trenutek
+// pogleda ven in izgine, kar je videti kot napaka.
+const HOLD = 1400;
+
 export function playIntro() {
   const splash = document.getElementById('splash');
   if (!splash) return;                     // brez zastora v HTML-u ni česa igrati
@@ -44,16 +49,19 @@ export function playIntro() {
   // da se vpiše serija — kdor tega ne mara čakati, gre naprej.
   splash.addEventListener('click', finish);
 
+  // Namesto takojšnjega umika: pokaži sličico logotipa in šele nato naprej.
+  const hold = () => setTimeout(finish, HOLD);
+
   video.addEventListener('ended', finish);
-  video.addEventListener('error', finish);
+  video.addEventListener('error', hold);
   setTimeout(finish, MAX_WAIT);
 
   video.src = source();
 
-  // Samodejno predvajanje je lahko zavrnjeno (varčevanje z baterijo, nastavitve
-  // brskalnika). Takrat ni česa gledati in gre zastor takoj stran.
+  // Samodejno predvajanje je lahko zavrnjeno — varčevanje z baterijo na iPhonu
+  // ga ustavi tudi pri utišanem posnetku. Takrat obvelja poster.
   const started = video.play();
-  if (started && typeof started.catch === 'function') started.catch(finish);
+  if (started && typeof started.catch === 'function') started.catch(hold);
 }
 
 // Pokončen zaslon dobi različico za telefon, ležeč tisto za računalnik.

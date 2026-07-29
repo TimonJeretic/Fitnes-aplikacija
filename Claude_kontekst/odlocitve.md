@@ -7,6 +7,46 @@ Nove odločitve dodajam sam, takoj ko padejo — brez čakanja, da Timon reče.
 
 ---
 
+## 2026-07-29 — Service worker odgovarja na zahteve po kosih (`Range`)
+
+**Odločitev:** `sw.js` prestreza zahteve z glavo `Range` posebej in iz shranjene
+datoteke izreže zahtevani kos ter ga vrne s statusom **206**. Ostale zahteve gredo
+po stari poti (najprej predpomnilnik, nato internet).
+
+**Zakaj:** brez tega uvodni posnetek na iPhonu ni deloval — zastor je za trenutek
+pogledal ven in izginil, na računalniku pa je bilo vse v redu. Vzrok: predvajalnik
+posnetka ne zahteva v celoti, ampak po kosih. Safari na tako zahtevo vztraja pri
+delnem odgovoru; cel posnetek s statusom 200 sprejme kot napako in predvajanje
+odpove. Chrome je bolj popustljiv, zato se napaka na računalniku ni pokazala.
+
+**Posledica:** velika datoteka se pri vsaki zahtevi po kosu prebere v pomnilnik v
+celoti (`arrayBuffer()`). Pri 1 MB posnetku je to nič; pri urnem videu bi bilo treba
+brati po kosih.
+
+**Kaj bi jo ovrglo:** nič — to je zahteva standarda in ne posebnost iPhona.
+
+---
+
+## 2026-07-29 — Ikona aplikacije je logotip iz uvodnega posnetka
+
+**Odločitev:** `icons/icon-192.png`, `icon-512.png` in `icon-512-maskable.png` so
+narejene iz zadnje sličice uvodnega posnetka: bel logotip LAPI na rdečem prelivu
+aplikacije. Ista sličica je tudi `media/intro-poster.jpg`.
+
+**Zakaj:** ikona na domačem zaslonu in prva stvar, ki jo vidiš ob odprtju, morata
+biti ista slika — sicer je videti, kot da si odprl nekaj drugega. Logotip je že
+obstajal v posnetku, zato ni bilo treba nikamor nalagati nove datoteke.
+
+**Zakaj tri velikosti:** Android izreže ikono v obliko, ki si jo izbere sam
+(*maskable*), zato ima ta različica logotip pomanjšan na polovico stranice — kar
+štrli iz varnega kroga, se odreže. iPhone manifesta ne bere in vzame
+`apple-touch-icon` iz `index.html`; prosojnost bi izrisal črno, zato je ozadje
+poln preliv in ne prosojnost.
+
+**Kaj bi jo ovrglo:** nov logotip. Postopek je zapisan v [delovni-tok.md](delovni-tok.md).
+
+---
+
 ## 2026-07-29 — Uvodna animacija ob zagonu
 
 **Odločitev:** ob odprtju aplikacije se predvaja kratek posnetek čez cel zaslon
@@ -28,6 +68,12 @@ po štirih poteh — konec posnetka, napaka, **dotik** (preskok) in časovna var
 (9 s). Če posnetka sploh ni na disku, se aplikacija odpre normalno; zato sta
 posnetka v `sw.js` v ločenem seznamu `OPTIONAL`, ki ob manjkajoči datoteki ne
 podre namestitve, kot bi jo `cache.addAll()`.
+
+**Dopolnjeno isti dan:** ob napaki ali zavrnjenem predvajanju zastor ne izgine
+takoj, ampak počaka 1,4 s (`HOLD`). Takrat obvelja `poster` — zadnja sličica
+posnetka z logotipom. Prej je zastor v takem primeru za trenutek pogledal ven in
+izginil, kar je izgledalo kot okvara. Varčevanje z baterijo na iPhonu samodejno
+predvajanje ustavi tudi pri utišanem posnetku, zato to ni robni primer.
 
 **Kaj bi jo ovrglo:** če se izkaže, da čakanje pred vsakim vpisom serije moti bolj,
 kot animacija razveseli. Takrat se predvaja samo ob prvem odprtju v dnevu — to je

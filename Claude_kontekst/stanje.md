@@ -165,6 +165,26 @@ To datoteko posodabljam sam, kadar se stanje spremeni.
   je tudi, da se aplikacija normalno odpre, **kadar posnetkov ni**. Posnetka sta v
   `sw.js` v seznamu `OPTIONAL`, ki ob manjkajoči datoteki ne podre namestitve.
   Novi datoteki: `js/startup/splash.js`, `css/splash.css`, mapa `media/`.
+  **Popravek 2026-07-29 (iPhone):** posnetek se na telefonu ni predvajal — zastor je
+  za trenutek pogledal ven in izginil. Vzrok ni bil posnetek, ampak service worker:
+  na zahtevo z glavo `Range` je vračal celo datoteko s statusom 200, Safari pa
+  vztraja pri delnem odgovoru. `sw.js` zdaj take zahteve prestreže in vrne **206**;
+  preverjeno v brezglavem brskalniku (`bytes 0-99/644769`, `video/mp4`), navadne
+  zahteve pa še naprej dobijo cel odgovor. Ob zavrnjenem predvajanju (varčevanje z
+  baterijo) zastor počaka 1,4 s, da se vidi `media/intro-poster.jpg` — zadnja
+  sličica posnetka z logotipom.
+
+- **Ikona aplikacije (2026-07-29).** `icons/icon-192.png`, `icon-512.png` in
+  `icon-512-maskable.png` niso več začasne: narejene so iz zadnje sličice uvodnega
+  posnetka — bel logotip LAPI na rdečem prelivu. Imena datotek so ista, zato
+  `manifest.json` in `apple-touch-icon` v `index.html` ostaneta nespremenjena.
+  Postopek za nov logotip je v [delovni-tok.md](delovni-tok.md).
+
+- **Prazen pas pod spodnjimi gumbi (2026-07-29).** Odmik spodaj je zdaj
+  `max(calc(var(--safe-bottom) - 14px), 10px)`: iPhone javi 34 px varnega območja,
+  črtica za domov pa je narisana ob samem robu, zato je ves pas izgledal kot
+  prazen prostor. Če se pas vidi tudi po tem, aplikacija ni nameščena na domači
+  zaslon in gre za vrstico Safarija, ki je aplikacija ne more odstraniti.
 
 ## V teku
 

@@ -33,9 +33,12 @@
        umakne, določi js/startup/splash.js.
 
        Zakaj muted + playsinline: brez tega iPhone samodejnega predvajanja ne
-       dovoli, posnetek pa bi se odprl čez cel zaslon v svojem predvajalniku. -->
+       dovoli, posnetek pa bi se odprl čez cel zaslon v svojem predvajalniku.
+       Poster je zadnja sličica posnetka: če predvajanja ni (varčevanje z
+       baterijo), se namesto praznine vidi vsaj logotip. -->
   <div id="splash" class="splash">
-    <video class="splash__video" autoplay muted playsinline preload="auto"></video>
+    <video class="splash__video" autoplay muted playsinline preload="auto"
+           poster="media/intro-poster.jpg"></video>
   </div>
 
   <!-- Sem router vstavi trenutni zaslon. HTML je namenoma prazen: vsebino in
