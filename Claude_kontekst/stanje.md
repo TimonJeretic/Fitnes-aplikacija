@@ -85,6 +85,11 @@ Node.js ni nameščen, zato je vse teklo v **brezglavem Edgeu** proti
   pa 270 od 272 (tam jo skrči `@media (max-width: 340px)` v `training.css`).
 - **Lepljiva glava** (`.brand`): po 300 px drsenja ostane na vrhu zaslona,
   spodnja vrstica gumbov pa je zunaj drsečega dela že po zgradbi strani.
+- **Elastika pri "Pull ups"**: izbirnik se odpre in barva se shrani (`band`),
+  dotik na "zadnjič" jo prepiše v današnjo serijo, migracija z verzije 4 na 5
+  podatkov ne izgubi. Vaja "Pullups" in "Pull-ups" ostaneta navadni vaji s kg.
+  Serija z elastiko ne pride na graf moči (od treh serij v preizkusu je štela
+  samo tista z BW), v arhivu pa piše "Zelena × 7".
 - **Delni odgovor (206)** service workerja na zahtevo z glavo `Range` — brez tega
   se uvodni posnetek na iPhonu ni predvajal.
 - **Varnostna kopija:** izvoz da veljaven JSON, branje nazaj ohrani števila,
