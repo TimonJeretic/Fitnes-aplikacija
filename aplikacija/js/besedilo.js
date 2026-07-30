@@ -5,6 +5,16 @@
 export const TEXT = {
   appName: 'Fitnes',
 
+  // Imena elastik pri zgibih. Ključi so `store.BANDS`, same barve so v CSS.
+  // Skupna obema zaslonoma: vpisujejo se pri treningu, berejo pa tudi v arhivu.
+  bands: {
+    yellow: 'Rumena',
+    green: 'Zelena',
+    teal: 'Turkizna',
+    red: 'Rdeča',
+    bw: 'BW (lastna teža)'
+  },
+
   // Imena zaslonov. Ključi so enaki kot `id` v js/screens/*.js.
   screens: {
     training: 'TRENING',
@@ -29,6 +39,9 @@ export const TEXT = {
     repeatLast: 'Ponovi zadnji trening',
     set: 'Set',
     unit: 'kg',
+    band: 'Barva elastike',
+    bandNone: 'Počisti izbiro',
+
     addSet: 'Dodaj serijo',
     removeLastSet: 'Odstrani zadnjo serijo',
     removeLastSetConfirm: 'Odstranim zadnjo serijo? Vpisana teža in ponovitve bodo izgubljene.',

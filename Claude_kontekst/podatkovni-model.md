@@ -1,8 +1,9 @@
 # Podatkovni model
 
 > **Status: POTRJEN in implementiran** v `aplikacija/js/store.js`.
-> Trenutna `schemaVersion` je **4** (2026-07-29, meritev je dobila `unit`,
-> `valueCm` se je preimenoval v `value`).
+> Trenutna `schemaVersion` je **5** (2026-07-30, serija je dobila `band` —
+> barvo elastike pri zgibih; pred tem 4: meritev je dobila `unit`, `valueCm`
+> se je preimenoval v `value`).
 > Vsaka nadaljnja sprememba strukture zahteva migracijo v `migrate()` in dvig
 > `schemaVersion` — na telefonu so pravi podatki.
 
@@ -12,7 +13,7 @@ Vse je **en JSON objekt v `localStorage`** pod ključem `fitnes`:
 
 ```js
 {
-  schemaVersion: 4,
+  schemaVersion: 5,
   exercises: [],           // register vaj
   templates: [],           // predloge treningov
   workouts: [],            // zgodovina
@@ -102,9 +103,18 @@ narediti; naslednjič naj se spet ponudijo.
 |---|---|---|
 | `weightKg` | number \| null | `null` = telesna teža ali neizpolnjeno |
 | `reps` | number \| null | |
+| `band` | string \| null | barva elastike; samo pri vaji "Pull ups" (verzija 5) |
 
 **Nima `id` in nima `order`** — mesto v polju `sets` je zaporedje. Serija ni nikoli
 naslovljena od zunaj, zato bi bil id mrtvo polje.
+
+**`band`** je eno od imen v `store.BANDS`: `'yellow' | 'green' | 'teal' | 'red' | 'bw'`.
+Zapiše se samo pri vaji, ki se imenuje natanko "Pull ups" (`store.usesBands()`) —
+tam se namesto teže vpiše elastika in `weightKg` ostane `null`. Same barve so v
+CSS (`.band--*`), v podatkih je ime: barvo se da spremeniti brez migracije.
+
+Serija z elastiko **ne gre na graf moči in ne šteje za rekord**: elastika del teže
+odvzame, koliko je ne vemo. `'bw'` (zgib brez elastike) je izjema in šteje normalno.
 
 Pri vajah z lastno težo gre v `weightKg` **dodana** teža (npr. pas pri dipsih),
 ne skupna. Graf moči telesno težo **prišteje** — z vrednostjo iz `bodyweightEntry`,
@@ -240,6 +250,11 @@ pobrisala zgodovino treningov.
 
 `migrate()` je hkrati zaščita pred pokvarjenim zapisom: manjkajoča ali napačna
 polja se nadomestijo s praznimi, da aplikacija ne obstane.
+
+Ni pa vsaka nova verzija tudi pretvorba. Verzija **5** doda serijam neobvezno polje
+`band`; star zapis ga preprosto nima in to pomeni "brez elastike". Verzija se kljub
+temu dvigne — iz nje se vidi, od kdaj polje obstaja, in to je edini zanesljiv način,
+da se čez pol leta ve, ali je zapis brez `band` star ali samo prazen.
 
 ## Varnostna kopija
 

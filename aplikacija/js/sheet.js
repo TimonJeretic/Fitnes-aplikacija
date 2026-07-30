@@ -12,7 +12,7 @@ import { el, button } from './dom.js';
 
 // config = {
 //   title,               napis na vrhu
-//   items,               [{ id, name, count, active }]
+//   items,               [{ id, name, count, active, swatch }]
 //   onPick(id),          klic ob izbiri
 //   closeLabel,          napis gumba za zapiranje
 //   emptyLabel,          napis, kadar je seznam prazen
@@ -57,6 +57,10 @@ function itemRow(item, close, onPick) {
     close();
     onPick(item.id);
   });
+
+  // Barvni kvadratek pred imenom (elastike pri zgibih). `swatch` je ime razreda,
+  // ker so barve v CSS — seznam sam ne ve, katere barve obstajajo.
+  if (item.swatch) row.append(el('span', 'sheet__swatch ' + item.swatch));
 
   row.append(el('span', 'sheet__name', item.name));
   if (item.count !== null && item.count !== undefined) {

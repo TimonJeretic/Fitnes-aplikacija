@@ -8,7 +8,7 @@
 // Oblika podatkov je opisana v Claude_kontekst/podatkovni-model.md.
 
 const KEY = 'fitnes';
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 // Kdaj je nazadnje nastala varnostna kopija. Ločen ključ in ne polje v podatkih:
 // uvoz stare kopije bi ta podatek povozil in aplikacija bi mislila, da kopije ni
@@ -18,6 +18,27 @@ const BACKUP_KEY = 'fitnes-kopija';
 // Enote, v katerih se meri telo. Meritev si enoto izbere ob nastanku in je ne
 // menja — sicer bi bile stare in nove točke na istem grafu v različnih enotah.
 export const UNITS = ['kg', 'cm'];
+
+// Barve elastik pri zgibih. Vrstni red je vrstni red v izbirniku; same barve so
+// v CSS (`.band--*` v training.css), tukaj so samo imena — barva je videz in ne
+// podatek, zato se popravi na enem mestu, brez migracije shranjenih treningov.
+// 'bw' ni elastika, ampak "brez nje" (lastna teža).
+export const BANDS = ['yellow', 'green', 'teal', 'red', 'bw'];
+
+// Vaja, pri kateri se namesto teže vpiše elastika. Ime mora biti natanko to —
+// "Pullups" ali "Pull-ups" je navadna vaja s kilogrami. Primerjamo brez ozira na
+// velike črke in presledke ob robu, ker je to tipkanje in ne druga vaja.
+const BAND_EXERCISE = 'pull ups';
+
+export function usesBands(exercise) {
+  return !!exercise && String(exercise.name || '').trim().toLowerCase() === BAND_EXERCISE;
+}
+
+// Elastika pri zgibih pomaga, zato serija z njo ni primerljiva s serijo brez nje.
+// 'bw' je izjema: to pomeni zgib brez elastike, torej čisto lastno težo.
+function assisted(set) {
+  return !!set.band && set.band !== 'bw';
+}
 
 function emptyData() {
   return {
@@ -57,6 +78,9 @@ function migrate(raw) {
     // tiho obravnaval drugače kot izrecno izbrani "ne".
     exercises: Array.isArray(raw.exercises) ? raw.exercises.map(cleanExercise) : base.exercises,
     templates: Array.isArray(raw.templates) ? raw.templates : base.templates,
+    // Verzija 5: serija ima lahko `band` (barva elastike pri zgibih). Staremu
+    // zapisu ni treba ničesar dodati — serija brez tega polja je serija brez
+    // elastike. Verzija se dvigne zato, da se ve, od kdaj polje obstaja.
     workouts: Array.isArray(raw.workouts) ? raw.workouts : base.workouts,
     bodyweightEntries: Array.isArray(raw.bodyweightEntries)
       ? raw.bodyweightEntries
@@ -240,6 +264,7 @@ export function personalRecord(exerciseId) {
 
     for (const set of entry.sets || []) {
       if (!Number.isFinite(set.reps)) continue;
+      if (assisted(set)) continue;      // z elastiko ni rekord, ampak druga vaja
 
       const weight = Number.isFinite(set.weightKg) ? set.weightKg : 0;
       const better = !best || weight > best.weight || (weight === best.weight && set.reps > best.reps);
@@ -503,6 +528,10 @@ export function bodyweightAt(day) {
 // `weightKg` **dodana** teža (pas pri dipsih), zato se prišteje telesna;
 // prazno polje takrat pomeni čisto lastno težo in ne manjkajočega podatka.
 function effectiveWeight(set, exercise, day) {
+  // Serija z elastiko na graf ne gre: elastika del teže odvzame, koliko je ne
+  // vemo. Šteti jo kot polno lastno težo bi krivuljo dvignilo po nedolžnem.
+  if (assisted(set)) return null;
+
   if (exercise && exercise.usesBodyweight) {
     const body = bodyweightAt(day);
     if (body === null) return null;

@@ -235,6 +235,10 @@ function topSets(points, exercise) {
 function setText(set, usesBodyweight) {
   const reps = set.reps === null || set.reps === undefined ? T.empty : String(set.reps);
 
+  // Zgib z elastiko: kilogramov ni, pove se barva. Take serije na grafu ni,
+  // v arhivu pa mora pisati, kaj si res naredila.
+  if (set.band) return (TEXT.bands[set.band] || set.band) + ' × ' + reps;
+
   if (usesBodyweight) {
     const added = set.weightKg ? ' +' + formatNumber(set.weightKg) + ' ' + T.unit : '';
     return T.ownBodyweight + added + ' × ' + reps;

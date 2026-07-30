@@ -305,10 +305,25 @@ body[data-screen="stats"] .screen {
    izbrana. Obroba je pridržana za izbiro enote spodaj; če bi jo imela tudi
    vrstica, bi bili v istem oknu dve različni "izbrano" in nobena jasna. */
 
+/* Ime pobere prostor, da ostane levo tudi takrat, ko je pred njim kvadratek. */
 .sheet__name {
+  flex: 1;
+  min-width: 0;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Barvni kvadratek pred imenom (elastike pri zgibih). Same barve so razredi
+   `.band--*` v training.css — seznam ve samo, da kvadratek nariše. */
+.sheet__swatch {
+  flex: none;
+  width: 26px;
+  height: 26px;
+
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 8px;
 }
 
 .sheet__count {

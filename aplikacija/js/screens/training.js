@@ -15,6 +15,7 @@ import * as store from '../store.js';
 import * as backup from '../backup.js';
 import { settingsButton } from '../settings.js';
 import { ICON_TRAINING, ICON_TRASH } from '../icons.js';
+import { openSheet } from '../sheet.js';
 import { el, button, icon, withLabel, parseNumber, limitNumber, formatNumber, formatDate } from '../dom.js';
 
 const T = TEXT.training;
@@ -345,8 +346,12 @@ function exerciseCard(entry) {
   // takrat desni stolpec ostane prazen.
   const last = store.lastSetsFor(entry.exerciseId);
 
+  // Zgibi z elastiko: namesto teže se izbere barva elastike. Odloča ime vaje,
+  // ne zastavica v podatkih — glej store.usesBands().
+  const bands = store.usesBands(exercise);
+
   const sets = el('div', 'exercise__sets');
-  entry.sets.forEach((set, index) => sets.append(setRow(set, index, last)));
+  entry.sets.forEach((set, index) => sets.append(setRow(set, index, last, bands)));
   card.append(sets);
 
   const controls = el('div', 'exercise__controls');
@@ -520,23 +525,33 @@ function shiftOthers(cards, from, to, step) {
   });
 }
 
-function setRow(set, index, last) {
+function setRow(set, index, last, bands) {
   const row = el('div', 'set-row');
   row.append(el('div', 'set-row__label', T.set + ' ' + (index + 1)));
 
-  const weight = numberField(set.weightKg, 'decimal', (value) => {
-    set.weightKg = value;
-    persist();
-  });
   const reps = numberField(set.reps, 'numeric', (value) => {
     set.reps = value;
     persist();
   });
 
-  // "kg" stoji ob polju za težo: brez tega ni jasno, kaj se vpisuje v katero
-  // polje, ker sta obe škatlici enaki.
   const inputs = el('div', 'pair');
-  inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
+  let weight = null;   // pri zgibih z elastiko tega polja ni
+
+  if (bands) {
+    // Pri zgibih se v prvo škatlico ne vpisuje teža, ampak izbere elastika.
+    // Napisa "kg" zato ni: kilogramov tu ni nikjer.
+    inputs.append(bandBox(set), el('span', 'pair__times', '×'), reps);
+  } else {
+    weight = numberField(set.weightKg, 'decimal', (value) => {
+      set.weightKg = value;
+      persist();
+    });
+
+    // "kg" stoji ob polju za težo: brez tega ni jasno, kaj se vpisuje v katero
+    // polje, ker sta obe škatlici enaki.
+    inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
+  }
+
   row.append(inputs);
 
   // Desni stolpec: zadnjič. Črta ga loči od današnjih številk in ga hkrati
@@ -547,7 +562,9 @@ function setRow(set, index, last) {
     const previous = last[index] || null;
     const reference = el('div', 'pair pair--ref');
     reference.append(
-      referenceBox(previous ? previous.weightKg : null, weight),
+      bands
+        ? referenceBandBox(previous ? previous.band : null, set)
+        : referenceBox(previous ? previous.weightKg : null, weight),
       el('span', 'pair__times', '×'),
       referenceBox(previous ? previous.reps : null, reps)
     );
@@ -596,6 +613,71 @@ function numberField(value, mode, onChange) {
 // da bi se konec skril, se pisava pomanjša.
 function fitText(input) {
   input.classList.toggle('is-long', input.value.length > 4);
+}
+
+// --- Elastika pri zgibih ---------------------------------------------------
+//
+// Pri vaji z imenom "Pull ups" se ne vpisuje teža, ampak barva elastike: z njo
+// se dela zgib, njena barva pa pove, koliko pomaga. Zapiše se v `set.band`,
+// kilogrami ostanejo prazni — in prav zato taka serija ne gre na graf moči
+// (glej store.js).
+
+function bandBox(set) {
+  const box = button('numbox numbox--band', '', () => openBandPicker(set));
+  paintBand(box, set.band);
+  withLabel(box, T.band);
+  return box;
+}
+
+// Ista škatlica v stolpcu "zadnjič": dotik prepiše elastiko v današnjo serijo,
+// tako kot dotik številke prepiše težo.
+function referenceBandBox(band, set) {
+  const box = el('button', 'numbox numbox--ref numbox--band', '');
+  box.type = 'button';
+  paintBand(box, band);
+
+  if (!band) {
+    box.disabled = true;
+    return box;
+  }
+
+  withLabel(box, TEXT.bands[band] || band);
+  box.addEventListener('click', () => {
+    set.band = band;
+    persist();
+    paint();
+  });
+  return box;
+}
+
+// Barva je razred in ne slog: same barve so zapisane v CSS, koda pozna samo imena.
+function paintBand(box, band) {
+  box.classList.remove(...store.BANDS.map((name) => 'band--' + name));
+  box.textContent = band === 'bw' ? 'BW' : '';
+  if (band) box.classList.add('band--' + band);
+}
+
+function openBandPicker(set) {
+  const items = store.BANDS.map((band) => ({
+    id: band,
+    name: TEXT.bands[band] || band,
+    swatch: 'band--' + band,
+    active: set.band === band
+  }));
+
+  // Zadnja vrstica pobriše izbiro: ponesreči izbrana barva mora imeti pot nazaj.
+  items.push({ id: '', name: T.bandNone, active: !set.band });
+
+  openSheet({
+    title: T.band,
+    items,
+    onPick: (band) => {
+      set.band = band || null;
+      persist();
+      paint();
+    },
+    closeLabel: T.close
+  });
 }
 
 // Klik na številko iz zadnjič jo prepiše v polje levo. En dotik namesto dveh

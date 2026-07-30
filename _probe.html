@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="sl">
+<head><meta charset="utf-8"><title>Preizkus elastik</title>
+<style>body{margin:0;font:12px monospace;background:#222;color:#eee}
+iframe{width:390px;height:820px;border:1px solid #555;float:right}</style>
+</head>
+<body>
+<pre id="out">tece...</pre>
+<img src="http://10.255.255.1/zadrzi.png" alt="" width="1" height="1">
+<script>
+const out = document.getElementById('out');
+const line = (t) => { out.textContent += '\n' + t; };
+
+const pullId = 'ex-pull';
+const fakeId = 'ex-fake';
+const iso = (back) => new Date(Date.now() - back * 86400000).toISOString();
+
+// Namenoma zapisano kot verzija 4: preveri se tudi migracija na 5.
+localStorage.setItem('fitnes', JSON.stringify({
+  schemaVersion: 4,
+  exercises: [
+    { id: pullId, name: 'Pull ups', note: '', usesBodyweight: true },
+    { id: fakeId, name: 'Pullups', note: '', usesBodyweight: true }
+  ],
+  templates: [{ id: 't-1', name: 'Pull', exerciseIds: [pullId, fakeId] }],
+  workouts: [{
+    id: 'w-1', name: 'Pull', date: iso(7),
+    exercises: [
+      { exerciseId: pullId, sets: [
+        { weightKg: null, reps: 7, band: 'green' },
+        { weightKg: null, reps: 5, band: 'bw' }
+      ] },
+      { exerciseId: fakeId, sets: [{ weightKg: 10, reps: 6 }] }
+    ]
+  }],
+  bodyweightEntries: [{ day: iso(7).slice(0, 10), weightKg: 72 }],
+  measurements: [], measurementEntries: [],
+  draft: {
+    name: 'Pull', templateId: 't-1', startedAt: iso(0),
+    exercises: [
+      { exerciseId: pullId, sets: [{ weightKg: null, reps: null }] },
+      { exerciseId: fakeId, sets: [{ weightKg: null, reps: null }] }
+    ]
+  }
+}));
+
+const frame = document.createElement('iframe');
+frame.src = 'aplikacija/#/trening';
+document.body.append(frame);
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+frame.addEventListener('load', async () => {
+  await wait(2600);
+  const doc = frame.contentDocument;
+  const win = frame.contentWindow;
+
+  const cards = doc.querySelectorAll('.exercise');
+  line('kartic: ' + cards.length);
+
+  const pull = cards[0], fake = cards[1];
+  line('1. kartica: ' + pull.querySelector('.exercise__label').textContent);
+  line('   izbira elastike: ' + !!pull.querySelector('.numbox--band') +
+       ' | napis kg: ' + !!pull.querySelector('.pair__unit'));
+  line('2. kartica: ' + fake.querySelector('.exercise__label').textContent);
+  line('   izbira elastike: ' + !!fake.querySelector('.numbox--band') +
+       ' | napis kg: ' + !!fake.querySelector('.pair__unit'));
+
+  // zadnjic pri Pull ups: barva prejsnjega treninga
+  const ref = pull.querySelector('.pair--ref .numbox--band');
+  line('zadnjic elastika: ' + (ref ? [...ref.classList].join('.') : 'ni'));
+
+  // sirine v vrstici
+  const row = pull.querySelector('.set-row');
+  line('vrstica po delih: ' + [...row.children]
+    .map((c) => c.className.split(' ')[0] + ' ' + Math.round(c.getBoundingClientRect().width))
+    .join(' | '));
+  const gapRight = row.getBoundingClientRect().right - row.getBoundingClientRect().left;
+  line('sirina vrstice: ' + Math.round(gapRight));
+
+  // izbira barve
+  pull.querySelector('.numbox--band').click();
+  await wait(250);
+  const items = [...doc.querySelectorAll('.sheet__item')];
+  line('v izbirniku: ' + items.map((i) => i.textContent.trim()).join(', '));
+  line('kvadratkov: ' + doc.querySelectorAll('.sheet__swatch').length);
+  items[0].click();
+  await wait(350);
+
+  const chosen = doc.querySelector('.exercise .numbox--band');
+  line('po izbiri razred: ' + [...chosen.classList].join('.'));
+  const saved = JSON.parse(localStorage.getItem('fitnes'));
+  line('shranjeno: band=' + saved.draft.exercises[0].sets[0].band +
+       ' | verzija=' + saved.schemaVersion);
+
+  // dotik na "zadnjic" prepise elastiko
+  const ref2 = doc.querySelector('.exercise .pair--ref .numbox--band');
+  if (ref2 && !ref2.disabled) {
+    ref2.click();
+    await wait(300);
+    line('po dotiku zadnjic: ' +
+      JSON.parse(localStorage.getItem('fitnes')).draft.exercises[0].sets[0].band);
+  }
+
+  // graf in arhiv
+  win.location.hash = '#/statistika/arhiv';
+  await wait(350);
+  doc.querySelector('.archive__row').click();
+  await wait(300);
+  line('arhiv serije: ' + [...doc.querySelectorAll('.past__value')]
+    .map((n) => n.textContent).join(' / '));
+
+  const mod = await import('http://localhost:5500/aplikacija/js/store.js');
+  line('graf Pull ups tock: ' + mod.strengthSeries(pullId).points.length +
+       ' (elastika ne sme steti; bw sme)');
+  const pr = mod.personalRecord(pullId);
+  line('PR Pull ups: ' + (pr ? pr.weight + ' x ' + pr.reps : 'ni'));
+  line('usesBands: Pull ups=' + mod.usesBands({ name: 'Pull ups' }) +
+       ' | pull ups=' + mod.usesBands({ name: ' pull ups ' }) +
+       ' | Pullups=' + mod.usesBands({ name: 'Pullups' }) +
+       ' | Pull-ups=' + mod.usesBands({ name: 'Pull-ups' }));
+
+  out.textContent += '\nKONEC';
+});
+</script>
+</body>
+</html>

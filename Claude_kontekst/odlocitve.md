@@ -12,6 +12,50 @@ Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
+## 2026-07-30 — Vaja "Pull ups" namesto teže vpisuje barvo elastike
+
+**Odločitev:** vaja, ki se imenuje **natanko** "Pull ups", ima namesto polja za
+težo izbirnik elastike. Dotik odpre spustni seznam s štirimi barvami
+(rumena `#fbdc06`, zelena `#00bf63`, turkizna `#269797`, rdeča `#9d0f0b`),
+možnostjo **BW** (zgib brez elastike) in vrstico *Počisti izbiro*. Napisa "kg"
+pri tej vaji ni. Izbrano se zapiše v `set.band`, `schemaVersion` gre na **5**.
+
+**Zakaj po imenu in ne z zastavico pri vaji:** zastavica bi pomenila še eno
+kljukico v oknu pod svinčnikom in še eno stvar, ki jo je treba nastaviti pri
+vsaki novi vaji. Elastika je pri enem samem gibu, in ta gib ima ime. "Pullups"
+ali "Pull-ups" je zato navadna vaja s kilogrami — primerjava je brez ozira na
+velike črke in presledke ob robu (tipkanje), ne pa brez ozira na presledek v
+sredini (drugo ime).
+
+**Zakaj serija z elastiko ne gre na graf moči in ne šteje za rekord:** elastika
+del teže odvzame, koliko je ne vemo. Šteti tako serijo kot polno lastno težo bi
+krivuljo dvignilo po nedolžnem. **BW** je izjema: to je zgib brez pomoči in šteje
+normalno. V arhivu se serija z elastiko izpiše z imenom barve ("Zelena × 7"),
+da je zapis še vedno berljiv.
+
+**Migracija ni potrebna:** serija brez polja `band` je serija brez elastike.
+Verzija se dvigne samo zato, da se ve, od kdaj polje obstaja.
+
+**Kaj bi jo ovrglo:** druga vaja z elastiko (na primer "Dips"). Takrat gre ime iz
+kode v podatke — polje pri vaji, ki pove, da se vpisuje elastika in ne teža.
+
+---
+
+## 2026-07-30 — Napis serije se razteza, številke se držijo črte
+
+**Odločitev:** `.set-row__label` ("Set 1") ima `flex: 1` in ne fiksne širine.
+Prostor, ki v vrstici ostane, pobere on; današnji številki sta zato vedno tik ob
+črti, ki ju loči od prejšnjega treninga.
+
+**Zakaj:** prej je prostor pobrala črta (`margin-left: auto`), zato je bila
+sredina vrstice prazna, številke pa razmetane po robovih. Prazen pas na sredini
+je bil videti kot napaka v postavitvi.
+
+**Kaj bi jo ovrglo:** daljši napis od "Set 10" — takrat je treba `min-width`
+povečati, sicer napis pade v dve vrstici.
+
+---
+
 ## 2026-07-29 — Glava in spodnja vrstica sta pribiti, drsi samo vsebina
 
 **Odločitev:** `.brand` (ikona, naslov, zobnik) je `position: sticky; top: 0` s

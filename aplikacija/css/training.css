@@ -378,11 +378,13 @@
   gap: 5px;
 }
 
-/* Napis pove, katera serija po vrsti je to. Fiksne širine, da so vsi napisi
-   poravnani in da vrstica ne poskoči, ko se številka podaljša. */
+/* Napis pove, katera serija po vrsti je to. Raztegne se čez ves prostor, ki v
+   vrstici ostane, in s tem porine današnji številki tik do črte — prazen pas na
+   sredini vrstice je bil videti kot napaka. Najmanjša širina je zapisana zato,
+   da napis ne pade v dve vrstici. */
 .set-row__label {
-  flex: none;
-  width: 54px;
+  flex: 1;
+  min-width: 54px;
   height: 46px;
 
   display: flex;
@@ -396,14 +398,12 @@
   font-size: 13px;
 }
 
-/* Črta med današnjim in prejšnjim treningom. `margin-left: auto` pobere ves
-   prostor, ki v vrstici ostane: današnje številke se držijo leve strani,
-   prejšnje pa desnega roba kartice. */
+/* Črta med današnjim in prejšnjim treningom. Prostor pobere napis serije levo,
+   zato je črta vedno tik ob današnjih številkah. */
 .set-row__divider {
   flex: none;
   align-self: stretch;
   width: 1px;
-  margin-left: auto;
   background: var(--border);
 }
 
@@ -441,10 +441,11 @@
    stisne ravno toliko, da vrstica ne gre čez rob kartice. Merjeno, ne ocenjeno —
    pri 320 px je prostora 272 px. */
 @media (max-width: 340px) {
-  .set-row__label { width: 44px; }
+  .set-row__label { min-width: 44px; }
   .pair .numbox { width: 50px; }
   .pair--ref .numbox { width: 34px; }
 }
+
 
 .pair__times {
   color: var(--text-muted);
@@ -501,6 +502,45 @@
 .numbox--ref:disabled {
   background: var(--training-ref-off);
   cursor: default;
+}
+
+/* --- Elastika pri zgibih -------------------------------------------------- */
+
+/* Prva škatlica pri vaji "Pull ups" ni polje za težo, ampak izbira elastike.
+   Prazna izgleda kot vsako drugo polje, izbrana pa je ploskev v barvi elastike —
+   barva je edino, kar si o njej zapomniš.
+
+   Barvna pravila morajo stati **za** `.numbox` in `.numbox--ref`: enako močna so
+   in odloči zadnje zapisano. Pred njima jih je ozadje polja povozilo. */
+.numbox--band {
+  border: 1px solid var(--border);
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 700;
+  transition: transform .12s ease;
+}
+
+.numbox--band:active {
+  transform: scale(0.92);
+}
+
+/* Barve elastik. Tukaj in nikjer drugje — koda pozna samo imena (store.BANDS). */
+.band--yellow { background: #fbdc06; }
+.band--green  { background: #00bf63; }
+.band--teal   { background: #269797; }
+.band--red    { background: #9d0f0b; }
+
+/* "Brez elastike" ni barva: ostane prazna ploskev z napisom BW. */
+.band--bw {
+  background: var(--training-field);
+  color: var(--text);
+}
+
+/* Stolpec "zadnjič" tudi pri elastiki ne kliče nase. */
+.pair--ref .numbox--band {
+  opacity: .8;
+  font-size: 12px;
 }
 
 .exercise__controls {

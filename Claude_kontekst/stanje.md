@@ -15,15 +15,17 @@ zato sistemski gumb *nazaj* dela pravilno. Ob zagonu se predvaja uvodni posnetek
 (`js/startup/splash.js`), ki ga dotik preskoči in ki aplikacije nikoli ne zaklene.
 
 **Podatki.** `js/store.js` je edina pot do `localStorage`, model je pri
-`schemaVersion: 4`. Migracije so napisane in preizkušene z verzij 1 in 3. Oblika je
-v [podatkovni-model.md](podatkovni-model.md).
+`schemaVersion: 5`. Migracije so napisane in preizkušene z verzij 1, 3 in 4. Oblika
+je v [podatkovni-model.md](podatkovni-model.md).
 
 **Zaslon TRENING.** Brez treninga: seznam preteklih treningov (vsak s številom vaj
 in košem za brisanje predloge) in pod črto polje za novo ime. Med treningom: kartice
 vaj s serijami, stolpec "zadnjič" (dotik prepiše vrednost v polje levo), okno pod
 svinčnikom (zapisek, popravek imena vaje, preklop *vaja z lastno težo*), vlečenje
 vaj z ime-ploščico kot ročajem, koš ob plusu (odstrani zadnjo serijo), gumba
-*Zavrži* in *Shrani*.
+*Zavrži* in *Shrani*. Vaja z imenom natanko **"Pull ups"** namesto teže vpisuje
+**barvo elastike**: prva škatlica odpre izbirnik s štirimi barvami, možnostjo BW
+in *Počisti izbiro*, napisa "kg" pri njej ni.
 Izbrana predloga odpre **prazen** trening; vaje prinese gumb *Ponovi zadnji trening*,
 ki izgine ob prvi dodani vaji. Izbirnik vaj ponudi samo vaje tega treninga.
 
