@@ -1,6 +1,6 @@
 /* Zaslon STATISTIKA: arhiv treningov in graf moči.
    Iskalno polje, predlogi, izbirnik in graf so isti razredi kot pri treningu in
-   teži (.field, .suggest, .picked, .steps, .graph, .chart) — tukaj je samo
+   teži (.field, .picked, .steps, .graph, .chart) — tukaj je samo
    tisto, česar tam ni. */
 
 :root {

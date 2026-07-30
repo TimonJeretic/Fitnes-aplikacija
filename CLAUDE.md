@@ -10,9 +10,10 @@ moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 ## Trenutno stanje
 
 Cela aplikacija stoji v `aplikacija/`. Trije zasloni delajo: **TRENING** (predloge,
-register vaj, serije s stolpcem "zadnjič", vlečenje vaj), **TEŽA** (telesna teža in
-meritve telesa, graf) in **STATISTIKA** (graf moči, arhiv treningov, arhiv vaj).
-Podatkovni model je pri `schemaVersion: 4`, edina pot do njega je `js/store.js`.
+register vaj, serije sedmih vrst s stolpcem "zadnjič", vlečenje vaj), **TEŽA**
+(telesna teža in meritve telesa, graf) in **STATISTIKA** (graf moči, arhiv treningov,
+arhiv vaj).
+Podatkovni model je pri `schemaVersion: 6`, edina pot do njega je `js/store.js`.
 Zobnik desno zgoraj odpre okno z varnostno kopijo: uvoz, izvoz in izbira mape, v
 katero se podatki zapišejo ob vsakem shranjenem treningu (`js/backup.js`).
 Videz je poenoten: ena barva `#9d0f0b`, ikone namesto črk spodaj, uvodna animacija
@@ -25,14 +26,18 @@ Podrobnosti in kaj sledi: `Claude_kontekst/stanje.md`
 - **Označi vaje z lastno težo.** Migracija je vse vaje postavila na
   `usesBodyweight: false`. Zgibi, sklece in dipsi rabijo preklop v oknu pod
   svinčnikom, sicer graf moči pri njih upošteva samo dodano težo in ne telesne.
+  Odkar je elastika svoja **vrsta serije**, to velja tudi za zgibe: serija vrste
+  *Elastika* na graf moči ne gre, zgib brez elastike pa se vpiše kot *Navaden set*
+  in takrat mora biti vaja označena z lastno težo, sicer je na grafu ni.
 - **Vpiši telesno težo na zaslonu TEŽA.** Brez enega samega tehtanja vaje z
   lastno težo grafa nimajo; namesto njega piše razlog.
 - **Preizkusi na telefonu.** Tipkovnica, velikost tarč in drsenje arhiva se
   pokažejo šele v roki.
-- **Določi mapo za varnostne kopije.** Zobnik desno zgoraj → *Določi mapo za kopije*.
-  Dokler mapa ni izbrana, se na namizju in Androidu kopija **ne dela sama** — v oknu
-  piše, kateri način na tej napravi velja. Na iPhonu mape ni mogoče izbrati; tam se
-  ob vsakem shranjevanju odpre okno za deljenje.
+- **Kopijo naredi sam, ko jo hočeš.** Zobnik desno zgoraj → *Izvozi zdaj*. Kopija
+  **nikoli** ne nastane sama, na nobeni napravi — prej je na iPhonu ob vsakem
+  shranjenem treningu skočilo okno za deljenje. Na namizju se z *Določi mapo za
+  kopije* enkrat izbere mapa in izvoz gre tiho vanjo; na iPhonu se odpre okno za
+  deljenje, drugje datoteka pade v Prenose.
 
 ## Stalna pravila
 

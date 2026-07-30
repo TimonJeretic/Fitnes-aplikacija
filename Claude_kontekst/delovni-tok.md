@@ -4,9 +4,9 @@
 
 | Orodje | Stanje |
 |---|---|
-| Python | 3.13.14 — na voljo, uporabljava ga za lokalni strežnik |
+| Python | 3.14.3 — na voljo, uporabljava ga za lokalni strežnik |
 | git | 2.54.0 |
-| Node.js | **ni nameščen** — in ga zaenkrat ne rabiva |
+| Node.js | 24.15 — nameščen od 2026-07-30. Aplikacija ga **ne** rabi (brez build koraka), preizkusi pa ga uporabljajo |
 | gh CLI | **ni nameščen** — GitHub nastavitve ureja Timon prek brskalnika |
 
 ## Lokalni zagon
@@ -65,17 +65,37 @@ Med razvojem v Chromu pomaga tudi: `F12` → zavihek **Application** → **Servi
 
 ## Preizkus izrisa v brezglavem brskalniku
 
-Node.js ni nameščen, zato zaslone preverjava z brezglavim Edgeom. Strežnik mora teči.
+Strežnik mora teči. Na voljo sta dve poti; **najprej poskusi drugo**, ker da sliko.
+
+### Hitro: zgradba izpisa
 
 ```
 msedge.exe --headless --disable-gpu --user-data-dir=<polna pot> --virtual-time-budget=8000 --dump-dom <naslov>
 ```
 
-**Posnetka zaslona ni.** `--screenshot` je Edge 150 opustil — datoteka preprosto ne
-nastane, brez sporocila o napaki. Preveriti je torej mogoce le zgradbo izpisa
-(`--dump-dom`), ne pa videza. Kako je nekaj videti, se vidi sele v pravem brskalniku.
+Dovolj za preizkuse, ki sami preverijo, kar hočejo, in rezultat zapišejo v stran
+(npr. v `<pre>`); izpis se potem samo prebere. Videza ne pove.
 
-Štiri pasti, ki so vse stale eno napačno ugotovitev:
+**Posnetka zaslona s tem ne dobiš.** `--screenshot` je Edge 150 opustil — datoteka
+preprosto ne nastane, brez sporočila o napaki.
+
+### Počasneje: pravi posnetek pri pravi širini telefona
+
+Chrome zna posnetek (`--headless=new --screenshot`), a **okna ne pomanjša pod
+500 px** — pri `--window-size=390` dobiš 390 px širok **izrez** 500 px široke strani
+in vse izgleda preozko. Pravo širino da samo DevTools protokol.
+
+Node.js je nameščen, `WebSocket` je v njem vgrajen, zato zadošča kratek skript:
+zaženi Chrome z `--remote-debugging-port`, poberi naslov iz `http://127.0.0.1:<port>/json/list`,
+in po vrsti pošlji `Page.enable`, `Runtime.enable`,
+`Emulation.setDeviceMetricsOverride` (`width`, `height`, `deviceScaleFactor: 2`,
+`mobile: true`), `Page.navigate` in `Page.captureScreenshot`
+(`captureBeyondViewport: true` zajame tudi to, kar je pod robom).
+
+Ob tem se splača poslušati `Runtime.exceptionThrown` in `Runtime.consoleAPICalled` —
+napaka v modulu se drugače pokaže samo kot prazen zaslon.
+
+### Pasti, ki so vse stale eno napačno ugotovitev
 
 - **`--user-data-dir` mora biti absolutna pot.** Relativne (`./p_1890`) Chromium ne
   razreši glede na mapo, iz katere ga zaženeš, ampak glede na svojo —
@@ -83,11 +103,12 @@ nastane, brez sporocila o napaki. Preveriti je torej mogoce le zgradbo izpisa
   ne konča z napako v konzoli, ampak odpre **okno z opozorilom** in obvisi: `--headless`
   ga ne prepreči. Proces potem straši čez zaslon, dokler ga ne ubiješ. Profil zato
   vedno v začasno mapo s polno potjo.
-- **Okno ne gre pod ~490 px.** `--window-size=390,844` naredi sliko 390 px široko,
-  stran pa se vseeno postavi pri ~488 px — slika je torej **odrezana**, ne ozka.
-  Postavitev pri 320 / 360 / 390 px se zato preveri tako, da se aplikacija naloži
-  v `<iframe width="360">` na začasni strani v korenu projekta (ime naj se začne s
-  podčrtajem, po preizkusu se pobriše).
+- **Okno ne gre pod 500 px.** `--window-size=390,844` naredi sliko 390 px široko,
+  stran pa se vseeno postavi pri 500 px — slika je torej **odrezana**, ne ozka.
+  Velja za Edge in za Chrome, tudi za `--headless=new`. Pravo širino da
+  `Emulation.setDeviceMetricsOverride` prek protokola (zgoraj); brez njega se
+  postavitev preveri tako, da se aplikacija naloži v `<iframe width="360">`, kar pa
+  ne sproži pravil `@media` po širini okna.
 - **Service worker servira staro kodo.** Če se ista mapa `--user-data-dir` uporabi
   dvakrat, drugi zagon dobi datoteke iz predpomnilnika in sprememb **ni videti**.
   Za vsak zagon nova mapa profila (ali pa profil pobriši).

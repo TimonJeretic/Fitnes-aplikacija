@@ -269,6 +269,20 @@ body[data-screen="stats"] .screen {
   font-weight: 700;
 }
 
+/* Iskalno polje se lepi na vrh okna: register vaj je dolg in popravek iskanja
+   ne sme zahtevati drsenja nazaj gor. Podlaga je obvezna — brez nje bi seznam
+   pod poljem prosevaj skozenj. Negativni robovi in odmik nazaj poskrbijo, da
+   podlaga zakrije tudi rob okna ob strani. */
+.sheet__search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  margin: 0 -14px;
+  padding: 0 14px 8px;
+  background: var(--sheet);
+}
+
 .sheet__list {
   display: flex;
   flex-direction: column;
@@ -337,6 +351,14 @@ body[data-screen="stats"] .screen {
 
 .sheet__item:active .sheet__count {
   color: var(--on-accent);
+}
+
+/* Zadnja vrstica, ki naredi vpisano ime. Prekinjena obroba pove, da tega vpisa
+   še ni — vrstica ne izgleda kot ena od obstoječih. */
+.sheet__item--new {
+  background: transparent;
+  border: 1px dashed var(--sheet-border);
+  color: var(--text-muted);
 }
 
 .sheet__empty {

@@ -12,11 +12,13 @@
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
-import * as backup from '../backup.js';
 import { settingsButton } from '../settings.js';
 import { ICON_TRAINING, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
-import { el, button, icon, withLabel, parseNumber, limitNumber, formatNumber, formatDate } from '../dom.js';
+import {
+  el, button, icon, withLabel,
+  parseNumber, limitNumber, formatNumber, formatTime, formatDate
+} from '../dom.js';
 
 const T = TEXT.training;
 
@@ -26,8 +28,7 @@ const T = TEXT.training;
 
 let root = null;      // koren zaslona; vanj se izriše vse
 let draft = null;     // trening v teku (isti objekt, kot je v shrambi)
-let query = '';       // kar je vpisano v iskalno polje
-let picking = false;  // ali je odprto iskalno polje za novo vajo
+let query = '';       // kar je vpisano v polje za ime novega treninga
 let nameInput = null; // polje z imenom treninga; rabimo ga za opozorilo ob shrani
 
 // --- Ikone -----------------------------------------------------------------
@@ -152,7 +153,6 @@ function startWorkout(template) {
   };
 
   query = '';
-  picking = false;
   persist();
   closeKeyboard();   // polje z imenom izgine z zaslona; tipkovnica naj gre z njim
   paint();
@@ -162,19 +162,20 @@ function repeatTemplate(template) {
   draft.exercises = template.exerciseIds
     // Vaja je lahko medtem izginila iz registra; predloga naj se zato ne sesuje.
     .filter((id) => store.getExercise(id))
-    .map((id) => ({ exerciseId: id, sets: blankSets(id) }));
+    .map((id) => ({ exerciseId: id, sets: [] }));
 
   persist();
   paint();
 }
 
-// Koliko praznih vrstic odpremo pri vaji: toliko serij, kolikor si jih naredil
-// zadnjič. Če vaje še ni bilo, ena — ostale dodaš z gumbom.
-function blankSets(exerciseId) {
-  const last = store.lastSetsFor(exerciseId);
-  const count = last ? last.length : 1;
-  return Array.from({ length: count }, () => ({ weightKg: null, reps: null }));
-}
+// Vaja se odpre **brez ene same vrstice**: vsaka serija nastane z gumbom + pod
+// njo in nobene ni tam zato, ker jo je nekdo uganil.
+//
+// Prej se je odprlo toliko praznih vrstic, kolikor si jih naredil zadnjič.
+// Odkar ima serija vrsto, bi bilo to ugibanje dvakrat — koliko serij in kakšnih —
+// vrstica, ki je nisi naredil, pa se mora pobrisati, in to je dražje od dotika
+// na +. Stolpec "zadnjič" pri tem ne izgubi ničesar: ravna se po mestu vrstice,
+// zato se prva dodana serija spet primerja s prvo od zadnjič.
 
 // --- Stanje 2: trening teče ------------------------------------------------
 
@@ -193,7 +194,7 @@ function activeView() {
 
   const body = el('div', 'training__body');
   draft.exercises.forEach((entry) => body.append(exerciseCard(entry)));
-  body.append(picking ? exercisePicker() : addExerciseButton());
+  body.append(addExerciseButton());
 
   const actions = el('div', 'training__actions');
   actions.append(button('btn btn--ghost', T.discard, discard));
@@ -218,76 +219,40 @@ function metaRow() {
 }
 
 function addExerciseButton() {
-  return button('addbar', '+', () => {
-    picking = true;
-    query = '';
-    paint();
-    // Kurzorja tukaj namenoma NE postavljamo v polje za novo vajo. Odkar je nad
-    // poljem seznam vaj, je izbira s seznama pogostejša od vpisovanja novega
-    // imena; tipkovnica bi seznam pokrila, na iPhonu pa je ostala odprta tudi
-    // potem, ko je bilo polje že odstranjeno z zaslona — in naslednji dotik v
-    // polje za kilažo ni prijel.
-  });
+  return button('addbar', '+', openExercisePicker);
 }
 
-// Zgoraj register vaj po abecedi, spodaj okvir za novo vajo — ista postavitev
-// kot "Pretekli treningi" in "Ustvari nov trening" na praznem zaslonu. Kar se
-// dela z istimi koraki, naj tudi izgleda enako.
-function exercisePicker() {
-  const wrap = el('div', 'picker');
-
-  const section = el('section', 'training__section');
-  section.append(el('h2', 'section__title', T.pickExercise));
-
-  // Ponudijo se vaje tega treninga — iz predloge in iz zgodovine treningov z
-  // istim imenom. Pri "Pull" torej ni vaj, ki jih delaš pri "Push".
-  // Ime treninga, ki ga še ni bilo, nima česa ponuditi; takrat se ponudi cel
-  // register, sicer bi bil izbirnik ob prvem "Legs" prazen.
-  const forName = store.exercisesForWorkoutName(draft.name);
-  const source = forName.length ? forName : store.searchExercises('');
-
-  // Vaja, ki je v treningu že zdaj, se ne ponudi drugič.
+// Okno čez zaslon: iskalno polje na vrhu, pod njim **cel** register vaj po
+// abecedi. Tipkanje seznam oži, zadnja vrstica pa naredi vajo, ki je register
+// še ne pozna. Vaja, ki je v treningu že zdaj, se ne ponudi drugič.
+//
+// Filtriranja po imenu treninga tukaj ni več: pri prvem "Legs" je pokazal
+// prazen seznam, pri treningu, ki meša sheme, pa je skril ravno tisto vajo, ki
+// si jo iskal. Register je skupen, iskanje pa je hitrejše od vsakega filtra.
+function openExercisePicker() {
   const added = new Set(draft.exercises.map((entry) => entry.exerciseId));
-  const known = source.filter((exercise) => !added.has(exercise.id));
+  const find = (text) => store.searchExercises(text)
+    .filter((exercise) => !added.has(exercise.id))
+    .map((exercise) => ({ id: exercise.id, name: exercise.name }));
 
-  if (known.length) {
-    const list = el('div', 'suggest');
-    known.forEach((exercise) => list.append(suggestion(exercise.name, null, () => addExercise(exercise))));
-    section.append(list);
-  } else {
-    section.append(el('p', 'templates__empty', source.length ? T.allAdded : T.noExercisesYet));
-  }
-  wrap.append(section);
-
-  wrap.append(el('div', 'rule'));
-
-  // Nova vaja. Gumb Potrdi je tukaj in ne pri vsaki vrstici seznama: ko vajo
-  // potrdiš, se cel okvir zapre in se prikaže spet ob naslednjem plusu.
-  const create = el('section', 'training__section');
-  create.append(el('h2', 'section__title', T.newExercise));
-  create.append(searchField(T.exerciseName, () => {}, () => addExerciseByName(query)));
-  create.append(button('btn btn--primary', T.confirm, () => addExerciseByName(query)));
-  wrap.append(create);
-
-  // Klik mimo zapre okvir, da plus spet zasede svoje mesto.
-  wrap.append(button('picker__cancel', T.close, () => {
-    picking = false;
-    query = '';
-    closeKeyboard();
-    paint();
-  }));
-
-  return wrap;
-}
-
-// Vaja, ki je register še ne pozna, se ob dodajanju vanj zapiše. Tako seznam
-// vaj nastane sam od sebe iz treningov in ga ni treba nikoli urejati posebej.
-function addExerciseByName(name) {
-  if (!String(name).trim()) {
-    markEmptyField();
-    return;
-  }
-  addExercise(store.createExercise(name));
+  openSheet({
+    title: T.pickExercise,
+    items: [],   // seznam napolni search.find(); tukaj ga ni treba dvakrat
+    emptyLabel: store.searchExercises('').length ? T.allAdded : T.noExercisesYet,
+    search: {
+      placeholder: T.searchExercise,
+      find,
+      newLabel: T.addNewExercise,
+      // Vaja, ki je register še ne pozna, se ob dodajanju vanj zapiše. Register
+      // tako nastane sam od sebe iz treningov in ga ni treba urejati posebej.
+      onNew: (name) => addExercise(store.createExercise(name))
+    },
+    onPick: (id) => {
+      const exercise = store.getExercise(id);
+      if (exercise) addExercise(exercise);
+    },
+    closeLabel: T.close
+  });
 }
 
 // Prazno polje ob dotiku gumba: rdeč rob in kurzor povesta isto kot okno s
@@ -300,9 +265,11 @@ function markEmptyField() {
 }
 
 function addExercise(exercise) {
-  draft.exercises.push({ exerciseId: exercise.id, sets: blankSets(exercise.id) });
-  picking = false;
-  query = '';
+  // Ime, ki ga v seznamu ni bilo, ker je vaja v treningu že dodana: store vrne
+  // obstoječo vajo in tu se ustavi, sicer bi bila v treningu dvakrat.
+  if (draft.exercises.some((entry) => entry.exerciseId === exercise.id)) return;
+
+  draft.exercises.push({ exerciseId: exercise.id, sets: [] });
   persist();
 
   // Tipkovnico spravimo dol, preden polje pod njo izgine z zaslona. Brez tega
@@ -327,12 +294,15 @@ function exerciseCard(entry) {
 
   const head = el('div', 'exercise__head');
 
-  // Ploščica z imenom je hkrati ročaj: primeš jo in vlečeš vajo gor ali dol.
+  // Ročaj so **samo** pike na desnem robu ploščice, ne cela ploščica: prst, ki
+  // se nasloni na ime, mora še vedno drsati po treningu.
   const name = el('div', 'exercise__name');
   name.append(el('span', 'exercise__label', exercise ? exercise.name : T.exerciseName));
-  name.append(icon('exercise__grip', ICON_GRIP));
-  withLabel(name, T.moveExercise);
-  enableDrag(name, card);
+
+  const grip = icon('exercise__grip', ICON_GRIP);
+  withLabel(grip, T.moveExercise);
+  enableDrag(grip, card);
+  name.append(grip);
   head.append(name);
 
   const pencil = button('exercise__note', '', () => openNote(entry));
@@ -346,20 +316,18 @@ function exerciseCard(entry) {
   // takrat desni stolpec ostane prazen.
   const last = store.lastSetsFor(entry.exerciseId);
 
-  // Zgibi z elastiko: namesto teže se izbere barva elastike. Odloča ime vaje,
-  // ne zastavica v podatkih — glej store.usesBands().
-  const bands = store.usesBands(exercise);
+  // Katera vrstica nosi katero številko. Superset, dropset in myoreps številke
+  // nimajo, zato je tudi ne porabijo — šteje store, da arhiv pokaže isto.
+  const numbers = store.setNumbers(entry.sets);
 
   const sets = el('div', 'exercise__sets');
-  entry.sets.forEach((set, index) => sets.append(setRow(set, index, last, bands)));
+  entry.sets.forEach((set, index) => {
+    sets.append(setRow(set, numbers[index], entry.sets[index - 1] || null, last, index));
+  });
   card.append(sets);
 
   const controls = el('div', 'exercise__controls');
-  controls.append(withLabel(button('mini', '+', () => {
-    entry.sets.push({ weightKg: null, reps: null });
-    persist();
-    paint();
-  }), T.addSet));
+  controls.append(withLabel(button('mini', '+', () => openSetKindPicker(entry)), T.addSet));
 
   // Koš stoji ob plusu in odstrani **zadnjo** serijo. Prej je bil v vsaki
   // vrstici posebej, a je tam jemal prostor številkam — najpogostejši razlog
@@ -367,7 +335,7 @@ function exerciseCard(entry) {
   const removeLast = button('mini mini--icon mini--muted', '', () => removeLastSet(entry));
   removeLast.append(icon('mini__icon', ICON_TRASH));
   withLabel(removeLast, T.removeLastSet);
-  removeLast.disabled = entry.sets.length < 2;
+  removeLast.disabled = entry.sets.length === 0;
   controls.append(removeLast);
 
   // Odstranitev vaje je čisto desno spodaj, najdlje od plusa nad njo.
@@ -380,8 +348,7 @@ function exerciseCard(entry) {
 // Vprašamo samo, kadar je kaj izgubiti. Prazno vajo, ki si jo pravkar dodal
 // po pomoti, odstraniš z enim dotikom.
 function removeExercise(entry) {
-  const filled = entry.sets.some((set) => set.weightKg !== null || set.reps !== null);
-  if (filled && !confirm(T.removeExerciseConfirm)) return;
+  if (entry.sets.some(isFilled) && !confirm(T.removeExerciseConfirm)) return;
 
   draft.exercises = draft.exercises.filter((item) => item !== entry);
   persist();
@@ -525,69 +492,139 @@ function shiftOthers(cards, from, to, step) {
   });
 }
 
-function setRow(set, index, last, bands) {
-  const row = el('div', 'set-row');
-  row.append(el('div', 'set-row__label', T.set + ' ' + (index + 1)));
-
-  const reps = numberField(set.reps, 'numeric', (value) => {
-    set.reps = value;
-    persist();
+// Kakšen set dodaš. Vrsta se izbere zdaj in se kasneje ne menja: napačno izbrana
+// vrstica ima pot nazaj skozi koš ob plusu, prehajanje med vrstami sredi vpisa pa
+// bi pomenilo vprašanje, kam gredo že vpisane številke.
+function openSetKindPicker(entry) {
+  openSheet({
+    title: T.pickSetKind,
+    items: store.SET_KINDS.map((kind) => ({ id: kind, name: TEXT.setKinds[kind] || kind })),
+    onPick: (kind) => {
+      entry.sets.push(store.newSet(kind));
+      persist();
+      paint();
+    },
+    closeLabel: T.close
   });
+}
+
+// Vrstica ene serije. Kaj je v njej, določa `kind`:
+//
+//   empty                       samo napis čez celo vrstico
+//   time                        MM:SS namesto teže in ponovitev
+//   band                        elastika namesto teže
+//   ostalo                      teža × ponovitve
+//
+// `number` je zaporedna številka ali `null` (takrat se vrstica imenuje po svoji
+// vrsti), `before` je serija nad njo — iz nje se ve, ali gre vmes znamenje.
+function setRow(set, number, before, last, index) {
+  const kind = store.setKind(set);
+
+  const row = el('div', 'set-row');
+  row.append(setLabel(kind, number, before));
+
+  // Prazen set nima česa vpisati in nima česa primerjati: napis zasede celo
+  // vrstico. Da je serija bila, je vse, kar pove — in vse, kar naj pove.
+  if (kind === 'empty') return row;
 
   const inputs = el('div', 'pair');
-  let weight = null;   // pri zgibih z elastiko tega polja ni
 
-  if (bands) {
-    // Pri zgibih se v prvo škatlico ne vpisuje teža, ampak izbere elastika.
-    // Napisa "kg" zato ni: kilogramov tu ni nikjer.
-    inputs.append(bandBox(set), el('span', 'pair__times', '×'), reps);
+  // Zadnjič se prepiše samo iz serije **iste vrste**: teža dropseta v vrstici,
+  // ki je danes navaden set, bi bila napačna številka na pravem mestu.
+  const previous = last && last[index] && store.setKind(last[index]) === kind ? last[index] : null;
+  const reference = el('div', 'pair pair--ref');
+
+  if (kind === 'time') {
+    const time = timeFields(set);
+    inputs.append(...time);
+    reference.append(referenceTimeBox(previous ? previous.seconds : null, set));
   } else {
-    weight = numberField(set.weightKg, 'decimal', (value) => {
-      set.weightKg = value;
+    const reps = numberField(set.reps, 'numeric', (value) => {
+      set.reps = value;
       persist();
     });
 
-    // "kg" stoji ob polju za težo: brez tega ni jasno, kaj se vpisuje v katero
-    // polje, ker sta obe škatlici enaki.
-    inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
+    if (kind === 'band') {
+      // Pri elastiki se v prvo škatlico ne vpisuje teža, ampak izbere elastika.
+      // Napisa "kg" zato ni: kilogramov tu ni nikjer.
+      inputs.append(bandBox(set), el('span', 'pair__times', '×'), reps);
+      reference.append(referenceBandBox(previous ? previous.band : null, set));
+    } else {
+      const weight = numberField(set.weightKg, 'decimal', (value) => {
+        set.weightKg = value;
+        persist();
+      });
+
+      // "kg" stoji ob polju za težo: brez tega ni jasno, kaj se vpisuje v katero
+      // polje, ker sta obe škatlici enaki.
+      inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
+      reference.append(referenceBox(previous ? previous.weightKg : null, weight));
+    }
+
+    reference.append(el('span', 'pair__times', '×'), referenceBox(previous ? previous.reps : null, reps));
   }
 
   row.append(inputs);
 
   // Desni stolpec: zadnjič. Črta ga loči od današnjih številk in ga hkrati
   // porine ob desni rob kartice — pri novi vaji ni ne enega ne drugega.
-  if (last) {
-    row.append(el('div', 'set-row__divider'));
-
-    const previous = last[index] || null;
-    const reference = el('div', 'pair pair--ref');
-    reference.append(
-      bands
-        ? referenceBandBox(previous ? previous.band : null, set)
-        : referenceBox(previous ? previous.weightKg : null, weight),
-      el('span', 'pair__times', '×'),
-      referenceBox(previous ? previous.reps : null, reps)
-    );
-    row.append(reference);
-  }
+  if (last) row.append(el('div', 'set-row__divider'), reference);
 
   return row;
 }
 
+// Napis levo. Oštevilčene vrste povedo, katera po vrsti so, ostale povedo, kaj
+// so. Znamenje do serije nad njo visi v razmiku nad napisom.
+function setLabel(kind, number, before) {
+  const label = el('div', 'set-row__label');
+  label.append(el('span', 'set-row__name',
+    number === null ? (TEXT.setKinds[kind] || kind) : T.set + ' ' + number));
+
+  const mark = linkMark(kind, before);
+  if (mark) label.append(mark);
+  return label;
+}
+
+// Znamenje med to in prejšnjo vrstico: plus pove, da sta superseta en sklop,
+// puščica navzdol, da je dropset nadaljevanje serije nad njim. Svoje vrstice
+// nima — visi v razmiku, ki je zaradi njega za malenkost večji.
+function linkMark(kind, before) {
+  if (!before) return null;
+
+  if (kind === 'superset' && store.setKind(before) === 'superset') {
+    return withLabel(el('span', 'set-row__link', '+'), T.supersetLink);
+  }
+  if (kind === 'dropset') {
+    return withLabel(el('span', 'set-row__link', '↓'), T.dropsetLink);
+  }
+  return null;
+}
+
 // Koš ob plusu odstrani zadnjo serijo. Vprašamo samo, kadar je kaj izgubiti —
 // prazna vrstica, ki je nastala ob pomotoma pritisnjenem plusu, izgine z enim
-// dotikom. Zadnja preostala serija ostane: vaja brez serij nima kaj pokazati,
-// odstrani se z × spodaj desno na kartici.
+// dotikom.
+//
+// Odstrani lahko tudi **zadnjo** serijo: vaja brez serij je od zdaj običajno
+// stanje, saj se prav taka odpre. Prej je zadnja ostala, ker je bila vaja brez
+// vrstic videti kot okvara.
 function removeLastSet(entry) {
-  if (entry.sets.length < 2) return;
+  if (!entry.sets.length) return;
 
-  const set = entry.sets[entry.sets.length - 1];
-  const filled = set.weightKg !== null || set.reps !== null;
-  if (filled && !confirm(T.removeLastSetConfirm)) return;
+  if (isFilled(entry.sets[entry.sets.length - 1]) && !confirm(T.removeLastSetConfirm)) return;
 
   entry.sets.pop();
   persist();
   paint();
+}
+
+// Ali je v seriji kaj, kar bi se z brisanjem izgubilo. Vsaka vrsta ima svoja
+// polja; prazen set jih nima in se zato zbriše brez vprašanja.
+function isFilled(set) {
+  const kind = store.setKind(set);
+  if (kind === 'empty') return false;
+  if (kind === 'time') return set.seconds !== null && set.seconds !== undefined;
+  if (kind === 'band' && set.band) return true;
+  return set.weightKg !== null || set.reps !== null;
 }
 
 function numberField(value, mode, onChange) {
@@ -615,12 +652,73 @@ function fitText(input) {
   input.classList.toggle('is-long', input.value.length > 4);
 }
 
-// --- Elastika pri zgibih ---------------------------------------------------
+// --- Čas namesto teže in ponovitev -----------------------------------------
 //
-// Pri vaji z imenom "Pull ups" se ne vpisuje teža, ampak barva elastike: z njo
-// se dela zgib, njena barva pa pove, koliko pomaga. Zapiše se v `set.band`,
-// kilogrami ostanejo prazni — in prav zato taka serija ne gre na graf moči
-// (glej store.js).
+// Plank, mrtvi obesek, izometrija: pri takem setu ni ne teže ne ponovitev, ampak
+// koliko časa si zdržal. V podatkih so sekunde, na zaslonu dve škatlici.
+
+function timeFields(set) {
+  // Vpisano živi tukaj in ne v podatkih: dokler tipkaš minute, sekund še ni in
+  // seštevek bi se med tipkanjem podvojil, če bi ga vsakič bral nazaj iz `seconds`.
+  let minutes = set.seconds === null || set.seconds === undefined
+    ? null
+    : Math.floor(set.seconds / 60);
+  let seconds = set.seconds === null || set.seconds === undefined
+    ? null
+    : set.seconds % 60;
+
+  // Obe polji prazni pomenita "časa nisem vpisal" in ne "nič sekund".
+  const apply = () => {
+    set.seconds = minutes === null && seconds === null
+      ? null
+      : (minutes || 0) * 60 + (seconds || 0);
+    persist();
+  };
+
+  const mm = numberField(minutes, 'numeric', (value) => { minutes = value; apply(); });
+  const ss = numberField(seconds, 'numeric', (value) => { seconds = value; apply(); });
+  withLabel(mm, T.minutes);
+  withLabel(ss, T.secondsField);
+
+  // Dvopičje in ne "×": to ni zmnožek dveh številk, ampak en sam podatek.
+  return [mm, el('span', 'pair__times', ':'), ss];
+}
+
+// Ista škatlica v stolpcu "zadnjič": dotik prepiše čas v današnjo serijo.
+function referenceTimeBox(seconds, set) {
+  const box = el('button', 'numbox numbox--ref', formatTime(seconds));
+  box.type = 'button';
+  if (box.textContent.length > 4) box.classList.add('is-long');
+
+  if (seconds === null || seconds === undefined) {
+    box.disabled = true;
+    return box;
+  }
+
+  withLabel(box, formatTime(seconds));
+  box.addEventListener('click', () => {
+    set.seconds = seconds;
+    persist();
+    paint();
+  });
+  return box;
+}
+
+// --- Elastika --------------------------------------------------------------
+//
+// Pri setu vrste "Elastika" se ne vpisuje teža, ampak elastika: z njo se dela
+// zgib, njena barva in debelina pa povesta, koliko pomaga. Zapiše se v
+// `set.band`, kilogrami ostanejo prazni — in prav zato taka serija ne gre na
+// graf moči (glej store.js).
+
+// Risba elastike: podolgovata zanka, kakor elastika leži, ko je ne vlečeš.
+// Barvo prevzame od besedila (`.band--*` v training.css), debelina poteze pa je
+// edina razlika med rdečima — barva je ista, pomoč pa ne.
+function bandIcon(band) {
+  return '<svg viewBox="0 0 44 26" fill="none" stroke="currentColor" '
+    + 'stroke-width="' + (band === 'red-thick' ? 6 : 3.5) + '" aria-hidden="true">'
+    + '<ellipse cx="22" cy="13" rx="14.5" ry="4" transform="rotate(-18 22 13)"/></svg>';
+}
 
 function bandBox(set) {
   const box = button('numbox numbox--band', '', () => openBandPicker(set));
@@ -650,11 +748,16 @@ function referenceBandBox(band, set) {
   return box;
 }
 
-// Barva je razred in ne slog: same barve so zapisane v CSS, koda pozna samo imena.
+// Elastika je razred in risba, ne slog: barve in debeline so v CSS, koda pozna
+// samo imena. "BW" je edina, ki je nima — brez elastike ni česa narisati.
 function paintBand(box, band) {
   box.classList.remove(...store.BANDS.map((name) => 'band--' + name));
-  box.textContent = band === 'bw' ? 'BW' : '';
-  if (band) box.classList.add('band--' + band);
+  box.replaceChildren();
+  if (!band) return;
+
+  box.classList.add('band--' + band);
+  if (band === 'bw') box.textContent = 'BW';
+  else box.append(icon('numbox__band', bandIcon(band)));
 }
 
 function openBandPicker(set) {
@@ -662,10 +765,12 @@ function openBandPicker(set) {
     id: band,
     name: TEXT.bands[band] || band,
     swatch: 'band--' + band,
+    // Ista risba kot v škatlici: v seznamu izbiraš to, kar boš potem videl.
+    swatchIcon: band === 'bw' ? null : bandIcon(band),
     active: set.band === band
   }));
 
-  // Zadnja vrstica pobriše izbiro: ponesreči izbrana barva mora imeti pot nazaj.
+  // Zadnja vrstica pobriše izbiro: ponesreči izbrana elastika mora imeti pot nazaj.
   items.push({ id: '', name: T.bandNone, active: !set.band });
 
   openSheet({
@@ -810,7 +915,6 @@ function discard() {
   store.clearDraft();
   draft = null;
   query = '';
-  picking = false;
   paint();
 }
 
@@ -830,17 +934,12 @@ function save() {
     return;
   }
 
+  // Varnostne kopije tukaj ni. Sama od sebe ne nastane nikjer — naredi se z
+  // gumbom *Izvozi zdaj* pod zobnikom (glej js/backup.js).
   store.saveWorkout(draft);
-
-  // Varnostna kopija takoj za shranjevanjem. Klic stoji tu in ne v store.js, ker se
-  // osnutek shranjuje ob vsakem dotiku — kopija ob vsaki seriji bi bila nesmisel.
-  // Napake ne vrže: trening je shranjen ne glede na to, kako se kopija konča,
-  // kaj je šlo narobe pa piše v nastavitvah.
-  backup.afterSave();
 
   draft = null;
   query = '';
-  picking = false;
   paint();
 }
 
@@ -858,8 +957,8 @@ function brandRow(titleOrInput) {
   return row;
 }
 
-// Iskalno polje za trening in za vajo je isto: tipkaš, spodaj se ožijo predlogi,
-// Enter vzame vpisano. Med tipkanjem se osveži samo seznam, da kurzor obstane.
+// Polje za ime novega treninga: tipkaš, Enter vzame vpisano. Vpisano živi v
+// `query`, da ga izris ne pobriše sredi tipkanja.
 function searchField(placeholder, onType, onEnter) {
   const wrap = el('div', 'field');
 
@@ -886,15 +985,6 @@ function searchField(placeholder, onType, onEnter) {
   return wrap;
 }
 
-function suggestion(name, count, onClick) {
-  const row = button('suggest__item', '', onClick);
-  row.append(el('span', 'suggest__name', name));
-  if (count !== null && count !== undefined) {
-    row.append(el('span', 'suggest__count', String(count)));
-  }
-  return row;
-}
-
 // --- Modul zaslona ---------------------------------------------------------
 
 export default {
@@ -910,7 +1000,6 @@ export default {
   render() {
     draft = store.getDraft();
     query = '';
-    picking = false;
     nameInput = null;
 
     root = el('div', 'training');

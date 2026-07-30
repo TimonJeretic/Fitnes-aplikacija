@@ -97,7 +97,9 @@
   color: var(--on-accent);
 }
 
-/* --- Iskalno polje in predlogi -------------------------------------------- */
+/* --- Vnosno polje ---------------------------------------------------------- */
+/* Skupni gradnik: ime novega treninga tukaj, iskanje vaje in nova meritev v
+   spustnem seznamu (js/sheet.js). */
 
 .field {
   margin-top: 14px;
@@ -131,71 +133,9 @@
   border-color: #d05050;
 }
 
-.suggest {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.suggest__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-
-  /* Tarča za palec: 52 px je več kot priporočenih 44 px, ker se aplikacija
-     uporablja med serijo, ko roka ni mirna. */
-  min-height: 52px;
-  padding: 0 14px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-
-  font: inherit;
-  font-size: 17px;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* Dotik pobarva vrstico v barvo aplikacije: v telovadnici je zaslon pogosto
-   mokri prst in pol pogleda — barva je edini takojšen odgovor, da je gumb res
-   sprejel dotik. Isto pravilo velja povsod, kjer se da kaj izbrati. */
-.suggest__item:active {
-  background: var(--accent);
-  border-color: transparent;
-  color: var(--on-accent);
-}
-
-.suggest__item:active .suggest__count {
-  background: rgba(0, 0, 0, .25);
-  color: var(--on-accent);
-}
-
-.suggest__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Koliko vaj ima predloga — namig, ali si izbral pravo. */
-.suggest__count {
-  flex: none;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--training-field);
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.suggest__item--new {
-  background: transparent;
-  border-style: dashed;
-  color: var(--text-muted);
-}
+/* Seznami predlogov (`.suggest`) so odstranjeni skupaj z izbirnikom vaj, ki se
+   je odpiral v zaslonu. Vrstice, med katerimi se izbira, so zdaj povsod
+   `.sheet__item` v screen.css — en videz namesto dveh. */
 
 .picker__cancel {
   width: 100%;
@@ -276,14 +216,14 @@
 }
 
 /* Ime vaje na barvni ploščici: pri drsanju po dolgem treningu takoj vidiš,
-   kje se ena vaja konča in začne druga. Hkrati je to ročaj za premikanje vaje,
-   zato `touch-action: none` — brez tega bi prst namesto vaje premikal stran. */
+   kje se ena vaja konča in začne druga. Ploščica sama **ni** ročaj — prst, ki
+   se nasloni nanjo, mora drsati po treningu kot povsod drugod. */
 .exercise__name {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 12px 14px;
 
   background: var(--accent-gradient);
@@ -293,14 +233,8 @@
   font-size: 18px;
   font-weight: 600;
 
-  touch-action: none;
-  cursor: grab;
   -webkit-user-select: none;
   user-select: none;
-}
-
-.exercise.is-dragging .exercise__name {
-  cursor: grabbing;
 }
 
 .exercise__label {
@@ -312,17 +246,31 @@
   white-space: nowrap;
 }
 
-/* Pike na desni: edini namig, da se ploščica da prijeti. */
+/* Pike na desni so **edini** ročaj za premikanje vaje, zato `touch-action: none`
+   samo tukaj — drugod bi prst namesto vaje premikal stran.
+   Tarča je večja od pik samih (40 px), da jo palec zadene; negativna robova jo
+   potisneta v odmik ploščice, da se ta zaradi tega ne razraste. */
 .exercise__grip {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: 40px;
+  height: 40px;
+  margin: -12px -8px -12px 0;
+
+  display: grid;
+  place-items: center;
+
   opacity: .55;
+  touch-action: none;
+  cursor: grab;
+}
+
+.exercise.is-dragging .exercise__grip {
+  cursor: grabbing;
 }
 
 .exercise__grip svg {
-  width: 100%;
-  height: 100%;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 
@@ -362,11 +310,21 @@
 
 /* --- Vrstica serije ------------------------------------------------------- */
 
+/* Razmik je večji, kot ga vrstice same rabijo: v njem visijo znamenja med
+   serijami (plus pri supersetu, puščica pri dropsetu). Svoje vrstice nimajo,
+   ker bi ta razmik podvojila in kartico po nepotrebnem raztegnila. */
 .exercise__sets {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 13px;
   margin-top: 10px;
+}
+
+/* Vaja se odpre brez serij, zato je prazen ovoj običajno stanje in ne izjema.
+   Brez tega bi za imenom vaje zijal razmik dveh odmikov, videti kot manjkajoča
+   vrstica. */
+.exercise__sets:empty {
+  display: none;
 }
 
 /* V vrstici so trije stolpci: napis, današnja teža in ponovitve, zadnjič.
@@ -383,6 +341,7 @@
    sredini vrstice je bil videti kot napaka. Najmanjša širina je zapisana zato,
    da napis ne pade v dve vrstici. */
 .set-row__label {
+  position: relative;      /* znamenje nad vrstico visi z njega */
   flex: 1;
   min-width: 54px;
   height: 46px;
@@ -396,6 +355,31 @@
   color: var(--text-muted);
 
   font-size: 13px;
+}
+
+/* Besedilo je v svojem elementu in ne kar v napisu: rezanje predolgega imena
+   zahteva `overflow: hidden`, to pa bi odrezalo tudi znamenje, ki visi nad
+   vrstico. "Superset" je daljši od "Set 1" in se na najožjem telefonu raje
+   odreže, kot da bi vrstico razbil v dve. */
+.set-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Znamenje v razmiku nad vrstico: plus pove, da sta superseta en sklop, puščica
+   navzdol, da je dropset nadaljevanje serije nad njim. Dotika ne prestreza —
+   pod njim ni ničesar, kar bi se dalo pritisniti, a prst je širok. */
+.set-row__link {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* Črta med današnjim in prejšnjim treningom. Prostor pobere napis serije levo,
@@ -439,11 +423,14 @@
 
 /* Najožji telefoni (320 px, tudi iPhone s povečanim prikazom): vse troje se
    stisne ravno toliko, da vrstica ne gre čez rob kartice. Merjeno, ne ocenjeno —
-   pri 320 px je prostora 272 px. */
+   pri 320 px je prostora 272 px.
+
+   Napisi vrst so daljši od "Set 1": pisava se pomanjša in stolpec "zadnjič"
+   odstopi dva piksla, da se "Superset" in "Myoreps" izpišeta cela. */
 @media (max-width: 340px) {
-  .set-row__label { min-width: 44px; }
+  .set-row__label { min-width: 44px; font-size: 11px; }
   .pair .numbox { width: 50px; }
-  .pair--ref .numbox { width: 34px; }
+  .pair--ref .numbox { width: 32px; }
 }
 
 
@@ -504,15 +491,16 @@
   cursor: default;
 }
 
-/* --- Elastika pri zgibih -------------------------------------------------- */
+/* --- Elastika -------------------------------------------------------------- */
 
-/* Prva škatlica pri vaji "Pull ups" ni polje za težo, ampak izbira elastike.
-   Prazna izgleda kot vsako drugo polje, izbrana pa je ploskev v barvi elastike —
-   barva je edino, kar si o njej zapomniš.
-
-   Barvna pravila morajo stati **za** `.numbox` in `.numbox--ref`: enako močna so
-   in odloči zadnje zapisano. Pred njima jih je ozadje polja povozilo. */
+/* Prva škatlica pri setu vrste "Elastika" ni polje za težo, ampak izbira
+   elastike. Škatlica ostane temna kot vsaka druga, v njej pa leži risba elastike
+   v svoji barvi — polna barvna ploskev je bila premočna in je vlekla pogled z
+   vrstice, hkrati pa ni ločila tanke rdeče od debele. */
 .numbox--band {
+  display: grid;
+  place-items: center;
+
   border: 1px solid var(--border);
   cursor: pointer;
 
@@ -525,22 +513,46 @@
   transform: scale(0.92);
 }
 
-/* Barve elastik. Tukaj in nikjer drugje — koda pozna samo imena (store.BANDS). */
-.band--yellow { background: #fbdc06; }
-.band--green  { background: #00bf63; }
-.band--teal   { background: #269797; }
-.band--red    { background: #9d0f0b; }
+.numbox__band {
+  width: 34px;
+  height: 20px;
+}
 
-/* "Brez elastike" ni barva: ostane prazna ploskev z napisom BW. */
+.numbox__band svg,
+.sheet__swatch svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Barve elastik. Tukaj in nikjer drugje — koda pozna samo imena (store.BANDS).
+   Barva je `color` in ne `background`, ker jo risba prevzame od besedila; ista
+   pravila zato pobarvajo škatlico v vrstici in kvadratek v izbirniku. */
+.band--yellow    { color: #fbdc06; }
+.band--green     { color: #00bf63; }
+.band--teal      { color: #22b6c4; }
+.band--red-thin  { color: #d0342c; }
+.band--red-thick { color: #d0342c; }
+
+/* "Brez elastike" ni barva in ni risba: ostane prazna ploskev z napisom BW. */
 .band--bw {
-  background: var(--training-field);
   color: var(--text);
+}
+
+/* Kvadratek v izbirniku ima risbo notri, zato rabi zrak okoli nje. */
+.sheet__swatch {
+  padding: 2px;
 }
 
 /* Stolpec "zadnjič" tudi pri elastiki ne kliče nase. */
 .pair--ref .numbox--band {
   opacity: .8;
   font-size: 12px;
+}
+
+.pair--ref .numbox__band {
+  width: 26px;
+  height: 15px;
 }
 
 .exercise__controls {

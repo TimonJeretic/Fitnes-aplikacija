@@ -1,6 +1,6 @@
 /* Zaslon TEŽA: izbirnik meritve, vnos in graf.
    Iskalno polje, predloge, gumbi in okno so isti razredi kot pri treningu
-   (.field, .suggest, .btn, .modal) — tukaj je samo tisto, česar tam ni. */
+   (.field, .btn, .modal) — tukaj je samo tisto, česar tam ni. */
 
 :root {
   /* Isti ploskvi kot pri treningu. Zapisani prek spremenljivk in ne prepisani,
@@ -82,11 +82,6 @@
   flex: none;
   color: var(--accent);
   font-size: 14px;
-}
-
-/* Razprt izbirnik nima svojega ozadja: polje in predlogi so že oblikovani. */
-.picker .field {
-  margin-top: 0;
 }
 
 /* --- Vnos ----------------------------------------------------------------- */

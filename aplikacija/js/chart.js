@@ -53,9 +53,9 @@ function periodStart(day, step) {
   if (step === 'year') return toDay(new Date(date.getFullYear(), 0, 1));
   if (step === 'month') return toDay(new Date(date.getFullYear(), date.getMonth(), 1));
 
-  // Teden se začne s ponedeljkom. getDay() ima nedeljo na 0, zato zamik za 6.
-  const weekday = (date.getDay() + 6) % 7;
-  date.setDate(date.getDate() - weekday);
+  // 'day': obdobje je en sam dan, torej vsak vnos svoja točka. Tedna ni —
+  // teden je pri tehtanju in pri treningu preveč in premalo hkrati (glej
+  // Claude_kontekst/odlocitve.md).
   return toDay(date);
 }
 
@@ -76,8 +76,8 @@ function formatNumber(value) {
 
 // --- Povprečenje po obdobju ------------------------------------------------
 
-// Vsi vnosi znotraj tedna/meseca/leta se zlijejo v eno točko na začetku obdobja.
-// Tri tehtanja v istem tednu tako ne naredijo treh vrhov na letnem grafu.
+// Vsi vnosi znotraj dneva/meseca/leta se zlijejo v eno točko na začetku obdobja.
+// Tri tehtanja v istem mesecu tako ne naredijo treh vrhov na letnem grafu.
 //
 // `mode` pove, kaj obdobje predstavlja:
 //   'avg' (privzeto) — povprečje. Teža niha čez dan; povprečje je pravo stanje.
@@ -156,7 +156,7 @@ function labelledIndexes(count) {
 }
 
 // points: [{ date: 'YYYY-MM-DD', value: number }] — že povprečene po obdobju.
-// options: { unit: 'kg' | 'cm', step: 'week' | 'month' | 'year', empty: 'Ni podatkov' }
+// options: { unit: 'kg' | 'cm', step: 'day' | 'month' | 'year', empty: 'Ni podatkov' }
 export function lineChart(points, options) {
   if (!points.length) {
     const empty = document.createElement('div');

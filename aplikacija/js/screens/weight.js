@@ -11,7 +11,6 @@
 
 import { TEXT } from '../besedilo.js';
 import * as store from '../store.js';
-import * as backup from '../backup.js';
 import { settingsButton } from '../settings.js';
 import { aggregate, lineChart } from '../chart.js';
 import { ICON_WEIGHT, ICON_TRASH } from '../icons.js';
@@ -26,7 +25,7 @@ const T = TEXT.weight;
 
 let root = null;          // koren zaslona
 let selectedId = null;    // null = telesna teža, sicer id meritve
-let step = 'month';       // obdobje povprečenja: 'week' | 'month' | 'year'
+let step = 'month';       // obdobje povprečenja: 'day' | 'month' | 'year'
 let value = '';           // kar je vpisano v polje za vrednost
 let day = '';             // izbran datum, ISO dan
 let valueInput = null;    // rabimo ga za opozorilo ob praznem vnosu
@@ -211,12 +210,10 @@ function save() {
     return;
   }
 
+  // Varnostne kopije tukaj ni, enako kot pri shranjenem treningu: naredi se z
+  // gumbom *Izvozi zdaj* pod zobnikom (glej js/backup.js).
   if (selectedId === null) store.addBodyweight(number, day);
   else store.addMeasurementEntry(selectedId, number, day);
-
-  // Varnostna kopija, enako kot ob shranjenem treningu. Napake ne vrže — vnos je
-  // shranjen ne glede na to, kako se kopija konča.
-  backup.afterSave();
 
   // Datum ostane, kot je: če vpisuješ za nazaj, gre naslednji vnos na isti dan.
   value = '';
@@ -300,7 +297,7 @@ function chartSection() {
   wrap.append(box);
 
   const steps = el('div', 'steps');
-  steps.append(stepButton('week', T.week));
+  steps.append(stepButton('day', T.day));
   steps.append(stepButton('month', T.month));
   steps.append(stepButton('year', T.year));
   wrap.append(steps);

@@ -1,9 +1,9 @@
 # Podatkovni model
 
 > **Status: POTRJEN in implementiran** v `aplikacija/js/store.js`.
-> Trenutna `schemaVersion` je **5** (2026-07-30, serija je dobila `band` —
-> barvo elastike pri zgibih; pred tem 4: meritev je dobila `unit`, `valueCm`
-> se je preimenoval v `value`).
+> Trenutna `schemaVersion` je **6** (2026-07-30, serija je dobila `kind` — vrsto
+> serije — in `seconds`; pred tem 5: serija je dobila `band`, 4: meritev je dobila
+> `unit`, `valueCm` se je preimenoval v `value`).
 > Vsaka nadaljnja sprememba strukture zahteva migracijo v `migrate()` in dvig
 > `schemaVersion` — na telefonu so pravi podatki.
 
@@ -13,7 +13,7 @@ Vse je **en JSON objekt v `localStorage`** pod ključem `fitnes`:
 
 ```js
 {
-  schemaVersion: 5,
+  schemaVersion: 6,
   exercises: [],           // register vaj
   templates: [],           // predloge treningov
   workouts: [],            // zgodovina
@@ -93,28 +93,65 @@ in grafi zato ostanejo nedotaknjeni, tudi če predloge ni več.
 | `date` | string | ISO datum |
 | `exercises` | array | `{ exerciseId, sets: [...] }` |
 
-Vsak shranjen trening ostane tukaj za vedno. Prazne serije se ob shranjevanju
-zavržejo, predloga pa dobi **vse** vaje — tudi tiste, ki jih tisti dan ni uspel
-narediti; naslednjič naj se spet ponudijo.
+Vsak shranjen trening ostane tukaj za vedno. Prazna **navadna** serija se ob
+shranjevanju zavrže, vsaka druga vrsta ostane tudi prazna (glej `kind` spodaj).
+Predloga dobi **vse** vaje — tudi tiste, ki jih tisti dan ni uspel narediti;
+naslednjič naj se spet ponudijo.
 
 ### `set` — posamezna serija
 
 | Polje | Tip | Opomba |
 |---|---|---|
+| `kind` | string | vrsta serije (verzija 6); privzeto `'normal'` |
 | `weightKg` | number \| null | `null` = telesna teža ali neizpolnjeno |
 | `reps` | number \| null | |
-| `band` | string \| null | barva elastike; samo pri vaji "Pull ups" (verzija 5) |
+| `band` | string \| null | elastika; samo pri `kind: 'band'` (verzija 5) |
+| `seconds` | number \| null | trajanje; samo pri `kind: 'time'` (verzija 6) |
 
 **Nima `id` in nima `order`** — mesto v polju `sets` je zaporedje. Serija ni nikoli
 naslovljena od zunaj, zato bi bil id mrtvo polje.
 
-**`band`** je eno od imen v `store.BANDS`: `'yellow' | 'green' | 'teal' | 'red' | 'bw'`.
-Zapiše se samo pri vaji, ki se imenuje natanko "Pull ups" (`store.usesBands()`) —
-tam se namesto teže vpiše elastika in `weightKg` ostane `null`. Same barve so v
-CSS (`.band--*`), v podatkih je ime: barvo se da spremeniti brez migracije.
+#### `kind` — vrsta serije
 
-Serija z elastiko **ne gre na graf moči in ne šteje za rekord**: elastika del teže
-odvzame, koliko je ne vemo. `'bw'` (zgib brez elastike) je izjema in šteje normalno.
+Vrsta se izbere ob dodajanju serije, v oknu pod plusom, in se kasneje **ne menja**
+(pot nazaj je koš, ki odstrani zadnjo serijo). Seznam je `store.SET_KINDS`:
+
+| `kind` | Napis v vrstici | Kaj se vpisuje |
+|---|---|---|
+| `normal` | `Set 1`, `Set 2` … | teža × ponovitve |
+| `superset` | `Superset` | teža × ponovitve |
+| `dropset` | `Dropset` | teža × ponovitve |
+| `myoreps` | `Myoreps` | teža × ponovitve |
+| `band` | `Set 1`, `Set 2` … | elastika × ponovitve |
+| `time` | `Set 1`, `Set 2` … | čas v `seconds` (na zaslonu MM:SS) |
+| `empty` | `Set 1`, `Set 2` … | nič; vrstica je samo napis |
+
+**Številko dobijo samo `normal`, `band`, `time` in `empty`** — in samo te jo tudi
+porabijo (`store.setNumbers()`). Zaporedje je torej `Set 1, Superset, Set 2,
+Dropset, Set 3`. Superset, dropset in myoreps se imenujejo po sebi, ker številka
+pri njih ne pove ničesar, ime pa vse. Šteje se v `store.js` in ne na zaslonu, ker
+isto številko izpišeta trening in arhiv.
+
+**Na graf moči in v rekord gre samo `normal`** (`countsForStrength()`). Superset,
+dropset in myoreps so isto delo v drugih pogojih — dropset z utrujeno mišico,
+superset z drugo vajo vmes — in ista teža tam ni ista teža; elastika del teže
+odvzame; čas in prazen set teže sploh nimata. Krivulja moči mora primerjati
+primerljivo, sicer se premakne zato, ker si spremenil način dela.
+
+**Znamenji med vrsticami** sta stvar prikaza in ne podatkov: `+` se izriše med
+dvema zaporednima supersetoma, `↓` nad dropsetom, ki ima nad sabo katerokoli
+vrstico. Izračuna se ob izrisu iz vrste serije nad njo.
+
+#### `band` — elastika
+
+Eno od imen v `store.BANDS`: `'yellow' | 'green' | 'teal' | 'red-thin' |
+'red-thick' | 'bw'`. Zapiše se samo pri `kind: 'band'`; tam se namesto teže izbere
+elastika in `weightKg` ostane `null`. Barve in debeline so v CSS (`.band--*`), v
+podatkih je ime — videz se da spremeniti brez migracije. Rdeča je dvakrat, ker sta
+v telovadnici res dve: tanka pomaga manj od debele.
+
+`'bw'` ni elastika, ampak "brez nje". Za graf moči to ni pomembno — nobena serija
+vrste `band` na graf ne gre.
 
 Pri vajah z lastno težo gre v `weightKg` **dodana** teža (npr. pas pri dipsih),
 ne skupna. Graf moči telesno težo **prišteje** — z vrednostjo iz `bodyweightEntry`,
@@ -188,9 +225,9 @@ smiselno zaporedje, abeceda pa ne.
 
 - `lastSetsFor(id)` — serije iz **zadnjega treninga kjerkoli v zgodovini**, v katerem
   se je vaja pojavila, ne glede na ime treninga. To je številka, ki jo hočeš prekositi.
-- `exercisesForWorkoutName(name)` — vaje, ki spadajo k treningu s tem imenom (iz
-  predloge in iz zgodovine treningov z istim imenom). Napolni izbirnik vaj: pri "Pull"
-  se ne ponujajo vaje s "Push". Ime, ki ga še ni bilo, vrne prazen seznam.
+- Filtra po imenu treninga ni: izbirnik vaj napolni `searchExercises(query)` s celim
+  registrom in ga oži iskalno polje. `exercisesForWorkoutName` je odstranjena
+  (odlocitve.md, 2026-07-30).
 - `searchTrainedExercises(query)` — samo vaje, ki so vsaj enkrat v zgodovini, s
   številom treningov. Vaja, ki je bila samo dodana v predlogo, nima česa na graf.
 - `removeExercise(id)` — zbriše vajo iz **vseh** zapisov: registra, predlog, shranjenih
@@ -255,6 +292,24 @@ Ni pa vsaka nova verzija tudi pretvorba. Verzija **5** doda serijam neobvezno po
 `band`; star zapis ga preprosto nima in to pomeni "brez elastike". Verzija se kljub
 temu dvigne — iz nje se vidi, od kdaj polje obstaja, in to je edini zanesljiv način,
 da se čez pol leta ve, ali je zapis brez `band` star ali samo prazen.
+
+Verzija **6** pa pretvorba je, in sicer edina, ki se dotakne shranjenih treningov
+(`cleanWorkout()` / `cleanSet()`). Do nje je vrsto serije določalo **ime vaje**: pri
+vaji z imenom natanko "Pull ups" se je vpisovala elastika, povsod drugod teža. Zdaj
+odloča izbira ob dodajanju serije, staremu zapisu pa se vrsta prebere iz tega, kar
+v njem piše:
+
+- serija z izbrano elastiko (`band`) → `kind: 'band'`;
+- vse ostale → `kind: 'normal'`;
+- `band: 'red'` → `'red-thin'`, ker je rdeča zdaj dveh debelin in je tanka tista,
+  ki je takrat visela na drogu.
+
+Skozi isto pretvorbo gre tudi **trening v teku**: če posodobitev pride sredi
+treninga, mora ta po njej izgledati enako kot prej.
+
+Posledica, ki jo je treba poznati: zgib brez elastike, vpisan z `band: 'bw'`, je po
+migraciji serija vrste `band` in **ne šteje več za moč** (prej je 'bw' štel). Zgibi,
+ki naj bodo na grafu, se od zdaj vpisujejo kot navaden set pri vaji z lastno težo.
 
 ## Varnostna kopija
 

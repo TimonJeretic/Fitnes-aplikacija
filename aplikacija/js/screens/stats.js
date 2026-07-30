@@ -18,7 +18,7 @@ import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
 import { ICON_STATS, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
-import { el, button, icon, formatNumber, formatRounded, formatDay } from '../dom.js';
+import { el, button, icon, formatNumber, formatRounded, formatTime, formatDay } from '../dom.js';
 
 const T = TEXT.stats;
 
@@ -37,7 +37,7 @@ let workoutQuery = '';      // iskalnik v arhivu
 let openWorkoutId = null;   // razprta vrstica arhiva
 let openExerciseId = null;  // razprta vrstica arhiva vaj
 let selectedId = null;      // vaja, ki je na grafu
-let step = 'month';         // obdobje združevanja: 'week' | 'month' | 'year'
+let step = 'month';         // obdobje združevanja: 'day' | 'month' | 'year'
 
 // --- Izris -----------------------------------------------------------------
 
@@ -186,7 +186,7 @@ function chartSection() {
   // Izbira obdobja je pod grafom, kot na zaslonu TEŽA: gledaš krivuljo, palec
   // pa je itak spodaj.
   const steps = el('div', 'steps');
-  steps.append(stepButton('week', T.week));
+  steps.append(stepButton('day', T.day));
   steps.append(stepButton('month', T.month));
   steps.append(stepButton('year', T.year));
   wrap.append(steps);
@@ -233,11 +233,21 @@ function topSets(points, exercise) {
 // izpiše kot pribitek in ne kot cela teža — sicer bi "0 kg × 10" pri zgibih
 // izgledalo kot napaka.
 function setText(set, usesBodyweight) {
+  const kind = store.setKind(set);
+
+  // Prazen set nima številk in jih ni imel: da je serija bila, je vse, kar pove.
+  if (kind === 'empty') return T.empty;
+
+  // Čas namesto teže in ponovitev (plank, mrtvi obesek).
+  if (kind === 'time') return formatTime(set.seconds) || T.empty;
+
   const reps = set.reps === null || set.reps === undefined ? T.empty : String(set.reps);
 
-  // Zgib z elastiko: kilogramov ni, pove se barva. Take serije na grafu ni,
-  // v arhivu pa mora pisati, kaj si res naredila.
-  if (set.band) return (TEXT.bands[set.band] || set.band) + ' × ' + reps;
+  // Zgib z elastiko: kilogramov ni, pove se elastika. Take serije na grafu ni,
+  // v arhivu pa mora pisati, kaj si res naredil.
+  if (kind === 'band') {
+    return (set.band ? TEXT.bands[set.band] || set.band : T.empty) + ' × ' + reps;
+  }
 
   if (usesBodyweight) {
     const added = set.weightKg ? ' +' + formatNumber(set.weightKg) + ' ' + T.unit : '';
@@ -393,10 +403,17 @@ function workoutDetail(id) {
 
     if (entry.note) card.append(el('p', 'past__note', entry.note));
 
+    // Napisi so isti kot med treningom: superset, dropset in myoreps se imenujejo
+    // po sebi in številke ne porabijo. Šteje store, da se arhiv in trening ne
+    // razideta pri isti seriji.
+    const numbers = store.setNumbers(entry.sets);
+
     const sets = el('div', 'past__sets');
     entry.sets.forEach((set, index) => {
       const row = el('div', 'past__set');
-      row.append(el('span', 'past__label', T.set + ' ' + (index + 1)));
+      row.append(el('span', 'past__label', numbers[index] === null
+        ? TEXT.setKinds[store.setKind(set)] || ''
+        : T.set + ' ' + numbers[index]));
       row.append(el('span', 'past__value', setText(set, entry.usesBodyweight)));
       sets.append(row);
     });

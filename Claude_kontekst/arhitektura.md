@@ -98,7 +98,7 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 | `splash.css` | zastor z uvodno animacijo (nad vsem, `z-index: 100`) |
 | `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, vrstica `.listrow` (ime + koš), spustni seznam `.sheet`, izbira `.choice` |
 | `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
-| `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.suggest`, `.btn`, `.modal` |
+| `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.btn`, `.modal` |
 | `weight.css` | zaslon TEŽA in gradniki grafa, ki jih uporablja tudi STATISTIKA: `.picked` (izbirnik), `.graph`, `.chart`, `.steps` |
 | `stats.css` | samo tisto, česar ni ne v training.css ne v weight.css |
 | `settings.css` | okno pod zobnikom (`.settings`); gumb `.brand__settings` je v screen.css, ker spada v `.brand` |

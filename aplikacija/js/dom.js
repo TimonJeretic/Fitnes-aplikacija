@@ -74,6 +74,16 @@ export function formatNumber(value) {
   return String(value).replace('.', ',');   // slovensko decimalno ločilo
 }
 
+// Čas serije (plank, mrtvi obesek) v zapisu MM:SS. Sekunde imajo vedno dve
+// števki, minute ne: "1:05" in "12:05" se bereta enako hitro, "01:05" pa je
+// samo daljši zapis iste stvari. V podatkih so sekunde, tukaj je videz.
+export function formatTime(seconds) {
+  if (seconds === null || seconds === undefined) return '';
+
+  const whole = Math.max(0, Math.round(Number(seconds) || 0));
+  return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
+}
+
 // Za izračunane vrednosti (ocena 1RM), kjer bi cel double pokazal 118,90000000001.
 export function formatRounded(value, decimals) {
   if (value === null || value === undefined) return '';

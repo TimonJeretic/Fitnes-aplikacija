@@ -8,7 +8,7 @@
 // Oblika podatkov je opisana v Claude_kontekst/podatkovni-model.md.
 
 const KEY = 'fitnes';
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 // Kdaj je nazadnje nastala varnostna kopija. Ločen ključ in ne polje v podatkih:
 // uvoz stare kopije bi ta podatek povozil in aplikacija bi mislila, da kopije ni
@@ -19,25 +19,51 @@ const BACKUP_KEY = 'fitnes-kopija';
 // menja — sicer bi bile stare in nove točke na istem grafu v različnih enotah.
 export const UNITS = ['kg', 'cm'];
 
-// Barve elastik pri zgibih. Vrstni red je vrstni red v izbirniku; same barve so
-// v CSS (`.band--*` v training.css), tukaj so samo imena — barva je videz in ne
-// podatek, zato se popravi na enem mestu, brez migracije shranjenih treningov.
+// Elastike. Vrstni red je vrstni red v izbirniku; same barve in debeline so v
+// CSS (`.band--*` v training.css), tukaj so samo imena — videz se popravi na
+// enem mestu, brez migracije shranjenih treningov. Rdeča je dvakrat, ker sta v
+// telovadnici res dve: tanka pomaga manj od debele.
 // 'bw' ni elastika, ampak "brez nje" (lastna teža).
-export const BANDS = ['yellow', 'green', 'teal', 'red', 'bw'];
+export const BANDS = ['yellow', 'green', 'teal', 'red-thin', 'red-thick', 'bw'];
 
-// Vaja, pri kateri se namesto teže vpiše elastika. Ime mora biti natanko to —
-// "Pullups" ali "Pull-ups" je navadna vaja s kilogrami. Primerjamo brez ozira na
-// velike črke in presledke ob robu, ker je to tipkanje in ne druga vaja.
-const BAND_EXERCISE = 'pull ups';
+// Kakšna je posamezna serija. Vrstni red je vrstni red v izbirniku pod plusom.
+//
+//   normal     teža × ponovitve, edina vrsta, ki šteje za moč
+//   superset   ista teža in ponovitve, narejeno v paru z drugo vajo
+//   dropset    nadaljevanje serije nad njim z manjšo težo
+//   myoreps    kratke ponovitve s premorom po glavni seriji
+//   band       namesto teže se izbere elastika (zgibi)
+//   time       namesto teže in ponovitev se vpiše čas (MM:SS)
+//   empty      samo napis; serija je bila, številk zanjo ni
+export const SET_KINDS = ['normal', 'superset', 'dropset', 'myoreps', 'band', 'time', 'empty'];
 
-export function usesBands(exercise) {
-  return !!exercise && String(exercise.name || '').trim().toLowerCase() === BAND_EXERCISE;
+// Vrste, ki nosijo zaporedno številko. Superset, dropset in myoreps se namesto
+// številke imenujejo po sebi — številka pri njih ne pove ničesar, ime pa vse.
+const NUMBERED_KINDS = ['normal', 'band', 'time', 'empty'];
+
+// Vrsta serije. Zapis brez `kind` je star (do verzije 5) ali skvarjen; oboje je
+// navaden set, ker je bil do takrat vsak set navaden.
+export function setKind(set) {
+  return set && SET_KINDS.includes(set.kind) ? set.kind : 'normal';
 }
 
-// Elastika pri zgibih pomaga, zato serija z njo ni primerljiva s serijo brez nje.
-// 'bw' je izjema: to pomeni zgib brez elastike, torej čisto lastno težo.
-function assisted(set) {
-  return !!set.band && set.band !== 'bw';
+// Prazna serija izbrane vrste. Oblika serije je zapisana natanko tukaj, da noben
+// zaslon ne ugiba, katera polja mu pripadajo.
+export function newSet(kind) {
+  const clean = SET_KINDS.includes(kind) ? kind : 'normal';
+  const set = { kind: clean, weightKg: null, reps: null };
+
+  if (clean === 'band') set.band = null;
+  if (clean === 'time') set.seconds = null;
+  return set;
+}
+
+// Zaporedne številke serij: `[1, null, 2, null, 3]`. `null` pomeni vrstico, ki
+// se imenuje po svoji vrsti. Šteje se tukaj in ne na zaslonu, ker isto številko
+// izpišeta trening in arhiv — in morata jo enako.
+export function setNumbers(sets) {
+  let seen = 0;
+  return (sets || []).map((set) => (NUMBERED_KINDS.includes(setKind(set)) ? ++seen : null));
 }
 
 function emptyData() {
@@ -78,10 +104,9 @@ function migrate(raw) {
     // tiho obravnaval drugače kot izrecno izbrani "ne".
     exercises: Array.isArray(raw.exercises) ? raw.exercises.map(cleanExercise) : base.exercises,
     templates: Array.isArray(raw.templates) ? raw.templates : base.templates,
-    // Verzija 5: serija ima lahko `band` (barva elastike pri zgibih). Staremu
-    // zapisu ni treba ničesar dodati — serija brez tega polja je serija brez
-    // elastike. Verzija se dvigne zato, da se ve, od kdaj polje obstaja.
-    workouts: Array.isArray(raw.workouts) ? raw.workouts : base.workouts,
+    // Verzija 5: serija ima lahko `band` (barva elastike pri zgibih).
+    // Verzija 6: serija ve, kakšna je (`kind`) — glej cleanSet().
+    workouts: Array.isArray(raw.workouts) ? raw.workouts.map(cleanWorkout) : base.workouts,
     bodyweightEntries: Array.isArray(raw.bodyweightEntries)
       ? raw.bodyweightEntries
       : base.bodyweightEntries,
@@ -94,8 +119,43 @@ function migrate(raw) {
     measurementEntries: Array.isArray(raw.measurementEntries)
       ? raw.measurementEntries.map(cleanMeasurementEntry).filter(Boolean)
       : base.measurementEntries,
-    draft: raw.draft && typeof raw.draft === 'object' ? raw.draft : null
+    // Trening v teku gre skozi isto pretvorbo kot zgodovina: če je posodobitev
+    // prišla sredi treninga, mora ta po njej izgledati enako kot prej.
+    draft: raw.draft && typeof raw.draft === 'object' ? cleanWorkout(raw.draft) : null
   };
+}
+
+// Verzija 6: vsaka serija pove, kakšna je. Do zdaj je to določalo ime vaje —
+// pri "Pull ups" se je vpisovala elastika, povsod drugod teža. Zdaj odloča
+// izbira pod plusom, staremu zapisu pa vrsto preberemo iz tega, kar v njem piše.
+function cleanWorkout(workout) {
+  if (!workout || typeof workout !== 'object' || !Array.isArray(workout.exercises)) {
+    return workout;
+  }
+
+  return Object.assign({}, workout, {
+    exercises: workout.exercises.map((entry) => {
+      if (!entry || typeof entry !== 'object' || !Array.isArray(entry.sets)) return entry;
+      return Object.assign({}, entry, { sets: entry.sets.map(cleanSet) });
+    })
+  });
+}
+
+function cleanSet(set) {
+  if (!set || typeof set !== 'object') return set;
+
+  const clean = Object.assign({}, set);
+
+  // Rdeča elastika je zdaj dveh debelin. Stari zapis pozna eno samo in to je
+  // tista, ki je takrat visela na drogu — tanka.
+  if (clean.band === 'red') clean.band = 'red-thin';
+
+  if (SET_KINDS.includes(clean.kind)) return clean;
+
+  // Izbrana barva je edini sled, da je bila to serija z elastiko. Serija brez
+  // nje je bila navadna, tudi pri zgibih.
+  clean.kind = clean.band ? 'band' : 'normal';
+  return clean;
 }
 
 // Vaja iz shrambe, dopolnjena do oblike, na katero se koda lahko zanese.
@@ -196,31 +256,9 @@ export function getExercise(id) {
   return read().exercises.find((exercise) => exercise.id === id) || null;
 }
 
-// Vaje, ki spadajo k treningu s tem imenom: tiste iz njegove predloge in tiste,
-// ki so se v treningu s tem imenom kdaj pojavile.
-//
-// Zakaj po imenu in ne kar cel register: "Pull" ne rabi ponujati vaj, ki jih
-// delaš pri "Push". Register je skupen — ista vaja je ista vaja, ne glede na to,
-// v katerem treningu se pojavi — filter pa je stvar tega, kaj se ponudi.
-//
-// Ime treninga, ki še nikoli ni bilo shranjeno, vrne prazen seznam. Kaj s tem
-// naredi zaslon, je njegova odločitev.
-export function exercisesForWorkoutName(name) {
-  const needle = normalizeName(name);
-  if (!needle) return [];
-
-  const ids = new Set();
-
-  const template = findTemplateByName(name);
-  if (template) template.exerciseIds.forEach((id) => ids.add(id));
-
-  for (const workout of read().workouts) {
-    if (normalizeName(workout.name) !== needle) continue;
-    for (const entry of workout.exercises || []) ids.add(entry.exerciseId);
-  }
-
-  return read().exercises.filter((exercise) => ids.has(exercise.id)).sort(byName);
-}
+// Vaj po imenu treninga se ne filtrira več (`exercisesForWorkoutName` je
+// odstranjena): izbirnik vaj ponudi cel register in ga oži iskalno polje.
+// Zakaj, piše v Claude_kontekst/odlocitve.md.
 
 // Zbriše vajo iz **vseh** zapisov: iz registra, iz predlog, iz shranjenih
 // treningov in iz treninga v teku. Vaja s tem res izgine — z grafov, iz arhiva
@@ -255,6 +293,8 @@ export function removeExercise(id) {
 //
 // Pri vaji z lastno težo je `weightKg` dodana teža; serije brez nje štejejo kot
 // nič dodanega, zato rekord takrat pomeni največ ponovitev.
+//
+// Šteje samo navaden set — isto pravilo kot pri grafu moči (glej countsForStrength).
 export function personalRecord(exerciseId) {
   let best = null;
 
@@ -264,7 +304,7 @@ export function personalRecord(exerciseId) {
 
     for (const set of entry.sets || []) {
       if (!Number.isFinite(set.reps)) continue;
-      if (assisted(set)) continue;      // z elastiko ni rekord, ampak druga vaja
+      if (!countsForStrength(set)) continue;
 
       const weight = Number.isFinite(set.weightKg) ? set.weightKg : 0;
       const better = !best || weight > best.weight || (weight === best.weight && set.reps > best.reps);
@@ -524,13 +564,25 @@ export function bodyweightAt(day) {
   return (found || entries[0]).weightKg;
 }
 
+// Ali serija sploh sme na graf moči in v rekord. Sme samo navadna:
+//
+//   superset, dropset, myoreps  isto delo, a v drugih pogojih — dropset je
+//                               narejen z utrujeno mišico, superset z drugo
+//                               vajo vmes. Ista teža tam ni ista teža.
+//   band                        elastika del teže odvzame, koliko je ne vemo.
+//   time, empty                 teže sploh nimata.
+//
+// Krivulja moči mora primerjati primerljivo, sicer se dvigne ali pade zato, ker
+// si spremenil način dela, in ne zato, ker si postal močnejši.
+function countsForStrength(set) {
+  return setKind(set) === 'normal';
+}
+
 // Teža, s katero je bila serija res narejena. Pri vaji z lastno težo je
 // `weightKg` **dodana** teža (pas pri dipsih), zato se prišteje telesna;
 // prazno polje takrat pomeni čisto lastno težo in ne manjkajočega podatka.
 function effectiveWeight(set, exercise, day) {
-  // Serija z elastiko na graf ne gre: elastika del teže odvzame, koliko je ne
-  // vemo. Šteti jo kot polno lastno težo bi krivuljo dvignilo po nedolžnem.
-  if (assisted(set)) return null;
+  if (!countsForStrength(set)) return null;
 
   if (exercise && exercise.usesBodyweight) {
     const body = bodyweightAt(day);
@@ -769,6 +821,15 @@ export function clearDraft() {
   write();
 }
 
+// Prazna navadna serija je pomotoma pritisnjen plus in se ob shranjevanju
+// zavrže. Vsaka druga vrsta ostane, tudi če je prazna: izbral si jo iz seznama,
+// torej je bila namen in ne pomota. Prazen set drugače v zgodovino sploh ne bi
+// mogel priti, ker po zgradbi nima česa izpolniti.
+function keepSet(set) {
+  if (setKind(set) !== 'normal') return true;
+  return set.weightKg !== null || set.reps !== null;
+}
+
 // Shrani trening v zgodovino in posodobi predlogo.
 // Prazne serije se zavržejo, predloga pa dobi vse vaje — tudi tiste, ki jih
 // danes nisi uspel narediti; naslednjič naj se spet ponudijo.
@@ -776,7 +837,7 @@ export function saveWorkout(draft) {
   const exercises = (draft.exercises || [])
     .map((entry) => ({
       exerciseId: entry.exerciseId,
-      sets: (entry.sets || []).filter((set) => set.weightKg !== null || set.reps !== null)
+      sets: (entry.sets || []).filter(keepSet)
     }))
     .filter((entry) => entry.sets.length > 0);
 

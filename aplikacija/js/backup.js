@@ -1,20 +1,24 @@
 // Varnostna kopija podatkov v datoteko na napravi.
 //
-// Kaj je sploh mogoče, se med sistemi močno razlikuje, zato so načini trije. Kateri
+// Prvo pravilo te datoteke: **kopija se nikoli ne naredi sama.** Nastane izključno
+// na dotik gumba *Izvozi zdaj* v oknu pod zobnikom. Samodejna kopija ob vsakem
+// shranjenem treningu je bila ovržena — na iPhonu je ob vsaki shranjeni vaji odprla
+// sistemsko okno za deljenje (Claude_kontekst/odlocitve.md).
+//
+// Kam datoteka pride, se med sistemi močno razlikuje, zato so načini trije. Kateri
 // velja, se ne ugiba iz imena brskalnika — ta se lažejo in seznami naprav se starajo —
 // ampak iz tega, ali funkcija sploh obstaja:
 //
-//   directory  mapo izbereš enkrat, aplikacija vanjo tiho piše (namizje, morda Android)
-//   share      sistemsko okno za deljenje ob vsakem shranjevanju (iPhone)
+//   directory  mapo izbereš enkrat, izvoz piše vanjo brez spraševanja (namizje)
+//   share      sistemsko okno za deljenje (iPhone)
 //   download   navaden prenos v mapo Prenosi, zasilni izhod
 //
-// V izbrani mapi nastaneta dve datoteki. `fitnes-kopija.json` se ob vsakem
-// shranjevanju prepiše in je vedno zadnje stanje; `fitnes-YYYY-MM-DD.json` nastane
-// enkrat na dan. Tako je mogoče stopiti korak nazaj, mapa pa se ne zalije s stotinami
-// datotek. Zakaj tako, piše v Claude_kontekst/odlocitve.md.
+// V izbrani mapi nastaneta dve datoteki. `fitnes-kopija.json` se ob vsakem izvozu
+// prepiše in je vedno zadnje stanje; `fitnes-YYYY-MM-DD.json` nastane enkrat na dan.
+// Tako je mogoče stopiti korak nazaj, mapa pa se ne zalije s stotinami datotek.
 //
-// Prvo pravilo te datoteke: **kopija ne sme nikoli podreti shranjevanja.** Trening je
-// shranjen, še preden se tukaj karkoli zgodi, in vsaka napaka konča v stanju kopije
+// Drugo pravilo: **kopija ne sme nikoli podreti shranjevanja.** Podatki so v shrambi,
+// še preden se tukaj karkoli zgodi, napake pa končajo v stanju kopije
 // (store.getBackupState) namesto v izjemi, ki bi prišla do zaslona.
 
 import * as store from './store.js';
@@ -91,7 +95,7 @@ async function writeToFolder(folder) {
   await writeFile(folder, CURRENT_FILE, text);
 
   // Dnevna kopija nastane samo, če je danes še ni. Če ta zapis pade, se `day` ne
-  // premakne in poskus se ponovi ob naslednjem shranjevanju.
+  // premakne in poskus se ponovi ob naslednjem izvozu.
   const day = store.todayIso();
   if (store.getBackupState().day !== day) {
     await writeFile(folder, 'fitnes-' + day + '.json', text);
@@ -102,7 +106,7 @@ async function writeToFolder(folder) {
 
 // Okno za deljenje (iPhone). Pot do njega ne sme imeti nobenega `await` pred klicem:
 // brskalnik deljenje dovoli samo neposredno iz dotika, čakanje pa to dovoljenje
-// porabi in klic zavrne.
+// porabi in klic zavrne. Zato se to okno odpre samo iz gumba *Izvozi zdaj*.
 function shareFile() {
   const text = store.exportJson();
   const name = 'fitnes-' + store.todayIso() + '.json';
@@ -162,30 +166,12 @@ export async function pickFolder() {
   return folder.name;
 }
 
-// Samodejna kopija ob shranjenem treningu ali vnosu teže. Nikoli ne vrže napake.
-export function afterSave() {
-  // iPhone: mape ni mogoče izbrati, zato gre kopija skozi okno za deljenje.
-  // Ta odločitev je sinhrona prav zato, da pred deljenjem ni čakanja.
-  if (!canPickFolder()) {
-    if (!canShareFiles()) return Promise.resolve('none');
-    try {
-      return Promise.resolve(shareFile());
-    } catch (error) {
-      return Promise.resolve('error');
-    }
-  }
-
-  return readHandle().then((folder) => {
-    if (!folder) return 'unset';   // mapa še ni izbrana; nastavitve to povejo
-    return writeToFolder(folder).then(() => 'directory');
-  }).catch((error) => {
-    store.setBackupState({ error: String((error && error.message) || error) });
-    return 'error';
-  });
-}
-
-// Ročna kopija iz nastavitev. Za razliko od afterSave() tukaj molk ni v redu:
-// uporabnik je gumb pritisnil in mora izvedeti, kaj se je zgodilo.
+// Kopija iz nastavitev — edina pot, po kateri datoteka sploh nastane. Molk tukaj
+// ni v redu: uporabnik je gumb pritisnil in mora izvedeti, kaj se je zgodilo.
+//
+// Na poti do deljenja ni nobenega `await`: brskalnik `navigator.share()` dovoli samo
+// neposredno iz dotika. `exportNow` je res `async`, a v vejo z deljenjem pade brez
+// čakanja — `canPickFolder()` je sinhrona poizvedba.
 export async function exportNow() {
   if (canPickFolder()) {
     const folder = await readHandle();

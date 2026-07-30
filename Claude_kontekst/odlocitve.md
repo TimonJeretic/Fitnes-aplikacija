@@ -12,6 +12,104 @@ Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
+## 2026-07-30 — Izbirnik vaj je popup z iskalnim poljem, brez filtra po treningu
+
+**Odločitev:** plus v treningu odpre spustni seznam čez zaslon (`js/sheet.js`).
+Na vrhu je **iskalno polje**, ki se lepi na vrh okna, pod njim **cel register vaj**
+po abecedi. Tipkanje seznam oži; ime, ki ga v seznamu ni, ponudi zadnja vrstica s
+prekinjeno obrobo (*Nova vaja: …*). Vaja, ki je v treningu že zdaj, se ne ponudi.
+Filtriranje po imenu treninga je **ovrženo** (glej vpis 2026-07-29 spodaj),
+`store.exercisesForWorkoutName` je odstranjena.
+
+**Zakaj brez filtra:** pri prvem "Legs" ni imel česa ponuditi, pri treningu, ki
+namenoma meša sheme, pa je skril ravno tisto vajo, ki si jo iskal. To je bilo v
+starem vpisu predvideno kot razlog za spremembo in se je zgodilo. Iskalno polje
+naredi isto, kar je hotel filter — kratek seznam — brez ugibanja, kaj kam spada.
+
+**Zakaj iskanje in novo ime v istem polju:** prej sta bila dva okvirja, seznam
+zgoraj in "Nova vaja" spodaj, torej dve polji za isto misel ("hočem to vajo").
+Zdaj je en korak: tipkaš, dokler ni na zaslonu tisto, kar hočeš, in se tega
+dotakneš. Vrstica *Nova vaja* se pokaže tudi pri delnem imenu — vaja z imenom
+"Zg" je legitimna in seznam nima pravice odločati, kdaj je vpis dokončan.
+
+**Kurzor se v polje NE postavi sam.** Tipkovnica bi pokrila seznam, na iPhonu pa
+je ostala odprta tudi potem, ko je bilo polje že odstranjeno z zaslona — in
+naslednji dotik v polje za kilažo ni prijel.
+
+**Kaj bi jo ovrglo:** register, ki bi zrasel do sto vaj, in želja po skupinah
+(potisk / poteg / noge). Takrat gre nad seznam vrstica z skupinami, ne filter po
+imenu treninga.
+
+---
+
+## 2026-07-30 — Obdobja na grafih so Dan, Mesec, Leto
+
+**Odločitev:** graf na TEŽI in STATISTIKI ima tri obdobja: **Dan**, Mesec, Leto.
+Teden je odstranjen; `chart.js` pri `step: 'day'` obdobja ne združuje več, ampak
+vsak dan pusti svojo točko.
+
+**Zakaj:** teden ni bil ne eno ne drugo. Za branje napredka je bil predrobna
+delitev (na letnem razmiku se točke stiskajo v črto), za popravljanje in
+preverjanje pa pregrob — hotel si videti **tisti trening**, ne povprečje sedmih
+dni. Dan je tisto, kar je v podatkih dejansko zapisano: tehtanje ima dan, trening
+ima dan.
+
+**Kaj s tem ne izgubiva:** dan v izračunu ostane obdobje kot vsako drugo, zato
+dve tehtanji istega dne še vedno dasta eno točko (povprečje), dva treninga
+istega dne pa najboljšega od obeh.
+
+**Kaj bi jo ovrglo:** dnevni graf, ki bi pri dveh letih podatkov postal
+neberljiv. Takrat rabi graf okno ("zadnjih 90 dni"), ne novega obdobja.
+
+---
+
+## 2026-07-30 — Varnostna kopija se nikoli ne naredi sama
+
+**Odločitev:** kopija nastane **izključno** na dotik gumba *Izvozi zdaj* v oknu
+pod zobnikom. `backup.afterSave()` je odstranjena, klicev iz `save()` obeh
+zaslonov ni več. Prvo vrstico v nastavitvah to tudi izrecno pove.
+
+**Zakaj:** na iPhonu je samodejna kopija ob vsakem shranjenem treningu in vsakem
+vnosu teže odprla sistemsko okno za deljenje — sredi treninga, z eno roko. Okno
+zahteva odgovor, torej je bila varnostna kopija naenkrat najbolj vsiljiv del
+aplikacije. To je bilo v starem vpisu predvideno kot razlog za spremembo
+("Timon je izbral, da se odpre ob vsakem shranjevanju") in se je pri prvi uporabi
+v telovadnici tudi zgodilo.
+
+**Zakaj tudi na Androidu in namizju nič:** kopija ob shranjevanju je smiselna
+samo, če je tiha, tiha pa je lahko samo v izbrani mapi. Dva različna odgovora na
+isto vprašanje ("se kopija dela sama?") sta slabša od enega jasnega — in podatki
+so v `localStorage` shranjeni takoj, ne šele s kopijo.
+
+**Kar ostane:** izbira mape, dnevna kopija in trije načini (mapa / deljenje /
+prenos). Vsi trije zdaj visijo na istem gumbu, ne več na shranjenem treningu.
+
+**Kaj bi jo ovrglo:** izgubljeni podatki, ker je Timon na izvoz pozabil. Takrat
+kopija ne gre nazaj na vsako shranjevanje, ampak največ enkrat na dan, in samo v
+načinu **mapa**, kjer je tiha.
+
+---
+
+## 2026-07-30 — Ročaj za premikanje vaje so samo pikice
+
+**Odločitev:** vlečenje se začne samo na pikicah desno na ploščici z imenom
+(`.exercise__grip`, tarča 40 × 40 px, `touch-action: none`). Cela ploščica ni več
+ročaj in `touch-action` ima privzeto vrednost.
+
+**Zakaj:** ploščica z imenom je najširša stvar na kartici, torej tisto, na kar
+prst pri drsenju po treningu pade najpogosteje. Z `touch-action: none` na njej
+drsenje ni prijelo — stran je obstala, kot da se je aplikacija zataknila.
+Namesto tega je vajo začela vleči.
+
+**Zakaj pikice in ne dolg pritisk:** dolg pritisk je nevidno pravilo, ki se ga je
+treba naučiti, in pri vsakem dotiku doda pol sekunde čakanja. Pikice so bile že
+prej edini namig, da se vaja da premakniti; zdaj so tudi edina tarča.
+
+**Kaj bi jo ovrglo:** pritožba, da je pikice s palcem težko zadeti. Takrat se
+tarča razširi po celi višini ploščice, ne pa nazaj na njeno širino.
+
+---
+
 ## 2026-07-30 — Vaja "Pull ups" namesto teže vpisuje barvo elastike
 
 **Odločitev:** vaja, ki se imenuje **natanko** "Pull ups", ima namesto polja za
@@ -249,7 +347,11 @@ košo za nedavno zbrisano ali izvoz podatkov pred brisanjem.
 
 ---
 
-## 2026-07-29 — Izbirnik vaj ponuja samo vaje tega treninga
+## 2026-07-29 — Izbirnik vaj ponuja samo vaje tega treninga — **OVRŽENO 2026-07-30**
+
+> Ovrgel jo je vpis *Izbirnik vaj je popup z iskalnim poljem* (2026-07-30): zgodilo
+> se je natanko to, kar je bilo tukaj predvideno kot razlog za spremembo — trening,
+> ki meša sheme. `store.exercisesForWorkoutName` ne obstaja več.
 
 **Odločitev:** "Izberi vajo" ponudi vaje, ki spadajo k treningu **s tem imenom** —
 iz njegove predloge in iz zgodovine treningov z istim imenom
@@ -917,6 +1019,11 @@ gumb *nazaj* in to, da po osvežitvi ostaneš na istem zaslonu.
 
 ## 2026-07-29 — Varnostna kopija: kam in kdaj
 
+> **Del "kdaj" je ovržen 2026-07-30** — glej vpis *Varnostna kopija se nikoli ne
+> naredi sama*. Kopija ne nastane ob shranjenem treningu, ampak samo na dotik gumba
+> *Izvozi zdaj*; `afterSave()` ne obstaja več. Del "kam" (mapa, dve datoteki, trije
+> načini, pravilo brez `await`) velja naprej.
+
 **Odločitev:** kopija nastane **ob shranjenem treningu in ob shranjenem vnosu teže**,
 ne ob vsaki spremembi. Kam gre, se ne določi v kodi, ampak z mapo, ki jo Timon izbere
 enkrat; ročaj te mape živi v IndexedDB.
@@ -944,7 +1051,7 @@ brskalnika, ker se ta lažejo in se seznami starajo.
 
 **Podrobnost, ki je bila odločitev in ne slučaj:** na poti do `navigator.share()` ni
 nobenega `await`. Brskalnik deljenje dovoli samo neposredno iz dotika; en sam `await`
-pred klicem to dovoljenje porabi in klic zavrne. Zato `afterSave()` najprej sinhrono
+pred klicem to dovoljenje porabi in klic zavrne. Zato `exportNow()` najprej sinhrono
 pogleda, ali je izbira mape sploh mogoča, in šele nato gre po eni ali drugi poti.
 
 **Kaj bi jo ovrglo:** prava sinhronizacija (Google Drive API) — a ta pomeni prijavo,
@@ -965,3 +1072,96 @@ tega na istem mestu na vseh treh zaslonih, zato ga ni treba iskati.
 
 **Kaj bi jo ovrglo:** če bi se v nastavitvah nabralo toliko stvari, da okno ne bi bilo
 več pregledno. Takrat postane podpot (`#/statistika/nastavitve`), ne pa četrti gumb.
+
+---
+
+## 2026-07-30 — Serija ima vrsto, izbere se ob dodajanju
+
+**Odločitev:** plus pod vajo ne doda več kar prazne vrstice, ampak odpre okno z
+vrstami serij: *Navaden set, Superset, Dropset, Myoreps, Elastika, Čas, Prazen set*.
+Vrsta se zapiše v `set.kind` in se kasneje **ne da spremeniti**.
+
+**Zakaj vrsta in ne prosto polje:** trening ni samo teža × ponovitve. Dropset,
+superset in myoreps so isto delo v drugačnih pogojih; če se zapišejo kot navadne
+serije, izgleda zgodovina, kot da si nekega dne padel s 102,5 na 40 kg. Vrsta to
+pove z eno besedo in brez tipkanja.
+
+**Zakaj se ne da spremeniti:** sprememba vrste bi odprla vprašanje, kam gredo že
+vpisane številke (teža pri elastiki, ponovitve pri času). Pot nazaj je koš ob
+plusu, ki odstrani zadnjo serijo — napačno izbrana vrsta stane dva dotika.
+
+**Kaj šteje za moč:** samo `normal`. Krivulja mora primerjati primerljivo; dropset
+z utrujeno mišico ni ista teža kot prva serija, elastika del teže odvzame, čas in
+prazen set teže sploh nimata. Isto pravilo velja za rekord (PR) — obe številki
+prideta iz istega vira, sicer se razideta.
+
+**Kaj preživi shranjevanje:** prazna **navadna** serija je pomotoma pritisnjen plus
+in se zavrže; vsaka druga vrsta ostane tudi prazna, ker si jo izbral iz seznama.
+Prazen set drugače v zgodovino sploh ne bi mogel priti — po zgradbi nima česa
+izpolniti.
+
+**Kaj bi jo ovrglo:** če bi se pokazalo, da je vrst preveč in da je izbiranje med
+sedmimi vrsticami sredi serije počasnejše od enega dotika na plus. Takrat postane
+plus "navaden set", vrsta pa dolg pritisk.
+
+---
+
+## 2026-07-30 — Elastika je vrsta serije, ne lastnost vaje "Pull ups"
+
+**Odločitev:** pravilo, da se pri vaji z imenom natanko "Pull ups" namesto teže
+vpisuje elastika, je odstranjeno (`store.usesBands()` ne obstaja več). Elastiko
+izbereš tako, da dodaš set vrste *Elastika*. Migracija na verzijo 6 obstoječe
+serije z izbrano elastiko označi kot take, zato v arhivu ni nič drugače.
+
+**Zakaj:** ime vaje je bilo tiho stikalo. Elastika se uporablja tudi pri veslanju,
+odmikih in raztezanju, "Pull ups" pa se pogosto dela brez nje — pravilo je torej
+hkrati premalo in preveč. Vrsta serije je izrecna izbira in velja za vsako vaj.
+
+**Cena:** zgib brez elastike, vpisan kot `band: 'bw'`, po migraciji ne šteje več za
+moč. Zgibi, ki naj bodo na grafu, se vpišejo kot navaden set pri vaji z lastno težo
+— tam se telesna teža prišteje in številka je pravilnejša, kot je bila prej.
+
+**Elastike so zdaj štiri barve in dve debelini** (`red-thin`, `red-thick`), ker sta
+v telovadnici res dve rdeči. Stara `'red'` se preslika v `'red-thin'`.
+
+---
+
+## 2026-07-30 — Elastika je risba, ne barvna ploskev
+
+**Odločitev:** škatlica z elastiko ostane temna kot vsako drugo polje, v njej pa
+leži risba elastike v svoji barvi — podolgovata zanka, narisana kot SVG pot v
+`js/screens/training.js`. Datoteke `icons/elastika_*.svg` niso v uporabi.
+
+**Zakaj ne datoteke:** vsaka je ~210 KB (SVG z vgrajeno sliko PNG), skupaj okoli
+1 MB v predpomnilniku za offline — več kot cela aplikacija. Pri 20 px se sliko
+zmehča, risba pa ostane ostra na vsakem zaslonu in barvo dobi iz CSS, zato je ena
+sama pot dovolj za vseh pet elastik.
+
+**Zakaj ne polna barvna ploskev, kot je bila prej:** ploskev je vlekla pogled z
+vrstice nase in ni znala ločiti tanke rdeče od debele. Risba oboje reši: debelina
+poteze je debelina elastike.
+
+---
+
+## 2026-07-30 — Vaja se odpre brez ene same serije
+
+**Odločitev:** dodana vaja nima nobene vrstice. Vsaka serija nastane z gumbom +
+pod njo. Velja povsod: za vajo iz izbirnika, za vajo, ki je register še ne pozna,
+in za *Ponovi zadnji trening*. Koš ob plusu zdaj odstrani tudi zadnjo vrstico.
+
+**Zakaj:** prej se je odprlo toliko praznih vrstic, kolikor si jih naredil zadnjič
+(ali ena, če vaje še ni bilo). Odkar ima serija vrsto, bi bilo to ugibanje dvakrat:
+koliko serij in kakšnih. Vrstica, ki je nisi naredil, se mora pobrisati — in to je
+dražje od dotika na +, ker se je treba prej prepričati, da je res prazna.
+
+**Kaj se pri tem ne izgubi:** stolpec "zadnjič" se ravna po **mestu** vrstice in ne
+po tem, ali je vrstica nastala vnaprej. Prva dodana serija se zato spet primerja s
+prvo od zadnjič, druga z drugo.
+
+**Posledica v podatkih:** vaja brez serij je od zdaj običajno stanje in ne okvara.
+`saveWorkout()` jo iz zgodovine izpusti (že prej), predloga pa jo obdrži — vaja, ki
+je ta dan nisi uspel narediti, se mora naslednjič spet ponuditi.
+
+**Kaj bi jo ovrglo:** če bi se pokazalo, da je pri dolgem treningu dotikov preveč.
+Takrat ni pot nazaj k ugibanju, ampak gumb, ki podvoji zadnjo vrstico — ta ne
+ugiba, ampak ponovi to, kar si pravkar vpisal.

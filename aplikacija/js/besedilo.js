@@ -5,14 +5,28 @@
 export const TEXT = {
   appName: 'Fitnes',
 
-  // Imena elastik pri zgibih. Ključi so `store.BANDS`, same barve so v CSS.
+  // Imena elastik. Ključi so `store.BANDS`, barve in debeline so v CSS.
   // Skupna obema zaslonoma: vpisujejo se pri treningu, berejo pa tudi v arhivu.
   bands: {
     yellow: 'Rumena',
     green: 'Zelena',
-    teal: 'Turkizna',
-    red: 'Rdeča',
+    teal: 'Cian',
+    'red-thin': 'Rdeča tanka',
+    'red-thick': 'Rdeča debela',
     bw: 'BW (lastna teža)'
+  },
+
+  // Imena vrst serij. Ključi so `store.SET_KINDS`. Kar ni oštevilčeno
+  // (superset, dropset, myoreps), se s tem napisom tudi imenuje v vrstici.
+  // Skupna obema zaslonoma: izbirajo se pri treningu, berejo tudi v arhivu.
+  setKinds: {
+    normal: 'Navaden set',
+    superset: 'Superset',
+    dropset: 'Dropset',
+    myoreps: 'Myoreps',
+    band: 'Elastika',
+    time: 'Čas',
+    empty: 'Prazen set'
   },
 
   // Imena zaslonov. Ključi so enaki kot `id` v js/screens/*.js.
@@ -39,18 +53,28 @@ export const TEXT = {
     repeatLast: 'Ponovi zadnji trening',
     set: 'Set',
     unit: 'kg',
-    band: 'Barva elastike',
+    band: 'Elastika',
     bandNone: 'Počisti izbiro',
 
+    // Čas namesto teže in ponovitev: dve škatlici, med njima dvopičje.
+    minutes: 'Minute',
+    secondsField: 'Sekunde',
+
     addSet: 'Dodaj serijo',
+    pickSetKind: 'Kakšen set dodaš?',
+    // Znamenji v razmiku med dvema vrsticama. Vidita se, ne slišita —
+    // napis je namig z miško in za bralnik zaslona.
+    supersetLink: 'Skupaj s setom nad njim',
+    dropsetLink: 'Nadaljevanje serije nad njim',
     removeLastSet: 'Odstrani zadnjo serijo',
     removeLastSetConfirm: 'Odstranim zadnjo serijo? Vpisana teža in ponovitve bodo izgubljene.',
 
     exerciseName: 'Ime vaje',
     pickExercise: 'Izberi vajo',
-    newExercise: 'Nova vaja',
-    noExercisesYet: 'Registra vaj še ni. Vpiši prvo vajo spodaj.',
-    allAdded: 'Vse vaje tega treninga so že dodane. Novo vpiši spodaj.',
+    searchExercise: 'Poišči ali vpiši vajo',
+    addNewExercise: 'Nova vaja: ',
+    noExercisesYet: 'Registra vaj še ni. Vpiši prvo vajo v polje zgoraj.',
+    allAdded: 'Vse vaje iz registra so že v treningu. Novo vpiši v polje zgoraj.',
     nameTaken: 'Vaja s tem imenom že obstaja, zato ime ni shranjeno.',
 
     note: 'Zapisek',
@@ -92,7 +116,7 @@ export const TEXT = {
     historyEmpty: 'Ni vnosov.',
     removeEntry: 'Zbriši vnos',
 
-    week: 'Teden',
+    day: 'Dan',
     month: 'Mesec',
     year: 'Leto',
     noData: 'Ni podatkov.',
@@ -128,7 +152,7 @@ export const TEXT = {
     noTrainedExercises: 'Ko shraniš prvi trening, se vaje pojavijo tukaj.',
     pickExercise: 'Izberi vajo in poglej, kako gre moč skozi čas.',
 
-    week: 'Teden',
+    day: 'Dan',
     month: 'Mesec',
     year: 'Leto',
 
@@ -155,12 +179,14 @@ export const TEXT = {
     folderAction: 'Določi mapo za kopije',
     folderChange: 'Zamenjaj mapo',
 
-    // Kaj se dogaja s kopijami na tej napravi. Kateri napis velja, se ne ugiba iz
-    // imena brskalnika, ampak iz tega, kaj naprava zna — glej js/backup.js.
-    modeDirectory: 'Kopija nastane sama ob vsakem shranjevanju.',
-    modeUnset: 'Mapa še ni določena, zato se kopija ne dela sama.',
-    modeShare: 'Ob shranjevanju se odpre okno za deljenje. '
-      + 'Izberi Shrani v Datoteke ali svoj oblak.',
+    // Prva vrstica stanja, na vsaki napravi ista: kopija se nikoli ne naredi sama.
+    modeManual: 'Kopija nikoli ne nastane sama — narediš jo z gumbom Izvozi zdaj.',
+
+    // Kam gre kopija na tej napravi. Kateri napis velja, se ne ugiba iz imena
+    // brskalnika, ampak iz tega, kaj naprava zna — glej js/backup.js.
+    modeDirectory: 'Datoteka gre v izbrano mapo.',
+    modeUnset: 'Mapa še ni določena; brez nje se datoteka prenese v mapo Prenosi.',
+    modeShare: 'Odpre se okno za deljenje. Izberi Shrani v Datoteke ali svoj oblak.',
     modeDownload: 'Ta brskalnik zna samo prenos v mapo Prenosi.',
 
     folderLabel: 'Mapa: ',

@@ -94,7 +94,8 @@ function statusLines(info) {
     download: T.modeDownload
   };
 
-  const lines = [modes[info.mode]];
+  // Prva vrstica pove, da se kopija ne dela sama; druga, kam gre, ko jo narediš.
+  const lines = [T.modeManual, modes[info.mode]];
   if (info.folder) lines.push(T.folderLabel + info.folder);
   lines.push(info.at ? T.lastLabel + moment(info.at) : T.never);
   if (info.error) lines.push(T.problemLabel + info.error);
