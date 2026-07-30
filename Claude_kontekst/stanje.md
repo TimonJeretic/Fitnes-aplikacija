@@ -22,7 +22,8 @@ v [podatkovni-model.md](podatkovni-model.md).
 in košem za brisanje predloge) in pod črto polje za novo ime. Med treningom: kartice
 vaj s serijami, stolpec "zadnjič" (dotik prepiše vrednost v polje levo), okno pod
 svinčnikom (zapisek, popravek imena vaje, preklop *vaja z lastno težo*), vlečenje
-vaj z ime-ploščico kot ročajem, koš pri vsaki seriji, gumba *Zavrži* in *Shrani*.
+vaj z ime-ploščico kot ročajem, koš ob plusu (odstrani zadnjo serijo), gumba
+*Zavrži* in *Shrani*.
 Izbrana predloga odpre **prazen** trening; vaje prinese gumb *Ponovi zadnji trening*,
 ki izgine ob prvi dodani vaji. Izbirnik vaj ponudi samo vaje tega treninga.
 
@@ -33,9 +34,10 @@ vrednost in datum (prednastavljen na danes) ter *Shrani*; spodaj graf s preklopo
 Teden / Mesec / Leto in gumb *Prikaži pretekle meritve*, kjer se vnos zbriše.
 
 **Zaslon STATISTIKA.** Na `#/statistika` sta gumba *Arhiv treningov* in *Arhiv vaj*,
-pod njima izbirnik vaje (samo vaje iz zgodovine, s številom treningov) in graf moči
-z obdobji. Obdobje predstavlja **najboljši** nastop v njem, ne povprečje. Pod grafom
-so tri številke (zadnje, rekord, sprememba) in najboljše serije po obdobjih.
+pod njima naslov *Statistika moči*, izbirnik vaje (samo vaje iz zgodovine, s številom
+treningov; dokler ni izbrana, v njem sivo piše "Ime vaje") in graf z obdobji.
+Obdobje predstavlja **najboljši** nastop v njem, ne povprečje. Pod grafom so gumbi
+Teden / Mesec / Leto in razdelek *Najboljša serija po obdobjih*.
 `#/statistika/arhiv` je iskanje čez ime in datum hkrati, vrstica se razpre v cel
 trening; **samo za branje**. `#/statistika/vaje` je register vaj po abecedi, dotik
 razpre rekord (`PR: 102,5 kg × 5`), koš vajo zbriše iz vseh zapisov hkrati.
@@ -58,7 +60,8 @@ Uvoz povozi vse, zato pred njim stoji potrditev s številom treningov na obeh st
 
 **Videz.** Ena barva `#9d0f0b` za vso aplikacijo, preliv v `#661714`. Spodaj Timonove
 ikone namesto črk (`js/icons.js`), vsak zaslon ima na vrhu isto ikono in naslov
-(`.brand`). Dotik gumba, s katerim se nekaj izbere, ga pobarva; glavni gumb potemni.
+(`.brand`) — ta se ne premakne, drsi samo vsebina med njim in spodnjo vrstico
+gumbov. Dotik gumba, s katerim se nekaj izbere, ga pobarva; glavni gumb potemni.
 Izbiranje meritve in vaje se odpre v spustnem seznamu čez zaslon (`js/sheet.js`).
 Ikone aplikacije so narejene iz zadnje sličice uvodnega posnetka.
 
@@ -76,7 +79,10 @@ Node.js ni nameščen, zato je vse teklo v **brezglavem Edgeu** proti
   `#/teza`, `#/statistika`, `#/statistika/arhiv`, `#/statistika/vaje` in nesmiseln
   naslov.
 - **Postavitev** izmerjena pri 320, 360, 390 in 430 px — nič se ne preliva čez rob.
-  Vrstica serije je pri 360 px široka natanko toliko, kolikor je prostora.
+  Vrstica serije je izmerjena po delih: pri 360 px zasede 308 px od 312, pri 320 px
+  pa 270 od 272 (tam jo skrči `@media (max-width: 340px)` v `training.css`).
+- **Lepljiva glava** (`.brand`): po 300 px drsenja ostane na vrhu zaslona,
+  spodnja vrstica gumbov pa je zunaj drsečega dela že po zgradbi strani.
 - **Delni odgovor (206)** service workerja na zahtevo z glavo `Range` — brez tega
   se uvodni posnetek na iPhonu ni predvajal.
 - **Varnostna kopija:** izvoz da veljaven JSON, branje nazaj ohrani števila,
@@ -86,10 +92,20 @@ Node.js ni nameščen, zato je vse teklo v **brezglavem Edgeu** proti
   **Pisanje v mapo in okno za deljenje nista preizkušena** — oboje zahteva sistemsko
   okno in pravi dotik, brezglavi brskalnik pa tega ne zna.
 
-**Na telefonu ni preverjeno nič.** Dva popravka posebej čakata potrditev v roki:
-prazen pas pod spodnjimi gumbi (`100dvh` in `max()` v `tabbar.css`) ter tipkovnica,
-ki je na iOS ostala odprta za polje, odstranjeno z zaslona (zato `blur()` pred
-vsakim takim izrisom in izrecni `user-select: text` na poljih).
+**Na telefonu preverjeno (iPhone, nameščena aplikacija):** ikona na domačem zaslonu,
+uvodna animacija in prazen pas pod spodnjimi gumbi. Zadnji je bil **zunaj** okna
+aplikacije: kriv je bil `black-translucent`, ki vsebino potisne pod uro, okna pa ne
+poveča. Zamenjano za `black` — pas je izginil, cena je, da se vsebina zgoraj ne
+razliva več pod uro. Odmik pod gumbi je `max(calc(var(--safe-bottom) - 14px), 8px)`
+(na iPhonu 20 px), da črtica za domov leži na podlagi pod kvadratki.
+
+Uvodna animacija se v **varčevanju z baterijo** ne predvaja — takrat iPhone ustavi
+samodejno predvajanje tudi pri utišanem posnetku. Namesto nje se pokaže slika
+logotipa; to ni okvara in se ne da zaobiti.
+
+**Še ni preverjeno v roki:** tipkovnica, ki je na iOS ostala odprta za polje,
+odstranjeno z zaslona (zato `blur()` pred vsakim takim izrisom in izrecni
+`user-select: text` na poljih), ter nova razporeditev vrstice serije.
 
 ## Sledi
 

@@ -7,10 +7,11 @@
   justify-content: space-around;
   gap: 12px;
 
-  /* Spodaj namenoma **brez** varnega območja. Črtica za domov na iPhonu se skrije
-     sama in gumbov ne moti, pas 34 px pod njimi pa je bil videti kot napaka.
-     Ostane le toliko, da se kvadratki ne dotikajo roba. */
-  padding: 12px 12px 8px;
+  /* Spodaj le del varnega območja (34 px na iPhonu → 20 px): celo območje je
+     naredilo prazen pas, brez njega pa je črtica za domov tekla čez kvadratke.
+     Toliko je ravno prav, da leži na podlagi pod njimi. Kjer varnega območja ni
+     (računalnik, Android brez geste), obvelja 8 px. */
+  padding: 12px 12px max(calc(var(--safe-bottom) - 14px), 8px);
   background: var(--bg);
   border-top: 1px solid var(--border);
 }
