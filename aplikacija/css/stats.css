@@ -99,7 +99,7 @@
    sicer se vrstice vidijo skozenj. */
 .archive__search {
   position: sticky;
-  top: 0;
+  top: var(--brand-h);   /* pod lepljivo glavo in ne za njo */
   z-index: 1;
 
   padding: 6px 0;
@@ -262,71 +262,15 @@
 
 /* --- Graf moči ------------------------------------------------------------ */
 
-.graph__title {
-  margin-bottom: 4px;
-  padding-left: 4px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-/* Tri številke pod grafom: kje si, koliko je bilo največ, kam gre. */
-.tiles {
-  display: flex;
-  gap: 8px;
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-
-  padding: 10px;
-
-  background: var(--stats-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-
-.tile__label {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.tile__value {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  font-size: 18px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Smer je barvna, ker jo pogledaš prvo. Rdeča ni graja: teden po bolezni pade
-   vsakemu — pomembno je le, da se to takoj vidi. */
-.tile.is-up .tile__value {
-  color: #4cc38a;
-}
-
-.tile.is-down .tile__value {
-  color: #e08585;
-}
-
 /* --- Najboljše serije po obdobjih ----------------------------------------- */
 
+/* Naslov je skupni `.section__title` — isti kot "Statistika moči" nad grafom,
+   da se zaslon bere kot dva razdelka in ne kot en dolg seznam. */
 .tops {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.tops__title {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
+  margin-top: 6px;
 }
 
 .tops__list {

@@ -39,6 +39,10 @@
   /* Varno območje: zareza zgoraj, črtica za domov spodaj (iPhone). */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Višina lepljive glave (.brand): 44 px vrstice + 14 px nad + 10 px pod.
+     Kar se lepi pod njo (iskalno polje v arhivu), se ravna po tej številki. */
+  --brand-h: calc(var(--safe-top) + 68px);
 }
 
 * {

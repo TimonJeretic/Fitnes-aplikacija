@@ -95,6 +95,7 @@ function statsView() {
   return [
     archiveLink(T.archive, ARCHIVE),
     archiveLink(T.exerciseArchive, EXERCISES),
+    el('h2', 'section__title', T.strengthSection),
     pickerSection(),
     chartSection()
   ];
@@ -122,13 +123,19 @@ function selected() {
 // Ena široka tarča čez ves zaslon: pove, katera vaja je na grafu, in je hkrati
 // gumb za menjavo. Enak vzorec kot izbirnik meritve na zaslonu TEŽA — dotik
 // odpre spustni seznam čez zaslon (js/sheet.js).
+//
+// Napisa "Vaja:" pred imenom tukaj ni: dokler vaja ni izbrana, v polju piše
+// "Ime vaje" v sivi barvi — tako izgleda kot polje, ki čaka na vpis, in ne kot
+// gumb z uganko, kaj se za njim skriva.
 function pickerSection() {
   const exercise = selected();
 
   const bar = button('picked', '', openPicker);
 
-  bar.append(el('span', 'picked__label', T.picked));
-  bar.append(el('span', 'picked__name', exercise ? exercise.name : T.choose));
+  const name = el('span', 'picked__name', exercise ? exercise.name : T.exerciseName);
+  if (!exercise) name.classList.add('is-empty');
+
+  bar.append(name);
   bar.append(el('span', 'picked__caret', '▾'));
   return bar;
 }
@@ -171,8 +178,8 @@ function chartSection() {
 
   const wrap = el('div', 'graph');
 
+  // Napisa nad grafom ni: kaj je na njem, pove naslov razdelka nad izbirnikom.
   const box = el('div', 'graph__box');
-  box.append(el('div', 'graph__title', T.strength));
   box.append(lineChart(points, { unit: T.unit, step, empty: T.noData }));
   wrap.append(box);
 
@@ -184,7 +191,6 @@ function chartSection() {
   steps.append(stepButton('year', T.year));
   wrap.append(steps);
 
-  wrap.append(tiles(points, series.points));
   wrap.append(topSets(points, exercise));
 
   return wrap;
@@ -199,47 +205,16 @@ function stepButton(name, label) {
   return node;
 }
 
-// Tri številke pod grafom. Na majhnem zaslonu povedo več kot oblika krivulje:
-// kje si zdaj, koliko je bilo največ in ali gre gor ali dol.
-function tiles(points, raw) {
-  const wrap = el('div', 'tiles');
-
-  const latest = points[points.length - 1].value;
-  // Rekord se bere iz nezdruženih točk: najboljša serija je bila en dan, ne
-  // vrh meseca, in mora biti ista številka pri vseh treh obdobjih.
-  const record = Math.max(...raw.map((point) => point.value));
-  const change = points.length > 1 ? latest - points[0].value : null;
-
-  wrap.append(tile(T.latest, formatRounded(latest) + ' ' + T.unit));
-  wrap.append(tile(T.record, formatRounded(record) + ' ' + T.unit));
-
-  const changeTile = tile(T.change, change === null ? T.empty : signed(change) + ' ' + T.unit);
-  if (change !== null && Math.abs(change) >= 0.05) {
-    changeTile.classList.add(change > 0 ? 'is-up' : 'is-down');
-  }
-  wrap.append(changeTile);
-
-  return wrap;
-}
-
-function tile(label, value) {
-  const node = el('div', 'tile');
-  node.append(el('span', 'tile__label', label));
-  node.append(el('span', 'tile__value', value));
-  return node;
-}
-
-function signed(value) {
-  const rounded = Math.round(value * 10) / 10;
-  return (rounded > 0 ? '+' : '') + formatNumber(rounded);
-}
+// Treh številk pod grafom (zadnje, rekord, sprememba) tukaj ni: rekord pove
+// arhiv vaj, ostalo pa se prebere s krivulje. Zaslon je s tem krajši za en
+// razdelek in bližje temu, kar rabiš med treningom.
 
 // Pod grafom seznam: katerega dne je padla najboljša serija obdobja in katera
 // je bila. Ocena 1RM je izpeljanka; serija, ki jo je dala, je tisto, kar si res
 // naredil in kar hočeš naslednjič prekositi.
 function topSets(points, exercise) {
   const wrap = el('div', 'tops');
-  wrap.append(el('h2', 'tops__title', T.topSets));
+  wrap.append(el('h2', 'section__title', T.topSets));
 
   const list = el('div', 'tops__list');
   points.slice().reverse().forEach((point) => {

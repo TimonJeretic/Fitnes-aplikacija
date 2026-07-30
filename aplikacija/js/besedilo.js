@@ -30,8 +30,8 @@ export const TEXT = {
     set: 'Set',
     unit: 'kg',
     addSet: 'Dodaj serijo',
-    removeSet: 'Odstrani to serijo',
-    removeSetConfirm: 'Odstranim to serijo? Vpisana teža in ponovitve bodo izgubljene.',
+    removeLastSet: 'Odstrani zadnjo serijo',
+    removeLastSetConfirm: 'Odstranim zadnjo serijo? Vpisana teža in ponovitve bodo izgubljene.',
 
     exerciseName: 'Ime vaje',
     pickExercise: 'Izberi vajo',
@@ -119,15 +119,14 @@ export const TEXT = {
     month: 'Mesec',
     year: 'Leto',
 
+    // Naslov razdelka nad izbirnikom vaje; `strength` je ime številke same
+    // (uporabljeno v arhivu treningov), zato sta niza dva.
+    strengthSection: 'Statistika moči',
     strength: 'Moč (ocena 1RM)',
     unit: 'kg',
     noData: 'Pri tej vaji ni nobene serije s težo in ponovitvami.',
     needsBodyweight: 'To je vaja z lastno težo, tvoje telesne teže pa še ne poznam. '
       + 'Vpiši jo na zaslonu TEŽA in graf se pojavi.',
-
-    latest: 'Zadnje',
-    record: 'Rekord',
-    change: 'Sprememba',
 
     topSets: 'Najboljša serija po obdobjih'
   },

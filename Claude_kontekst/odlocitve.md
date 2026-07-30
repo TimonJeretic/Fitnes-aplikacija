@@ -12,6 +12,72 @@ Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
+## 2026-07-29 — Glava in spodnja vrstica sta pribiti, drsi samo vsebina
+
+**Odločitev:** `.brand` (ikona, naslov, zobnik) je `position: sticky; top: 0` s
+podlago v barvi strani. Spodnja vrstica gumbov je zunaj drsečega dela že po
+zgradbi strani. Drsi torej samo tisto med njima.
+
+**Zakaj:** naslov pove, kje si, zobnik pa je edina pot do varnostne kopije. Oboje
+je prej pri dolgem treningu odrsalo z zaslona in ju je bilo treba iskati z
+vračanjem na vrh — sredi serije, z eno roko.
+
+**Posledica, ki je zahtevala popravek kode:** lepljivo se drži **svojega starša**.
+Dokler je bila glava v ovoju `<header>`, je odlepila, brž ko je ovoj odrsal.
+Zato je zdaj otrok korena zaslona, ki je visok kot cela vsebina — `training.js`
+ovoja ne dela več.
+
+**Posledica za vse, kar se lepi pod njo:** iskalno polje v arhivu treningov ima
+`top: var(--brand-h)` in ne 0, sicer bi zdrsnilo za glavo. Višina je zapisana na
+enem mestu v `base.css`.
+
+**Kaj bi jo ovrglo:** zaslon, kjer je naslov tako visok, da za vsebino ne ostane
+dovolj prostora. Takrat se glava ob drsenju navzdol skrije in ob drsenju navzgor
+vrne.
+
+---
+
+## 2026-07-29 — Koš stoji ob plusu in odstrani zadnjo serijo
+
+**Odločitev:** koša v vsaki vrstici serije ni več. Ob plusu pod serijami je koš,
+ki odstrani **zadnjo** serijo. Pri edini seriji je ugasnjen.
+
+**Zakaj:** koš v vrstici je jemal prostor natanko tam, kjer ga rabijo številke —
+polji za težo in ponovitve sta bili zaradi njega ozki, stolpec "zadnjič" pa
+stisnjen na 30 px. Razlog, da se serija briše, je skoraj vedno ponesreči
+pritisnjen plus, kar pomeni **zadnjo** serijo; za ta primer je en koš dovolj.
+Ta vpis ovrže odločitev *Koš pri vsaki seriji namesto gumba "−"* niže v tem
+dnevniku: takrat je štelo, da se izbriše natanko tista serija, na katero pokažeš,
+zdaj pa je pretehtal prostor v vrstici.
+
+**Kaj se je s tem sprostilo:** napis serije 44 → 54 px, polji za težo in
+ponovitve 52 → 58 px, stolpec "zadnjič" 30 → 40 px in za dve piki večja pisava.
+Izmerjeno: pri 360 px vrstica zasede 308 px od 312.
+
+**Kaj bi jo ovrglo:** če bi se v praksi pogosto brisala serija na sredini. Takrat
+nazaj koš v vrstici — a takrat mora prostor priti od kod drugod.
+
+---
+
+## 2026-07-29 — Zaslon STATISTIKA brez treh številk pod grafom
+
+**Odločitev:** ploščic *Zadnje / Rekord / Sprememba* ni več. Zaslon je: oba
+arhiva, naslov *Statistika moči*, izbirnik vaje, graf, obdobja in *Najboljša
+serija po obdobjih*.
+
+**Zakaj:** tako je narisan Timonov načrt zaslona. Rekord ima svoje mesto v arhivu
+vaj, kjer je izpisan rdeče, zadnjo vrednost in smer pa pove krivulja sama.
+Ploščice so bile tretja različica iste zgodbe na istem zaslonu.
+
+**Zraven:** v izbirniku vaje ni več napisa "Vaja:". Dokler vaja ni izbrana, v njem
+sivo piše "Ime vaje" — izgleda kot polje, ki čaka na dotik, in ne kot gumb z
+uganko, kaj se za njim skriva.
+
+**Kaj bi jo ovrglo:** želja po eni številki, ki jo prebereš brez branja grafa.
+Takrat ena ploščica (rekord), ne tri.
+
+---
+
 ## 2026-07-29 — Vrstica z uro je `black`, ne `black-translucent`
 
 **Odločitev:** `<meta name="apple-mobile-web-app-status-bar-style">` v `index.html`
@@ -238,7 +304,11 @@ vrh", to ne bi zamenjalo abecede, ampak dodalo kratek seznam nad njo.
 
 ---
 
-## 2026-07-29 — Koš pri vsaki seriji namesto gumba "−"
+## 2026-07-29 — Koš pri vsaki seriji namesto gumba "−" — **OVRŽENO isti dan**
+
+> Ovrže jo *Koš stoji ob plusu in odstrani zadnjo serijo* na vrhu tega dnevnika.
+> Razlog je natanko tisti, ki je spodaj naveden kot cena: koš je jemal prostor
+> številkam. Vpis ostane, ker pove, kaj se pri tem izgubi.
 
 **Odločitev:** vsaka vrstica serije ima čisto desno, za svojo črto, koš, ki odstrani
 **natanko tisto** serijo. Gumb `−`, ki je odstranil zadnjo serijo, je odstranjen.

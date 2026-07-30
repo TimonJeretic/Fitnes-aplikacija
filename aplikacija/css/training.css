@@ -24,11 +24,9 @@
 
 /* --- Glava ---------------------------------------------------------------- */
 
-.training__header {
-  flex: none;
-}
-
 /* Vrstica z ikono in naslovom je skupna vsem zaslonom — glej .brand v screen.css.
+   Svojega ovoja nima: lepljiva glava mora biti otrok korena, sicer se odlepi,
+   brž ko ovoj odrsa z zaslona.
 
    Ime treninga je polje in ne napis, da ga popraviš z enim dotikom.
    Videti mora biti kot naslov, dokler se ga ne dotakneš. */
@@ -62,12 +60,13 @@
   border-color: #d05050;
 }
 
-/* Datum levo, ponudba "Ponovi zadnji trening" desno. */
+/* Datum levo, ponudba "Ponovi zadnji trening" desno. Negativni odmik pobere
+   razmik korena: vrstica spada k naslovu nad sabo in ne k vajam pod njo. */
 .training__meta {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 4px 0 0 44px;   /* poravnano pod ime, ne pod ikono */
+  margin: -8px 0 0 44px;   /* poravnano pod ime, ne pod ikono */
 }
 
 .training__date {
@@ -370,20 +369,20 @@
   margin-top: 10px;
 }
 
-/* V vrstici so štirje stolpci: napis, vpisana teža, zadnjič in koš. Razmiki so
-   ožji od ostalih, ker mora vse to na 360 px širok telefon. */
+/* V vrstici so trije stolpci: napis, današnja teža in ponovitve, zadnjič.
+   Koša tukaj ni več — stoji ob plusu pod serijami in odstrani zadnjo. Prostor,
+   ki ga je pobral, je šel številkam. */
 .set-row {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-/* Napis je ozek in fiksen: pove samo, katera serija po vrsti je to. Ves prostor,
-   ki ostane, gre poljema za težo in ponovitve — tja se piše in tam mora biti
-   "102,5" berljivo. */
+/* Napis pove, katera serija po vrsti je to. Fiksne širine, da so vsi napisi
+   poravnani in da vrstica ne poskoči, ko se številka podaljša. */
 .set-row__label {
   flex: none;
-  width: 44px;
+  width: 54px;
   height: 46px;
 
   display: flex;
@@ -397,17 +396,15 @@
   font-size: 13px;
 }
 
+/* Črta med današnjim in prejšnjim treningom. `margin-left: auto` pobere ves
+   prostor, ki v vrstici ostane: današnje številke se držijo leve strani,
+   prejšnje pa desnega roba kartice. */
 .set-row__divider {
   flex: none;
   align-self: stretch;
   width: 1px;
-  background: var(--border);
-}
-
-/* Črta pred košem pobere ves prostor, ki v vrstici ostane, in s tem porine koš
-   ob desni rob kartice. Na širšem telefonu se s tem razmakne od številk. */
-.set-row__divider--end {
   margin-left: auto;
+  background: var(--border);
 }
 
 /* Današnja teža in ponovitve. Obe polji sta **fiksni in enako veliki**: širina se
@@ -421,22 +418,32 @@
 
 .pair .numbox {
   flex: none;
-  width: 52px;
+  width: 58px;
 }
 
-/* Stolpec "zadnjič" je samo podatek in ne tarča za tipkanje, zato ostane ozek. */
+/* Stolpec "zadnjič" je samo podatek in ne tarča za tipkanje: manjši od
+   današnjih polj in v sivi barvi, da se bere šele, ko ga pogledaš. */
 .pair--ref {
   flex: none;
 }
 
 .pair--ref .numbox {
   flex: none;
-  width: 30px;
-  font-size: 12px;
+  width: 40px;
+  font-size: 14px;
 }
 
 .pair--ref .numbox.is-long {
-  font-size: 10px;
+  font-size: 11px;
+}
+
+/* Najožji telefoni (320 px, tudi iPhone s povečanim prikazom): vse troje se
+   stisne ravno toliko, da vrstica ne gre čez rob kartice. Merjeno, ne ocenjeno —
+   pri 320 px je prostora 272 px. */
+@media (max-width: 340px) {
+  .set-row__label { width: 44px; }
+  .pair .numbox { width: 50px; }
+  .pair--ref .numbox { width: 34px; }
 }
 
 .pair__times {
@@ -496,48 +503,6 @@
   cursor: default;
 }
 
-/* Koš na koncu vrstice: odstrani natanko to serijo. Siv in brez ozadja, ker
-   brisanje ne sme biti enako vidno kot vpisovanje. Pri edini seriji je ugasnjen —
-   vaja brez serij nima kaj pokazati, odstrani se z × spodaj na kartici. */
-/* Koš čisto ob desnem robu kartice: sam po sebi ni tarča, ki bi jo iskala roka,
-   zato naj vzame čim manj prostora vrstici. */
-.set-row__remove {
-  flex: none;
-  width: 24px;
-  height: 46px;
-
-  display: grid;
-  place-items: center;
-
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-
-  transition: transform .12s ease, color .15s ease;
-}
-
-.set-row__remove:active {
-  transform: scale(0.9);
-  color: #e08585;
-}
-
-.set-row__remove:disabled {
-  opacity: .3;
-  cursor: default;
-}
-
-.set-row__icon {
-  width: 16px;
-  height: 16px;
-}
-
-.set-row__icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 .exercise__controls {
   display: flex;
   gap: 8px;
@@ -560,6 +525,37 @@
 }
 
 .mini--muted {
+  color: var(--text-muted);
+}
+
+/* Koš ob plusu: odstrani zadnjo serijo. Ikona namesto znaka, ker je koš že
+   povsod drugod v aplikaciji brisanje. */
+.mini--icon {
+  display: grid;
+  place-items: center;
+}
+
+.mini__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.mini__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Pri edini seriji je ugasnjen: vaja brez serij nima kaj pokazati, odstrani se
+   z × na desni strani iste vrstice. */
+.mini:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.mini:disabled:active {
+  transform: none;
+  background: var(--training-field);
   color: var(--text-muted);
 }
 

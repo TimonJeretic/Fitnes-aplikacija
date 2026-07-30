@@ -66,6 +66,18 @@
   font-weight: 600;
 }
 
+/* Dokler ni nič izbrano, je v izbirniku napis "Ime vaje" — siv in navaden,
+   tako kot namig v vnosnem polju. Zaslon s tem pove, da se tukaj nekaj izbere,
+   ne da bi bilo videti, kot da je vaja s tem imenom res izbrana. */
+.picked__name.is-empty {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.picked:active .picked__name.is-empty {
+  color: var(--on-accent);
+}
+
 .picked__caret {
   flex: none;
   color: var(--accent);

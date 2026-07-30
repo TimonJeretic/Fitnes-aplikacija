@@ -35,11 +35,24 @@ body[data-screen="stats"] .screen {
 /* --- Skupni deli vseh zaslonov -------------------------------------------- */
 
 /* Ikona in naslov na vrhu zaslona. Ista ikona kot na kvadratku spodaj, zato je
-   ob pogledu na vrh takoj jasno, kje si — tudi sredi serije. */
+   ob pogledu na vrh takoj jasno, kje si — tudi sredi serije.
+
+   Glava se ne premakne: drsi samo vsebina med njo in spodnjo vrstico gumbov.
+   Negativni odmiki poberejo rob zaslona, da je podlaga glave čez celo širino in
+   da vsebina pod njo ne kuka izza roba. Višina je zapisana v `--brand-h`
+   (base.css) — po njej se ravna vse, kar se lepi pod glavo. */
 .brand {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+
   display: flex;
   align-items: center;
   gap: 10px;
+
+  margin: calc(-1 * (var(--safe-top) + 14px)) -12px 0;
+  padding: calc(var(--safe-top) + 14px) 12px 10px;
+  background: var(--bg);
 }
 
 .brand__logo {

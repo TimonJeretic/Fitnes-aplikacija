@@ -68,10 +68,10 @@ function paint() {
 // Iskalnega polja nad seznamom ni: imen treninga je peščica in seznam je krajši
 // od tipkanja.
 function idleView() {
-  const header = el('header', 'training__header');
-  header.append(brandRow(T.newWorkout));
-
-  return [header, pastSection(), el('div', 'rule'), createSection()];
+  // Glava ni v svojem ovoju: lepi se na vrh zaslona (`position: sticky`), to pa
+  // deluje samo znotraj starša — v kratkem ovoju bi odlepila takoj, ko bi ta
+  // odrsal. Zato je otrok korena, ki je visok kot cel zaslon.
+  return [brandRow(T.newWorkout), pastSection(), el('div', 'rule'), createSection()];
 }
 
 function pastSection() {
@@ -178,8 +178,6 @@ function blankSets(exerciseId) {
 // --- Stanje 2: trening teče ------------------------------------------------
 
 function activeView() {
-  const header = el('header', 'training__header');
-
   nameInput = el('input', 'training__name');
   nameInput.type = 'text';
   nameInput.value = draft.name;
@@ -192,9 +190,6 @@ function activeView() {
     persist();
   });
 
-  header.append(brandRow(nameInput));
-  header.append(metaRow());
-
   const body = el('div', 'training__body');
   draft.exercises.forEach((entry) => body.append(exerciseCard(entry)));
   body.append(picking ? exercisePicker() : addExerciseButton());
@@ -203,7 +198,7 @@ function activeView() {
   actions.append(button('btn btn--ghost', T.discard, discard));
   actions.append(button('btn btn--primary', T.save, save));
 
-  return [header, body, actions];
+  return [brandRow(nameInput), metaRow(), body, actions];
 }
 
 // Datum levo, desno pa ponudba, da se prejšnji trening prepiše sem. Ponudba
@@ -351,7 +346,7 @@ function exerciseCard(entry) {
   const last = store.lastSetsFor(entry.exerciseId);
 
   const sets = el('div', 'exercise__sets');
-  entry.sets.forEach((set, index) => sets.append(setRow(entry, set, index, last)));
+  entry.sets.forEach((set, index) => sets.append(setRow(set, index, last)));
   card.append(sets);
 
   const controls = el('div', 'exercise__controls');
@@ -361,9 +356,14 @@ function exerciseCard(entry) {
     paint();
   }), T.addSet));
 
-  // Gumba za odstranitev zadnje serije tukaj ni: koš na koncu vsake vrstice
-  // odstrani točno tisto serijo, kar je isto dejanje in brez ugibanja, katera
-  // bo šla.
+  // Koš stoji ob plusu in odstrani **zadnjo** serijo. Prej je bil v vsaki
+  // vrstici posebej, a je tam jemal prostor številkam — najpogostejši razlog
+  // zanj pa je ponesreči pritisnjen plus, torej vedno zadnja serija.
+  const removeLast = button('mini mini--icon mini--muted', '', () => removeLastSet(entry));
+  removeLast.append(icon('mini__icon', ICON_TRASH));
+  withLabel(removeLast, T.removeLastSet);
+  removeLast.disabled = entry.sets.length < 2;
+  controls.append(removeLast);
 
   // Odstranitev vaje je čisto desno spodaj, najdlje od plusa nad njo.
   controls.append(withLabel(button('mini mini--remove', '×', () => removeExercise(entry)), T.removeExercise));
@@ -520,7 +520,7 @@ function shiftOthers(cards, from, to, step) {
   });
 }
 
-function setRow(entry, set, index, last) {
+function setRow(set, index, last) {
   const row = el('div', 'set-row');
   row.append(el('div', 'set-row__label', T.set + ' ' + (index + 1)));
 
@@ -539,8 +539,8 @@ function setRow(entry, set, index, last) {
   inputs.append(weight, el('span', 'pair__unit', T.unit), el('span', 'pair__times', '×'), reps);
   row.append(inputs);
 
-  // Desni stolpec: zadnjič. Pri novi vaji ga ni — in z njim odpade tudi njegova
-  // črta, sicer bi se ob črti pred košem videli dve črti druga ob drugi.
+  // Desni stolpec: zadnjič. Črta ga loči od današnjih številk in ga hkrati
+  // porine ob desni rob kartice — pri novi vaji ni ne enega ne drugega.
   if (last) {
     row.append(el('div', 'set-row__divider'));
 
@@ -554,28 +554,21 @@ function setRow(entry, set, index, last) {
     row.append(reference);
   }
 
-  // Koš čisto desno, za svojo črto: odstrani natanko to serijo. Najpogostejši
-  // razlog je pomotoma pritisnjen plus, zato mora biti dosegljiv v vrstici sami.
-  row.append(el('div', 'set-row__divider set-row__divider--end'));
-
-  const remove = button('set-row__remove', '', () => removeSet(entry, index, set));
-  remove.append(icon('set-row__icon', ICON_TRASH));
-  withLabel(remove, T.removeSet);
-  // Vaja brez serij nima kaj pokazati: zadnja vrstica ostane, vaja pa se
-  // odstrani z × spodaj desno na kartici.
-  remove.disabled = entry.sets.length < 2;
-  row.append(remove);
-
   return row;
 }
 
-// Vprašamo samo, kadar je kaj izgubiti — prazna vrstica, ki je nastala ob
-// pomotoma pritisnjenem plusu, izgine z enim dotikom.
-function removeSet(entry, index, set) {
-  const filled = set.weightKg !== null || set.reps !== null;
-  if (filled && !confirm(T.removeSetConfirm)) return;
+// Koš ob plusu odstrani zadnjo serijo. Vprašamo samo, kadar je kaj izgubiti —
+// prazna vrstica, ki je nastala ob pomotoma pritisnjenem plusu, izgine z enim
+// dotikom. Zadnja preostala serija ostane: vaja brez serij nima kaj pokazati,
+// odstrani se z × spodaj desno na kartici.
+function removeLastSet(entry) {
+  if (entry.sets.length < 2) return;
 
-  entry.sets.splice(index, 1);
+  const set = entry.sets[entry.sets.length - 1];
+  const filled = set.weightKg !== null || set.reps !== null;
+  if (filled && !confirm(T.removeLastSetConfirm)) return;
+
+  entry.sets.pop();
   persist();
   paint();
 }
