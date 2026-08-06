@@ -1,7 +1,8 @@
 # Fitnes aplikacija
 
-Osebni dnevnik treningov: vaje, seti, ponovitve, kile, plus grafa napredka
-moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
+Osebni dnevnik treningov in prehrane: vaje, seti, ponovitve, kile, obroki, plus
+grafi napredka moči, telesne teže in vnosa kalorij. PWA brez backenda — podatki
+živijo na telefonu.
 
 - **Živa aplikacija:** https://timonjeretic.github.io/Fitnes-aplikacija/aplikacija/
 - **Repozitorij je JAVEN.** Vse, kar gre v git, je javno berljivo. Nič občutljivega
@@ -9,11 +10,12 @@ moči in telesne teže. PWA brez backenda — podatki živijo na telefonu.
 
 ## Trenutno stanje
 
-Cela aplikacija stoji v `aplikacija/`. Trije zasloni delajo: **TRENING** (predloge,
-register vaj, serije sedmih vrst s stolpcem "zadnjič", vlečenje vaj), **TEŽA**
-(telesna teža in meritve telesa, graf) in **STATISTIKA** (graf moči, arhiv treningov,
-arhiv vaj).
-Podatkovni model je pri `schemaVersion: 6`, edina pot do njega je `js/store.js`.
+Cela aplikacija stoji v `aplikacija/`. Štirje zasloni delajo: **TRENING** (predloge,
+register vaj, serije sedmih vrst s stolpcem "zadnjič", vlečenje vaj, vpis cardia),
+**TEŽA** (telesna teža in meritve telesa, graf), **STATISTIKA** (graf moči, arhiv
+treningov, arhiv vaj) in **PREHRANA** (obroki, maintenance, graf teže in kalorij
+hkrati na dveh oseh).
+Podatkovni model je pri `schemaVersion: 7`, edina pot do njega je `js/store.js`.
 Zobnik desno zgoraj odpre okno z varnostno kopijo: uvoz, izvoz in izbira mape, v
 katero se podatki zapišejo ob vsakem shranjenem treningu (`js/backup.js`).
 Videz je poenoten: ena barva `#9d0f0b`, ikone namesto črk spodaj, uvodna animacija
@@ -23,6 +25,11 @@ Podrobnosti in kaj sledi: `Claude_kontekst/stanje.md`
 
 ## TODO
 
+- **Nastavi razmerje osi na grafu prehrane.** `AXIS_RATIO` v `aplikacija/js/chart.js`
+  je zdaj 40 (1 kg = 40 kcal). Prava vrednost se pokaže šele na resničnih podatkih:
+  večja številka črti stisne skupaj, manjša ju razmakne.
+- **Prava ikona za PREHRANO.** Spodnji gumb ima zaenkrat samo črko **P**
+  (`ICON_NUTRITION` v `aplikacija/js/icons.js`) — zamenja se en niz in nič drugega.
 - **Označi vaje z lastno težo.** Migracija je vse vaje postavila na
   `usesBodyweight: false`. Zgibi, sklece in dipsi rabijo preklop v oknu pod
   svinčnikom, sicer graf moči pri njih upošteva samo dodano težo in ne telesne.

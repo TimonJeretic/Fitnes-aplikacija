@@ -21,11 +21,13 @@
 
 /* Zaslon s pravo vsebino ni en napis na sredini, ampak seznam, ki drsi od vrha.
    Router postavi body[data-screen], zato lahko tak zaslon izklopi sredinjenje in
-   polnobarvno ozadje — ostali trije ostanejo nedotaknjeni. Ko bodo predelani vsi,
-   se pravila zgoraj lahko poenostavijo. */
+   polnobarvno ozadje. Trenutno so tukaj vsi štirje zasloni — pravila zgoraj so
+   s tem samo še videz, ki ga vidi nov zaslon, dokler ga ne dopišeš sem. Ne
+   pozabi: brez te vrstice se nov zaslon izriše sredinsko na rdeči podlagi. */
 body[data-screen="training"] .screen,
 body[data-screen="weight"] .screen,
-body[data-screen="stats"] .screen {
+body[data-screen="stats"] .screen,
+body[data-screen="nutrition"] .screen {
   display: block;
   background: var(--bg);
   color: var(--text);

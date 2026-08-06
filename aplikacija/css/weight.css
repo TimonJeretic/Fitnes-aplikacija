@@ -238,6 +238,26 @@
   fill: var(--accent);
 }
 
+/* Druga serija na istem grafu (zaslon PREHRANA: kalorije ob teži). Barva ni nova
+   barva aplikacije, ampak svetla nevtralna iz palete — rdeča ostane rezervirana
+   za tisto, kar je na grafu glavno. Iste barve je kljukica ob napisu. */
+.chart__line--alt {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+
+.chart__dot--alt {
+  fill: var(--text);
+}
+
+/* Desna os. Malce bledejša od leve, da se osi ne zamenjata. */
+.chart__label--alt,
+.chart__unit--alt {
+  fill: var(--text);
+  opacity: .75;
+}
+
 .chart__value {
   fill: var(--text);
   font-size: 9px;

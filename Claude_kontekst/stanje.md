@@ -1,6 +1,6 @@
 # Stanje projekta
 
-**Zadnja posodobitev:** 2026-07-30
+**Zadnja posodobitev:** 2026-08-02
 
 To datoteko posodabljam sam, kadar se stanje spremeni. Kronologije tukaj ni —
 piše, kaj **danes** stoji. Zakaj je nekaj tako, je v [odlocitve.md](odlocitve.md).
@@ -9,13 +9,14 @@ piše, kaj **danes** stoji. Zakaj je nekaj tako, je v [odlocitve.md](odlocitve.m
 
 **Ogrodje.** Aplikacija živi v `aplikacija/` in je nameščiva PWA: `manifest.json`,
 `sw.js` s predpomnilnikom in ikone. `index.html` v korenu samo preusmeri v podmapo.
-Zasloni so trije (TRENING, TEŽA, STATISTIKA), našteti v `js/startup/screen_register.js`;
-prazni četrti zaslon RAČUN je odstranjen. Router zna podpoti (`#/statistika/arhiv`),
+Zasloni so **štirje** (TRENING, TEŽA, STATISTIKA, PREHRANA), našteti v
+`js/startup/screen_register.js`; nekdanji prazni zaslon RAČUN je odstranjen, PREHRANA
+pa je pravi četrti gumb. Router zna podpoti (`#/statistika/arhiv`),
 zato sistemski gumb *nazaj* dela pravilno. Ob zagonu se predvaja uvodni posnetek
 (`js/startup/splash.js`), ki ga dotik preskoči in ki aplikacije nikoli ne zaklene.
 
 **Podatki.** `js/store.js` je edina pot do `localStorage`, model je pri
-`schemaVersion: 6`. Migracije so napisane in preizkušene z verzij 1, 3, 4 in 5.
+`schemaVersion: 7`. Migracije so napisane in preizkušene z verzij 1, 3, 4, 5 in 6.
 Oblika je v [podatkovni-model.md](podatkovni-model.md).
 
 **Zaslon TRENING.** Brez treninga: seznam preteklih treningov (vsak s številom vaj
@@ -46,6 +47,11 @@ ki izgine ob prvi dodani vaji. Plus odpre **okno čez zaslon**: iskalno polje na
 pod njim cel register vaj po abecedi, zadnja vrstica naredi vpisano ime (*Nova vaja: …*).
 Filtra po imenu treninga ni več.
 
+Pod razdelkom *Ustvari nov trening* je **Vpiši cardio**: polje za porabljene
+kalorije, datum (privzeto danes) in *Shrani cardio*. En vnos na dan; polje je
+prednapolnjeno s tem, kar za ta dan že stoji, prazno polje vnos odstrani. Ta
+številka gre v izračun maintenance na zaslonu PREHRANA.
+
 **Zaslon TEŽA.** En izbirnik na vrhu določa, kaj vpisuješ in kaj je na grafu:
 telesna teža ali katera od meritev telesa. Meritev nastane iz vpisanega imena in
 ima svojo enoto (cm ali kg), izbrano ob nastanku. Pod izbirnikom sta polje za
@@ -61,7 +67,20 @@ Dan / Mesec / Leto in razdelek *Najboljša serija po obdobjih*.
 trening; **samo za branje**. `#/statistika/vaje` je register vaj po abecedi, dotik
 razpre rekord (`PR: 102,5 kg × 5`), koš vajo zbriše iz vseh zapisov hkrati.
 
-**Varnostna kopija.** Zobnik desno zgoraj na vseh treh zaslonih odpre okno
+**Zaslon PREHRANA.** Na vrhu vrstica *Danes zaužito* s kalorijami in proteini
+dneva. Pod njo vnos obroka: dve številski polji (kalorije, proteini), gumb *Dodaj*
+in koš, ki s potrditvijo pobriše **vse današnje** obroke. Posameznih obrokov zaslon
+ne našteva. Sledita ploščici *Maintenance* (NEAT, izračunan iz zadnjega tedna vnosov,
+tehtanj in cardia) in *Povprečno zaužito* (čist povprečen vnos, brez cardia); kadar
+je podatkov premalo, na mestu številke piše, kaj je treba vpisati. Spodaj graf z
+dvema kljukicama, **Teža** in **Kalorije**: teža na levi osi, kalorije na desni,
+razmerje med osema je zaklenjeno (`AXIS_RATIO = 40` v `js/chart.js`, torej 1 kg =
+40 kcal). Pod grafom Dan / Mesec / Leto.
+
+**Ikona zaslona PREHRANA je začasna črka P** (`ICON_NUTRITION` v `js/icons.js`) in
+čaka pravo risbo.
+
+**Varnostna kopija.** Zobnik desno zgoraj na vseh štirih zaslonih odpre okno
 (`js/settings.js`) z gumbi *Uvoz kopije*, *Izvozi zdaj* in — kjer je to mogoče —
 *Določi mapo za kopije*; spodaj piše, da kopija nikoli ne nastane sama, kam gre na
 tej napravi in kdaj je nastala nazadnje.
@@ -145,9 +164,20 @@ pravo širino telefona (postopek in pasti: [delovni-tok.md](delovni-tok.md)).
 - **Varnostna kopija:** izvoz da veljaven JSON, branje nazaj ohrani števila,
   tuja datoteka JSON in skvarjeno besedilo sta zavrnjena (ne izpraznita podatkov),
   uvoz vase ohrani vse. Okno se izriše z vsemi gumbi, stanje ("Mapa še ni določena",
-  "Kopije še ni") se dopiše iz IndexedDB. Zobnik je na vseh treh zaslonih.
+  "Kopije še ni") se dopiše iz IndexedDB. Zobnik je na vseh štirih zaslonih.
   **Pisanje v mapo in okno za deljenje nista preizkušena** — oboje zahteva sistemsko
   okno in pravi dotik, brezglavi brskalnik pa tega ne zna.
+- **Prehrana (2026-08-02, brezglavi Edge):** 22 preverjanj gre skozi. Dnevni
+  seštevek kalorij in proteinov; maintenance se ujema z ročnim izračunom do
+  tisočinke; današnji dan v povprečje **ne** šteje; razlogi `noTrend` in
+  `shortTrend` se pojavijo pravilno in povprečen vnos ob njiju ostane; ena točka
+  na dan v `nutritionSeries()`; brisanje dneva; migracija 6 → 7 ohrani trening in
+  doda prazni polji. Graf: dve črti in dva razreda, desna os ima pet celih števil,
+  obe enoti sta izpisani, izmerjeno razmerje osi je natanko 40 kcal/kg. Ena serija
+  riše kot prej (ena črta, brez desne osi), prazna da `chart__empty`, same kalorije
+  obdržijo svojo barvo na levi osi. Izris obeh zaslonov na nasutih podatkih:
+  `Danes zaužito 1130 kcal / 80 g`, `Maintenance 1615`, `Povprečno zaužito 2420` —
+  vse tri številke se ujemajo z ročnim izračunom.
 
 **Na telefonu preverjeno (iPhone, nameščena aplikacija):** ikona na domačem zaslonu,
 uvodna animacija in prazen pas pod spodnjimi gumbi. Zadnji je bil **zunaj** okna
@@ -174,6 +204,10 @@ odstranjeno z zaslona (zato `blur()` pred vsakim takim izrisom in izrecni
 4. **Določi mapo za kopije** in preveri, da datoteka res nastane. Na Androidu je
    odprto vprašanje, ali Chrome `showDirectoryPicker()` sploh ima; če ga nima, pade
    na okno za deljenje. Vidi se v nastavitvah — napis pove, kateri način velja.
+5. **Nastavi razmerje osi na grafu prehrane.** `AXIS_RATIO` v `js/chart.js` je
+   zdaj 40 (1 kg = 40 kcal). Prava vrednost se pokaže šele na tvojih podatkih:
+   večja številka črti stisne skupaj, manjša ju razmakne.
+6. **Prava ikona za PREHRANO** namesto začasne črke P.
 
 ## Odprta vprašanja
 
@@ -183,3 +217,9 @@ odstranjeno z zaslona (zato `blur()` pred vsakim takim izrisom in izrecni
   brisanje vsega tam namenoma še ni, ker je preblizu gumbu za uvoz.
 - **Ali aplikacija ostane v podmapi `aplikacija/`** ali se kdaj preseli na koren
   zaradi lepšega naslova.
+- **Ali povprečen cardio deliti z vsemi sedmimi dnevi** namesto samo z dnevi, ko
+  je cardio bil. Tako, kot je zdaj, NEAT podceni — razloženo v
+  [odlocitve.md](odlocitve.md). Preklop je konstanta `CARDIO_OVER_ALL_DAYS` v
+  `store.js`; pokaže se šele na resničnih podatkih.
+- **Ali maintenance potrebuje daljše okno od sedmih dni**, če bo številka preveč
+  skakala (tehtanje po vikendu, dan brez beleženja).

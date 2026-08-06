@@ -8,7 +8,7 @@
 // Oblika podatkov je opisana v Claude_kontekst/podatkovni-model.md.
 
 const KEY = 'fitnes';
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 // Kdaj je nazadnje nastala varnostna kopija. Ločen ključ in ne polje v podatkih:
 // uvoz stare kopije bi ta podatek povozil in aplikacija bi mislila, da kopije ni
@@ -75,6 +75,8 @@ function emptyData() {
     bodyweightEntries: [],   // telesna teža
     measurements: [],        // register meritev telesa: roka, prsi, pas …
     measurementEntries: [],  // izmerjene vrednosti, vsaka veže se na eno meritev
+    meals: [],               // obroki: kalorije in proteini, več na dan
+    cardioEntries: [],       // porabljene kalorije s cardiem, en vnos na dan
     draft: null              // trening v teku
   };
 }
@@ -119,6 +121,13 @@ function migrate(raw) {
     measurementEntries: Array.isArray(raw.measurementEntries)
       ? raw.measurementEntries.map(cleanMeasurementEntry).filter(Boolean)
       : base.measurementEntries,
+    // Verzija 7: prehrana — obroki in cardio. Star zapis ju nima in ju dobi
+    // prazna; s tem se ne izgubi nič, samo maintenance se do prvih vnosov ne
+    // izračuna in zaslon PREHRANA namesto številke pove razlog.
+    meals: Array.isArray(raw.meals) ? raw.meals.map(cleanMeal).filter(Boolean) : base.meals,
+    cardioEntries: Array.isArray(raw.cardioEntries)
+      ? raw.cardioEntries.map(cleanCardio).filter(Boolean)
+      : base.cardioEntries,
     // Trening v teku gre skozi isto pretvorbo kot zgodovina: če je posodobitev
     // prišla sredi treninga, mora ta po njej izgledati enako kot prej.
     draft: raw.draft && typeof raw.draft === 'object' ? cleanWorkout(raw.draft) : null
@@ -186,6 +195,32 @@ function cleanMeasurementEntry(entry) {
   const clean = Object.assign({}, entry, { value });
   delete clean.valueCm;
   return clean;
+}
+
+// Verzija 7: obrok brez uporabnih kalorij ni obrok — takega ni mogoče niti
+// sešteti niti popraviti, zato se zavrže. Proteini so neobvezni: kdaj jih ne veš.
+function cleanMeal(meal) {
+  if (!meal || typeof meal !== 'object') return null;
+
+  const kcal = Number(meal.kcal);
+  if (!Number.isFinite(kcal)) return null;
+
+  const proteinG = Number(meal.proteinG);
+  return {
+    id: meal.id || newId(),
+    date: cleanDay(meal.date),
+    kcal,
+    proteinG: Number.isFinite(proteinG) ? proteinG : null
+  };
+}
+
+function cleanCardio(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+
+  const kcal = Number(entry.kcal);
+  if (!Number.isFinite(kcal)) return null;
+
+  return { id: entry.id || newId(), date: cleanDay(entry.date), kcal };
 }
 
 function read() {
@@ -803,6 +838,238 @@ export function removeMeasurementEntry(id) {
   write();
 }
 
+// --- Prehrana --------------------------------------------------------------
+//
+// Datum je ISO dan, enako kot pri teži. Razlika je v številu vnosov na dan:
+// obrokov je več (zajtrk, kosilo, večerja), cardio pa je en sam vnos na dan in
+// ponoven vpis starega prepiše — enako kot tehtanje.
+//
+// Obrok nima ne imena ne ure. Vsako polje je en korak več ob vsakem vnosu, ta
+// zaslon pa se uporablja štirikrat na dan.
+
+// Koliko dni nazaj se gleda za povprečja in za trend teže. Teden je tisto, kar
+// zgladi razliko med delovnikom in vikendom, ne da bi zaostajal za tednom nazaj.
+const WINDOW_DAYS = 7;
+
+// Energija enega kilograma telesne mase. Približek (maščoba ima ~9400, mišica
+// precej manj), a to je številka, po kateri se v praksi računa.
+const KCAL_PER_KG = 7700;
+
+// Danes se v povprečja NE šteje: dan še ni končan in dopoldanski vnos bi
+// povprečje potegnil navzdol, maintenance pa navzgor. Postavi na true, če hočeš
+// videti tudi današnji dan.
+const INCLUDE_TODAY = false;
+
+// Najmanjši razmik med prvim in zadnjim tehtanjem v oknu. Pri dveh tehtanjih dan
+// narazen je nihanje vode večje od pravega trenda in maintenance podivja.
+const MIN_TREND_DAYS = 4;
+
+// S čim se deli vsota cardia. false = s številom dni, ko je cardio bil (tako je
+// naročeno). true = z vsemi dnevi v oknu, kar je matematično skladno s tem, kako
+// je cardio zajet v trendu teže — glej komentar pri nutritionSummary().
+const CARDIO_OVER_ALL_DAYS = false;
+
+// Dan, premaknjen za `offset` dni. Gre čez Date, ker meje mesecev in prestopna
+// leta niso stvar aritmetike nad nizi.
+function shiftDay(day, offset) {
+  const parts = String(day).split('-');
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]) + offset);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(date.getDate()).padStart(2, '0');
+  return date.getFullYear() + '-' + month + '-' + dayOfMonth;
+}
+
+// Koliko dni je med dvema dnevoma. Računa se prek poldneva, da poletni čas
+// (dan s 23 ali 25 urami) ne odreže ali doda enega dne.
+function daysBetween(from, to) {
+  const a = new Date(Number(from.slice(0, 4)), Number(from.slice(5, 7)) - 1, Number(from.slice(8, 10)), 12);
+  const b = new Date(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 1, Number(to.slice(8, 10)), 12);
+  return Math.round((b - a) / 86400000);
+}
+
+// Meje okna: [od, do] vključno. `do` je včeraj, razen če INCLUDE_TODAY.
+function window7() {
+  const to = INCLUDE_TODAY ? todayIso() : shiftDay(todayIso(), -1);
+  return { from: shiftDay(to, -(WINDOW_DAYS - 1)), to };
+}
+
+function inWindow(day, bounds) {
+  return String(day) >= bounds.from && String(day) <= bounds.to;
+}
+
+export function getMeals() {
+  return oldestFirst(read().meals);
+}
+
+// Obroki enega dne. Zaslon jih ne našteva, potrebuje pa jih dnevni seštevek.
+export function mealsOn(day) {
+  const target = cleanDay(day);
+  return read().meals.filter((meal) => meal.date === target);
+}
+
+// Kalorije so obvezne, proteini ne. Prazno polje za proteine je `null` in ne 0:
+// nič pojedenih proteinov in "nisem preštel" nista isto.
+export function addMeal(kcal, proteinG, date) {
+  const energy = Number(kcal);
+  if (!Number.isFinite(energy)) return null;
+
+  const protein = Number(proteinG);
+  const meal = {
+    id: newId(),
+    date: cleanDay(date),
+    kcal: energy,
+    proteinG: Number.isFinite(protein) ? protein : null
+  };
+
+  read().meals.push(meal);
+  write();
+  return meal;
+}
+
+// Zbriše vse obroke enega dne. Popravek posameznega obroka ni mogoč — dan se
+// pobriše in vpiše na novo. Pri štirih vnosih je to hitreje kot seznam s koši.
+export function removeMealsOn(day) {
+  const target = cleanDay(day);
+  const all = read();
+  all.meals = all.meals.filter((meal) => meal.date !== target);
+  write();
+}
+
+// Seštevek dneva. `proteinG` je null, kadar noben obrok tega dne nima proteinov —
+// takrat zaslon izpiše črtico namesto zavajajoče ničle.
+export function dayNutrition(day) {
+  const meals = mealsOn(day);
+
+  let kcal = 0;
+  let proteinG = null;
+  for (const meal of meals) {
+    kcal += meal.kcal;
+    if (meal.proteinG !== null) proteinG = (proteinG || 0) + meal.proteinG;
+  }
+
+  return { kcal, proteinG, count: meals.length };
+}
+
+// Ena točka na dan: vsota kalorij tega dne. Oblika je tista, ki jo razume
+// js/chart.js, zato gre naravnost na graf.
+export function nutritionSeries() {
+  const byDay = new Map();
+  for (const meal of read().meals) {
+    byDay.set(meal.date, (byDay.get(meal.date) || 0) + meal.kcal);
+  }
+
+  return Array.from(byDay, ([date, value]) => ({ date, value }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Cardio: en vnos na dan, ponoven vpis prepiše — kot addBodyweight().
+export function setCardio(kcal, date) {
+  const value = Number(kcal);
+  if (!Number.isFinite(value)) return null;
+
+  const day = cleanDay(date);
+  const entries = read().cardioEntries;
+
+  const existing = entries.find((entry) => entry.date === day);
+  if (existing) {
+    existing.kcal = value;
+    write();
+    return existing;
+  }
+
+  const entry = { id: newId(), date: day, kcal: value };
+  entries.push(entry);
+  write();
+  return entry;
+}
+
+export function getCardio(day) {
+  const target = cleanDay(day);
+  const entry = read().cardioEntries.find((item) => item.date === target);
+  return entry ? entry.kcal : null;
+}
+
+export function removeCardio(day) {
+  const target = cleanDay(day);
+  const all = read();
+  all.cardioEntries = all.cardioEntries.filter((entry) => entry.date !== target);
+  write();
+}
+
+// Povprečje po dnevih, ko je vnos res bil. Prazni dnevi se ne štejejo: dan brez
+// vpisanega obroka pomeni "nisem beležil", ne "nisem jedel".
+function averagePerDay(byDay, bounds, overAllDays) {
+  let sum = 0;
+  let days = 0;
+
+  for (const [day, value] of byDay) {
+    if (!inWindow(day, bounds)) continue;
+    sum += value;
+    days += 1;
+  }
+
+  if (!days) return { value: null, days: 0 };
+  return { value: sum / (overAllDays ? WINDOW_DAYS : days), days };
+}
+
+// Maintenance in povprečen vnos zadnjega tedna.
+//
+// Formula:
+//   maintenance = povprecen vnos - trend teze - povprecen cardio
+//
+// Trend je pretvorjen v kalorije na dan: če si v oknu pridobil kilogram, si jedel
+// 7700 kcal nad vzdrževanjem, torej je vzdrževanje za toliko nižje od vnosa.
+// Odštet cardio naredi iz tega **NEAT** vzdrževanje: poraba brez namernega
+// cardia, tisto, kar se ne spreminja od dneva do dneva.
+//
+// Trend se deli z dejanskim razmikom med prvim in zadnjim tehtanjem v oknu, ne s
+// fiksnimi sedmimi dnevi: pri tehtanju v ponedeljek in četrtek je sprememba
+// nastala v treh dneh in deljenje s sedmimi bi jo razredčilo. Pri vsakodnevnem
+// tehtanju je razmik itak WINDOW_DAYS - 1 in razlike ni.
+//
+// Opozorilo k cardiu: povprečje se po naročilu računa samo čez dneve s cardiem.
+// Dvakratni tek po 400 kcal v tednu tako odšteje 400, čeprav je v tem oknu
+// prispeval 800/7 ≈ 114 kcal na dan — trend teže vsebuje samo to razredčeno
+// vrednost. NEAT je s tem podcenjen; CARDIO_OVER_ALL_DAYS = true to popravi.
+export function nutritionSummary() {
+  const bounds = window7();
+
+  const intakeByDay = new Map();
+  for (const meal of read().meals) {
+    intakeByDay.set(meal.date, (intakeByDay.get(meal.date) || 0) + meal.kcal);
+  }
+
+  const intake = averagePerDay(intakeByDay, bounds, false);
+  if (intake.value === null) {
+    return { maintenance: null, avgIntake: null, reason: 'noMeals', days: 0 };
+  }
+
+  const cardioByDay = new Map();
+  for (const entry of read().cardioEntries) cardioByDay.set(entry.date, entry.kcal);
+  const cardio = averagePerDay(cardioByDay, bounds, CARDIO_OVER_ALL_DAYS);
+
+  const weighings = getBodyweightEntries().filter((entry) => inWindow(entry.date, bounds));
+  if (weighings.length < 2) {
+    return { maintenance: null, avgIntake: intake.value, reason: 'noTrend', days: intake.days };
+  }
+
+  const first = weighings[0];
+  const last = weighings[weighings.length - 1];
+  const span = daysBetween(first.date, last.date);
+  if (span < MIN_TREND_DAYS) {
+    return { maintenance: null, avgIntake: intake.value, reason: 'shortTrend', days: intake.days };
+  }
+
+  const trend = (last.weightKg - first.weightKg) * KCAL_PER_KG / span;
+
+  return {
+    maintenance: intake.value - trend - (cardio.value || 0),
+    avgIntake: intake.value,
+    reason: null,
+    days: intake.days
+  };
+}
+
 // --- Trening v teku --------------------------------------------------------
 
 export function getDraft() {
@@ -901,7 +1168,9 @@ function countOf(source) {
     workouts: source.workouts.length,
     exercises: source.exercises.length,
     bodyweightEntries: source.bodyweightEntries.length,
-    measurementEntries: source.measurementEntries.length
+    measurementEntries: source.measurementEntries.length,
+    meals: source.meals.length,
+    cardioEntries: source.cardioEntries.length
   };
 }
 

@@ -33,7 +33,8 @@ export const TEXT = {
   screens: {
     training: 'TRENING',
     weight: 'TEŽA',
-    stats: 'STATISTIKA'
+    stats: 'STATISTIKA',
+    nutrition: 'PREHRANA'
   },
 
   // Zaslon TRENING.
@@ -92,7 +93,16 @@ export const TEXT = {
     discardConfirm: 'Zavržem trening? Vpisane serije bodo izgubljene.',
     save: 'Shrani',
     nameMissing: 'Trening rabi ime, preden ga lahko shranim.',
-    noExercises: 'V treningu ni nobene vaje. Dodaj vsaj eno ali pritisni Zavrži.'
+    noExercises: 'V treningu ni nobene vaje. Dodaj vsaj eno ali pritisni Zavrži.',
+
+    // Cardio. Stoji na zaslonu brez treninga, ker se vpiše po teku in ne med
+    // serijami; v maintenance na zaslonu PREHRANA gre kot poraba tega dne.
+    cardio: 'Vpiši cardio',
+    cardioValue: 'Porabljene kalorije',
+    cardioUnit: 'kcal',
+    cardioSave: 'Shrani cardio',
+    cardioSaved: 'Shranjeno.',
+    cardioHint: 'En vnos na dan. Ponoven vpis prejšnjega prepiše.'
   },
 
   // Zaslon TEŽA.
@@ -166,6 +176,42 @@ export const TEXT = {
       + 'Vpiši jo na zaslonu TEŽA in graf se pojavi.',
 
     topSets: 'Najboljša serija po obdobjih'
+  },
+
+  // Zaslon PREHRANA.
+  nutrition: {
+    heading: 'Prehrana',
+
+    today: 'Danes zaužito',
+    kcalUnit: 'kcal',
+    proteinUnit: 'g',
+    empty: '—',
+
+    addMeal: 'Dodaj obrok',
+    kcal: 'Kalorije',
+    protein: 'Proteini',
+    add: 'Dodaj',
+    clearToday: 'Zbriši današnje obroke',
+    clearTodayConfirm: 'Zbrišem vse današnje obroke? Dan se s tem postavi na nič.',
+
+    maintenance: 'Maintenance',
+    average: 'Povprečno zaužito',
+
+    // Namesto številke, kadar je za izračun premalo podatkov. Vsak razlog pove
+    // tudi, kaj je treba narediti, da se številka pojavi.
+    noMeals: 'Vpiši obroke vsaj en dan.',
+    noTrend: 'Rabim dve tehtanji v zadnjem tednu.',
+    shortTrend: 'Tehtanji sta preblizu skupaj.',
+
+    chart: 'Graf',
+    showWeight: 'Teža',
+    showCalories: 'Kalorije',
+    weightUnit: 'kg',
+    day: 'Dan',
+    month: 'Mesec',
+    year: 'Leto',
+    noData: 'Ni podatkov.',
+    nothingPicked: 'Odkljukaj težo ali kalorije.'
   },
 
   // Okno pod zobnikom: varnostna kopija podatkov.

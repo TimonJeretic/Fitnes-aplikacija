@@ -30,6 +30,8 @@ let root = null;      // koren zaslona; vanj se izriše vse
 let draft = null;     // trening v teku (isti objekt, kot je v shrambi)
 let query = '';       // kar je vpisano v polje za ime novega treninga
 let nameInput = null; // polje z imenom treninga; rabimo ga za opozorilo ob shrani
+let cardioDay = '';   // datum, za katerega se vpisuje cardio
+let cardio = '';      // kar je vpisano v polje za porabljene kalorije
 
 // --- Ikone -----------------------------------------------------------------
 // Vrisane v kodo in ne naložene kot datoteke: ena zahteva manj in barvo
@@ -73,7 +75,14 @@ function idleView() {
   // Glava ni v svojem ovoju: lepi se na vrh zaslona (`position: sticky`), to pa
   // deluje samo znotraj starša — v kratkem ovoju bi odlepila takoj, ko bi ta
   // odrsal. Zato je otrok korena, ki je visok kot cel zaslon.
-  return [brandRow(T.newWorkout), pastSection(), el('div', 'rule'), createSection()];
+  return [
+    brandRow(T.newWorkout),
+    pastSection(),
+    el('div', 'rule'),
+    createSection(),
+    el('div', 'rule'),
+    cardioSection()
+  ];
 }
 
 function pastSection() {
@@ -123,6 +132,68 @@ function createSection() {
 
   section.append(button('btn btn--primary', T.confirm, () => startFromQuery()));
   return section;
+}
+
+// Cardio ni trening s serijami, zato ne odpre kartic — je ena številka na dan.
+// Stoji tukaj in ne na zaslonu PREHRANA, ker se vpiše po vadbi; porabo pa
+// upošteva maintenance na zaslonu PREHRANA.
+function cardioSection() {
+  const section = el('section', 'training__section');
+  section.append(el('h2', 'section__title', T.cardio));
+
+  const row = el('div', 'entry__row');
+
+  const value = el('input', 'entry__value');
+  value.type = 'text';           // text + inputMode: številska tipkovnica, brez puščic
+  value.inputMode = 'numeric';
+  value.value = cardio;
+  value.placeholder = T.cardioValue;
+  value.setAttribute('aria-label', T.cardioValue);
+  value.addEventListener('input', () => {
+    value.value = String(value.value).replace(/[^0-9]/g, '').slice(0, 5);
+    cardio = value.value;
+  });
+
+  const date = el('input', 'entry__date');
+  date.type = 'date';            // sistemski koledar; daje in jemlje 'YYYY-MM-DD'
+  date.value = cardioDay;
+  date.setAttribute('aria-label', T.date);
+  date.addEventListener('input', () => {
+    cardioDay = date.value;
+    // Drug dan ima lahko svoj vnos; polje mora pokazati tistega, ne prejšnjega.
+    cardio = existingCardio(cardioDay);
+    value.value = cardio;
+  });
+
+  row.append(value, el('span', 'entry__unit', T.cardioUnit), date);
+
+  const actions = el('div', 'entry__actions');
+  actions.append(button('btn btn--primary entry__save', T.cardioSave, () => saveCardio(value)));
+
+  section.append(row, actions, el('p', 'templates__empty', T.cardioHint));
+  return section;
+}
+
+// Kar je za ta dan že vpisano, kot besedilo za v polje. Prednapolnjeno polje
+// pove, da ponoven vpis prejšnjega prepiše in ne prišteje.
+function existingCardio(day) {
+  const saved = store.getCardio(day);
+  return saved === null ? '' : String(saved);
+}
+
+function saveCardio(field) {
+  const kcal = parseNumber(cardio);
+
+  // Prazno polje pri vpisanem dnevu pomeni "cardia ta dan ni bilo" — vnos se
+  // pobriše. Brez tega pomotoma vpisanega cardia ne bi bilo mogoče odstraniti.
+  if (kcal === null) {
+    store.removeCardio(cardioDay);
+  } else {
+    store.setCardio(kcal, cardioDay);
+  }
+
+  field.blur();   // tipkovnica naj se umakne; vnos je končan
+  paint();
 }
 
 function startFromQuery() {
@@ -1001,6 +1072,8 @@ export default {
     draft = store.getDraft();
     query = '';
     nameInput = null;
+    cardioDay = store.todayIso();
+    cardio = existingCardio(cardioDay);
 
     root = el('div', 'training');
     paint();

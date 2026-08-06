@@ -65,7 +65,7 @@ export default {
 [odlocitve.md](odlocitve.md). Isti niz gre lahko na kvadratek spodaj in v vrstico
 z naslovom na vrhu zaslona (`.brand` v `css/screen.css`).
 
-**Barva** je danes pri vseh treh zaslonih ista (`#9d0f0b`). Polje kljub temu ostane
+**Barva** je danes pri vseh štirih zaslonih ista (`#9d0f0b`). Polje kljub temu ostane
 pri zaslonu: pogodba se ne spreminja zaradi tega, ker so vrednosti trenutno enake.
 
 **Podpoti.** Prvi kos naslova je zaslon, ostanek dobi zaslon kot argument:
@@ -78,7 +78,7 @@ brez svojega naslova bi podpogled ob *nazaj* vrgel ven iz aplikacije.
 se sama zgradita spodnja vrstica gumbov in usmerjanje; `index.html` ostane nedotaknjen.
 Prvi zaslon v seznamu je privzeti.
 
-Dve stvari, ki nista očitni:
+Tri stvari, ki niso očitne:
 
 - **Barva zaslona živi v modulu zaslona, ne v CSS.** Router jo prepiše v `--accent`
   na `<body>`, CSS pa povsod uporablja samo `var(--accent)`. Zaradi tega je nov
@@ -86,9 +86,14 @@ Dve stvari, ki nista očitni:
 - **Naslov z lojtro** (`#/trening`) namesto prave poti. Prava pot bi zahtevala strežnik,
   ki vsak naslov vrne na `index.html`; GitHub Pages tega ne zna. Z lojtro delujeta
   gumb *nazaj* in osvežitev na istem zaslonu.
+- **`css/screen.css` ima seznam `body[data-screen="…"] .screen`**, ki izklopi
+  sredinjenje in polnobarvno ozadje. Zaslona, ki tam ni, se to ne prime in izriše
+  se kot en napis na sredini rdeče ploskve. To je edino mesto zunaj registra, kjer
+  nov zaslon **mora** biti omenjen.
 
-Ko dodaš zaslon, ga **obvezno dopiši tudi v `FILES` v `sw.js`**. Sicer se aplikacija
-z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v telovadnici.
+Ko dodaš zaslon, ga **obvezno dopiši tudi v `FILES` v `sw.js`** (modul in njegov
+CSS), CSS pa še z `<link>` v `index.html`. Sicer se aplikacija z internetom odpre
+normalno, brez interneta pa se sesuje — kar opaziš šele v telovadnici.
 
 ## Kje živi kateri CSS
 
@@ -99,8 +104,9 @@ z internetom odpre normalno, brez interneta pa se sesuje — kar opaziš šele v
 | `screen.css` | ploskev zaslona in **skupni deli**: `.brand` (ikona + naslov), `.section__title`, `.rule`, vrstica `.listrow` (ime + koš), spustni seznam `.sheet`, izbira `.choice` |
 | `tabbar.css` | spodnja vrstica: kvadratek, ikona, aktivno stanje s sijem |
 | `training.css` | zaslon TRENING in **skupni gradniki, ki so nastali tam**: `.field`, `.btn`, `.modal` |
-| `weight.css` | zaslon TEŽA in gradniki grafa, ki jih uporablja tudi STATISTIKA: `.picked` (izbirnik), `.graph`, `.chart`, `.steps` |
+| `weight.css` | zaslon TEŽA in gradniki grafa, ki jih uporabljata tudi STATISTIKA in PREHRANA: `.picked` (izbirnik), `.graph`, `.chart` (skupaj z drugo serijo `.chart__line--alt`), `.steps` |
 | `stats.css` | samo tisto, česar ni ne v training.css ne v weight.css |
+| `nutrition.css` | zaslon PREHRANA: `.today` (dnevni skupek), `.meal` (vnos obroka), `.summary` (maintenance), `.series` (kljukici nad grafom) |
 | `settings.css` | okno pod zobnikom (`.settings`); gumb `.brand__settings` je v screen.css, ker spada v `.brand` |
 
 Gradnik, ki ga rabi drugi zaslon, se **ne prepiše** — uporabi se isti razred, tudi

@@ -143,9 +143,12 @@ async function runImport() {
   location.reload();
 }
 
+// Vnosi so vse, kar ni trening: tehtanja, meritve telesa, obroki in cardio.
+// Ena sama številka namesto štirih — pri potrditvi uvoza šteje red velikosti.
 function counts(value) {
   return value.workouts + T.workoutsUnit
-    + (value.bodyweightEntries + value.measurementEntries) + T.entriesUnit;
+    + (value.bodyweightEntries + value.measurementEntries + value.meals + value.cardioEntries)
+    + T.entriesUnit;
 }
 
 async function runExport(refresh) {

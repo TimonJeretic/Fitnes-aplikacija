@@ -1,0 +1,248 @@
+/* Zaslon PREHRANA: dnevni skupek, vnos obroka, maintenance in graf.
+   Gumbi, graf, obdobja in polja so isti razredi kot drugod (.btn, .graph,
+   .chart, .steps) — tukaj je samo tisto, česar ni ne v training.css ne v
+   weight.css. */
+
+:root {
+  /* Ista ploskev kot pri treningu in teži; zapisano prek spremenljivke, da se ob
+     morebitnem izluščenju skupnih delov popravi eno mesto. */
+  --nutrition-card: var(--training-card);
+  --nutrition-field: var(--training-field);
+}
+
+.nutrition {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  padding: calc(var(--safe-top) + 14px) 12px 16px;
+}
+
+/* --- Danes zaužito -------------------------------------------------------- */
+
+/* Tri ploščice v vrsti: napis, kalorije, proteini. Napis je ožji od števil,
+   ker se bere enkrat, števili pa vsakič. */
+.today {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.today__label {
+  flex: 1.1;
+  display: flex;
+  align-items: center;
+
+  padding: 0 12px;
+
+  background: var(--nutrition-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.today__tile {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+
+  min-height: 60px;
+  padding: 0 8px;
+
+  background: var(--nutrition-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.today__value {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.today__unit {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* --- Vnos obroka ---------------------------------------------------------- */
+
+.meal__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dve številski polji drug ob drugem. Placeholder pove, katero je katero —
+   napis nad poljem bi vrstico podvojil po višini. */
+.meal__value {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 12px;
+
+  background: var(--nutrition-field);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.meal__value::placeholder {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.meal__value:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.meal__value.is-error {
+  border-color: #d9534f;
+}
+
+.meal__add {
+  flex: none;
+  min-width: 84px;
+  min-height: 56px;
+  padding: 0 12px;
+  font-size: 16px;
+}
+
+/* Koš je ožji od gumba Dodaj: briše cel dan in ne sme biti pomota za sosedom. */
+.meal__clear {
+  flex: none;
+  width: 44px;
+  height: 56px;
+
+  display: grid;
+  place-items: center;
+
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: var(--text-muted);
+
+  cursor: pointer;
+  transition: transform .12s ease, color .15s ease;
+}
+
+.meal__clear:active {
+  transform: scale(0.9);
+  color: #e08585;
+}
+
+.meal__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.meal__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* --- Maintenance in povprečje --------------------------------------------- */
+
+.summary {
+  display: flex;
+  gap: 8px;
+}
+
+.summary__card {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+
+  min-height: 72px;
+  padding: 10px 12px;
+
+  background: var(--nutrition-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.summary__label {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.summary__line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.summary__value {
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.summary__unit {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Namesto številke, dokler je podatkov premalo. Manjše in bledo — je razlaga,
+   ne vrednost. */
+.summary__reason {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* --- Kljukici nad grafom -------------------------------------------------- */
+
+.series {
+  display: flex;
+  gap: 16px;
+}
+
+/* Cela vrstica je tarča: dotik po napisu preklopi škatlico, brez lastne logike. */
+.series__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.series__box {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  cursor: pointer;
+}
+
+/* Barva kljukice = barva črte na grafu. Brez tega ne veš, katera črta je katera. */
+.series__box--weight {
+  accent-color: var(--accent);
+}
+
+.series__box--calories {
+  accent-color: var(--text);
+}
+
+.series__name {
+  color: var(--text);
+  font-size: 15px;
+}

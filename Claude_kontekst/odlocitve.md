@@ -12,6 +12,132 @@ Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
+## 2026-08-02 — Prehrana je četrti zaslon
+
+**Odločitev:** aplikacija dobi zaslon **PREHRANA** (`js/screens/nutrition.js`,
+pot `#/prehrana`) in z njim četrti gumb v spodnji vrstici. Beleži obroke
+(kalorije + proteini), pokaže dnevni skupek, izračunan maintenance in povprečen
+vnos, ter graf teže in kalorij hkrati.
+
+**Zakaj zaslon in ne podpot pod TEŽO:** prehrana se odpre štirikrat na dan, teža
+enkrat. Vsak dodaten dotik do vpisa obroka bi bil plačan vsak dan, gumb spodaj pa
+je en dotik od koderkoli.
+
+**To ovrže razlog iz vpisa "Zaslon RAČUN je odstranjen" (2026-07-29).** Tam je
+četrti gumb padel, ker je bil **prazen** — tarča, ki ni delala ničesar, in je pri
+tem ožila tri prave. Ta gumb ni prazen. Isto velja za pomislek iz vpisa
+"Nastavitve so okno pod zobnikom, ne zaslon": tam je bilo rečeno, da mora vrstica
+ostati pri treh velikih tarčah. Preverjeno pri 320, 360 in 390 px: štirje
+kvadratki po 60 px z 12 px razmika vzamejo 276 px, torej se ne stisnejo.
+
+**Ikona je začasna črka P.** `ICON_NUTRITION` v `js/icons.js` je SVG z besedilom,
+ne risba. To je zavestno kršenje vpisa "Ikone namesto črk na spodnjih gumbih" —
+za en gumb in do prave risbe. Zamenja se en niz in nič drugega.
+
+**Kaj bi jo ovrglo:** peti zaslon. Pri petih kvadratkih vrstica ne zdrži in
+zasloni gredo v podpoti (`#/prehrana/…`), kot je predvideno pri nastavitvah.
+
+---
+
+## 2026-08-02 — Maintenance se izračuna iz podatkov, ne iz formule za BMR
+
+**Odločitev:** vzdrževalne kalorije se ne računajo iz višine, starosti in spola
+(Mifflin-St Jeor), ampak iz tega, kar aplikacija že ve:
+
+```
+maintenance = povprecen vnos - trend teze - povprecen cardio
+```
+
+Sedemdnevno okno, `7700 kcal` na kilogram, natančno v `nutritionSummary()` v
+`store.js` in razloženo v [podatkovni-model.md](podatkovni-model.md).
+
+**Zakaj:** Mifflin je ocena povprečnega človeka in bi rabil štiri nova polja v
+nastavitvah, ki bi jih Timon vpisal enkrat in nikoli popravil. Izračun iz podatkov
+pove, kako se odziva **njegovo** telo, in se sam popravlja, ko se metabolizem
+premakne. Cena je čakanje: brez tedna vnosov in dveh tehtanj številke ni.
+
+**Zakaj NEAT in ne skupni TDEE:** odštet cardio pusti tisto, kar se ne spreminja
+od dneva do dneva. Kar pokuriš na tekaču, prišteješ sam tisti dan — številka na
+zaslonu ostane ista in je zato uporabna kot izhodišče.
+
+**Znana netočnost, ki je bila izbrana zavestno:** povprečen cardio se deli s
+številom dni, ko je cardio bil, ne z vsemi sedmimi. Dvakratni tek po 400 kcal v
+tednu tako odšteje 400, čeprav je prispeval 800/7 ≈ 114 kcal na dan. NEAT je s tem
+podcenjen. Tako je bilo naročeno; konstanta `CARDIO_OVER_ALL_DAYS` v `store.js` to
+obrne v eni vrstici.
+
+**Kaj bi jo ovrglo:** teden ali dva uporabe, ki bi pokazala, da številka preveč
+skače (tehtanje po vikendu, en dan brez beleženja). Takrat gre okno na 14 dni ali
+trend na premico skozi vse točke namesto skozi prvo in zadnjo — oboje je sprememba
+znotraj iste funkcije.
+
+---
+
+## 2026-08-02 — Graf zna dve seriji in dve osi Y
+
+**Odločitev:** `lineChart()` v `js/chart.js` sprejme neobvezno drugo serijo
+(`options.second`). Z dvema serijama dobi graf še desno os, razmerje med osema pa
+je **zaklenjeno** na `AXIS_RATIO = 40` (1 kg leve osi = 40 kcal desne). Podpis in
+vedenje z eno serijo se nista spremenila; TEŽA in STATISTIKA sta nedotaknjeni.
+
+**Zakaj:** teža in kalorije se brati skupaj ali pa nič — vprašanje je vedno "sem
+shujšal, ker sem manj jedel". Dva grafa eden pod drugim tega ne pokažeta, ker
+očesu ne uspe poravnati dveh časovnih osi.
+
+**Zakaj zaklenjeno razmerje in ne dve neodvisni osi:** neodvisno raztegnjeni osi
+bi vsakič napolnili višino in bližina črt ne bi pomenila ničesar — graf bi izgledal
+dramatično tudi pri nihanju 200 kcal. Zaklenjeno razmerje naredi iz bližine
+podatek. Skupen razpon je večji od obeh, da se nobena serija ne odreže, sredina pa
+je vsaki svoja, da črti ležita druga ob drugi.
+
+**To ovrže mejo iz vpisa "Graf je ročno napisan SVG" (2026-07-29):** tam je bilo
+zapisano, da bi potreba po več serijah hkrati odločitev ovrgla. Potreba je prišla,
+knjižnica pa še vedno ni odgovor — druga serija je bila ~60 vrstic v isti datoteki.
+Vpis o ročnem SVG s tem **ostane v veljavi**, samo njegova meja se je premaknila.
+
+**Kaj bi jo ovrglo:** tretja serija, stolpci ali povečevanje s prsti. Pri tem se
+`chart.js` ne da več držati na tej velikosti.
+
+---
+
+## 2026-08-02 — Cardio je en vnos na dan in se vpisuje na zaslonu TRENING
+
+**Odločitev:** porabljene kalorije s cardiem so svoja entiteta (`cardioEntries`),
+en vnos na dan, ponoven vpis prepiše. Polje stoji na zaslonu **TRENING**, v stanju
+brez treninga, pod razdelkom *Ustvari nov trening*.
+
+**Zakaj tam in ne na PREHRANI:** cardio je vadba, ne hrana. Vpiše se po teku, ko si
+že v zavihku TRENING, in ne takrat, ko vpisuješ kosilo.
+
+**Zakaj en vnos na dan:** isto pravilo kot pri tehtanju. Dva teka na isti dan sta
+redkost, seznam z brisanjem posameznega vnosa pa bi bil tretji tak seznam v
+aplikaciji. Prazno polje ob shranjevanju vnos odstrani — brez tega pomotoma
+vpisanega cardia ne bi bilo mogoče umakniti.
+
+**Kaj bi jo ovrglo:** redno dvakratno cardio na dan. Takrat postane vnos seštevek
+več zapisov, kot so obroki.
+
+---
+
+## 2026-08-02 — Obrok ima samo kalorije in proteine, popravlja se cel dan
+
+**Odločitev:** obrok je `{ kcal, proteinG }` in nič drugega — brez imena, ure,
+ogljikovih hidratov in maščob. Današnjih obrokov zaslon ne našteva; X ob vnosu
+pobriše **vse današnje** in vpišeš jih na novo.
+
+**Zakaj:** zaslon se odpre štirikrat na dan in vsako polje je takrat en korak več.
+Kalorije in proteini sta edini številki, po katerih se odloča.
+
+**Zakaj brez seznama in brez koša pri posameznem obroku:** seznam bi zaslon
+podaljšal pod graf, popravek pa je pri štirih številkah hitrejši, če dan vržeš
+stran in ga vpišeš znova. Brisanje gre zato **čez potrditev** — za razliko od koša
+pri posameznem tehtanju na zaslonu TEŽA, kjer vidiš točno, kaj brišeš.
+
+**Kaj bi jo ovrglo:** dan z osmimi obroki ali želja videti, kaj je bilo kdaj.
+Takrat pride seznam pod skupek in obrok dobi ime.
+
+---
+
 ## 2026-07-30 — Izbirnik vaj je popup z iskalnim poljem, brez filtra po treningu
 
 **Odločitev:** plus v treningu odpre spustni seznam čez zaslon (`js/sheet.js`).

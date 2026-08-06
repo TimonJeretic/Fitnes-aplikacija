@@ -11,6 +11,7 @@
 import training from '../screens/training.js';
 import weight from '../screens/weight.js';
 import stats from '../screens/stats.js';
+import nutrition from '../screens/nutrition.js';
 
 // Vrstni red tukaj = vrstni red gumbov spodaj.
-export const SCREENS = [training, weight, stats];
+export const SCREENS = [training, weight, stats, nutrition];

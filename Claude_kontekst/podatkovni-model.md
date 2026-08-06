@@ -1,9 +1,9 @@
 # Podatkovni model
 
 > **Status: POTRJEN in implementiran** v `aplikacija/js/store.js`.
-> Trenutna `schemaVersion` je **6** (2026-07-30, serija je dobila `kind` — vrsto
-> serije — in `seconds`; pred tem 5: serija je dobila `band`, 4: meritev je dobila
-> `unit`, `valueCm` se je preimenoval v `value`).
+> Trenutna `schemaVersion` je **7** (2026-08-02, prehrana: `meals` in
+> `cardioEntries`; pred tem 6: serija je dobila `kind` in `seconds`, 5: serija je
+> dobila `band`, 4: meritev je dobila `unit`, `valueCm` se je preimenoval v `value`).
 > Vsaka nadaljnja sprememba strukture zahteva migracijo v `migrate()` in dvig
 > `schemaVersion` — na telefonu so pravi podatki.
 
@@ -13,13 +13,15 @@ Vse je **en JSON objekt v `localStorage`** pod ključem `fitnes`:
 
 ```js
 {
-  schemaVersion: 6,
+  schemaVersion: 7,
   exercises: [],           // register vaj
   templates: [],           // predloge treningov
   workouts: [],            // zgodovina
   bodyweightEntries: [],   // telesna teža
   measurements: [],        // register meritev telesa
   measurementEntries: [],  // izmerjene vrednosti
+  meals: [],               // obroki: kalorije in proteini
+  cardioEntries: [],       // porabljene kalorije s cardiem
   draft: null              // trening v teku
 }
 ```
@@ -202,6 +204,39 @@ premakniti na sosednji dan. Nizi te oblike se sortirajo leksikografsko enako kot
 Na en dan gre **en vnos** na serijo. Ponoven vpis istega dne obstoječega prepiše:
 popravek tipkarske napake je s tem ponoven vpis, graf pa nima dveh točk na isti dan.
 
+Izjema je `meal`: obrokov je na dan več in vsak je svoj zapis — glej spodaj.
+
+### `meal` — obrok
+
+| Polje | Tip | Opomba |
+|---|---|---|
+| `id` | string | |
+| `date` | string | ISO **dan** |
+| `kcal` | number | obvezno; brez njega obroka ni |
+| `proteinG` | number \| null | `null` = nisi štel, kar ni isto kot 0 |
+
+**Edina entiteta z več vnosi na dan.** Obrokov je na dan štiri do šest in vsak je
+svoj vpis; pravilo "en vnos na dan" tukaj ne velja, ker bi pomenilo, da vsak
+naslednji obrok prejšnjega izbriše. Namesto tega se popravlja **cel dan**:
+`removeMealsOn(day)` pobriše vse obroke tistega dne in vpišeš jih na novo.
+
+Obrok nima **ne imena ne ure ne ogljikovih hidratov ne maščob**. Vsako polje je en
+korak več ob vsakem vnosu, ta zaslon pa se odpre štirikrat na dan. Kalorije in
+proteini sta edini številki, po katerih se odloča.
+
+### `cardioEntry` — poraba s cardiem
+
+| Polje | Tip | Opomba |
+|---|---|---|
+| `id` | string | |
+| `date` | string | ISO **dan** |
+| `kcal` | number | porabljene kalorije |
+
+En vnos na dan, ponoven vpis prepiše — enako kot tehtanje. Vpisuje se na zaslonu
+**TRENING** (razdelek *Vpiši cardio* v stanju brez treninga), ker se vpiše po
+vadbi; bere pa ga maintenance na zaslonu PREHRANA. Prazno polje ob shranjevanju
+vnos tistega dne **odstrani** — drugače pomotoma vpisanega cardia ne bi šlo umakniti.
+
 ### `draft` — trening v teku
 
 Ista oblika kot `workout`, brez `id` in `date`, z `startedAt`.
@@ -261,8 +296,58 @@ smiselno zaporedje, abeceda pa ne.
 - `todayIso()` — današnji dan v **lokalnem** času. `new Date().toISOString()` vzame
   UTC in bi tik po polnoči ponudil včerajšnji datum.
 
+**Prehrana.**
+
+- `dayNutrition(day)` — seštevek dneva: `{ kcal, proteinG, count }`. `proteinG` je
+  `null`, kadar noben obrok tega dne proteinov nima; zaslon takrat izpiše črtico,
+  ker bi ničla trdila nekaj, česar ne veš.
+- `nutritionSeries()` — **ena točka na dan**, vsota kalorij tistega dne, najstarejši
+  prvi. Oblika je tista, ki jo razume `js/chart.js`, zato gre naravnost na graf.
+- `mealsOn(day)`, `addMeal(kcal, proteinG, date)`, `removeMealsOn(day)`.
+- `setCardio(kcal, date)`, `getCardio(day)`, `removeCardio(day)`.
+- `nutritionSummary()` — `{ maintenance, avgIntake, reason, days }`. Glej spodaj.
+
 Vsi seznami vnosov pridejo **najstarejši prvi**, ker graf riše od leve proti desni.
 Izjema je arhiv treningov: tam iščeš skoraj vedno zadnje, zato so najnovejši prvi.
+
+## Maintenance (NEAT)
+
+Zapisano natanko enkrat, v `nutritionSummary()` v `store.js`:
+
+```
+maintenance = povprecen vnos - trend teze - povprecen cardio
+```
+
+- **povprečen vnos** — povprečje kalorij čez dneve okna, ko je bil vpisan vsaj en
+  obrok. Prazni dnevi se **ne** štejejo: dan brez vnosa pomeni "nisem beležil", ne
+  "nisem jedel". Ta ista številka je na zaslonu desno pod *Povprečno zaužito* —
+  tam je **čist vnos**, brez cardia in brez trenda.
+- **trend teže** — `(zadnje tehtanje − prvo tehtanje) × 7700 / razmik v dnevih`.
+  Če si pridobil kilogram, si jedel 7700 kcal nad vzdrževanjem, torej je
+  vzdrževanje za toliko **nižje** od vnosa — od tod minus.
+- **povprečen cardio** — povprečje čez dneve, ko je bil cardio vpisan. Odštet cardio
+  naredi iz TDEE **NEAT** vzdrževanje: porabo brez namerne vadbe.
+
+Konstante so na vrhu odseka *Prehrana* v `store.js` in so tam zato, da se dajo
+hitro spremeniti: `WINDOW_DAYS = 7`, `KCAL_PER_KG = 7700`, `INCLUDE_TODAY = false`,
+`MIN_TREND_DAYS = 4`, `CARDIO_OVER_ALL_DAYS = false`.
+
+Tri podrobnosti, ki so bile odločitev in ne slučaj:
+
+1. **Današnji dan se ne šteje.** Dan še ni končan; dopoldne bi povprečje potegnil
+   navzdol, maintenance pa navzgor. Okno je zato zadnjih sedem **celih** dni.
+2. **Trend se deli z dejanskim razmikom med tehtanjema**, ne fiksno s sedem. Pri
+   tehtanju v ponedeljek in četrtek je sprememba nastala v treh dneh; deljenje s
+   sedmimi bi jo razredčilo. Pri vsakodnevnem tehtanju razlike ni.
+3. **Cardio se deli s številom dni s cardiem**, ne z vsemi sedmimi (tako je
+   naročeno). To NEAT podceni: dvakratni tek po 400 kcal odšteje 400, čeprav je v
+   sedemdnevnem oknu prispeval 800/7 ≈ 114 kcal na dan in trend teže vsebuje samo
+   to razredčeno vrednost. `CARDIO_OVER_ALL_DAYS = true` to popravi.
+
+Kadar se ne da izračunati, funkcija vrne `maintenance: null` in `reason`, zaslon pa
+namesto številke izpiše, kaj je treba narediti: `noMeals` (ni obrokov v oknu),
+`noTrend` (manj kot dve tehtanji), `shortTrend` (tehtanji bližje kot `MIN_TREND_DAYS`).
+Isti vzorec kot `needsBodyweight` pri grafu moči — prazno polje bi izgledalo kot okvara.
 
 ## Ocena moči (1RM)
 
@@ -310,6 +395,12 @@ treninga, mora ta po njej izgledati enako kot prej.
 Posledica, ki jo je treba poznati: zgib brez elastike, vpisan z `band: 'bw'`, je po
 migraciji serija vrste `band` in **ne šteje več za moč** (prej je 'bw' štel). Zgibi,
 ki naj bodo na grafu, se od zdaj vpisujejo kot navaden set pri vaji z lastno težo.
+
+Verzija **7** pretvorba ni: doda dve prazni polji, `meals` in `cardioEntries`.
+Star zapis ju nima in dobi prazni; zgodovina treningov, teža in meritve ostanejo
+nedotaknjeni, samo maintenance se do prvih vnosov ne izračuna. Verzija se kljub
+temu dvigne — po istem premisleku kot pri 5. Preverjeno z zapisom verzije 6:
+trening preživi, novi polji sta prazni.
 
 ## Varnostna kopija
 
