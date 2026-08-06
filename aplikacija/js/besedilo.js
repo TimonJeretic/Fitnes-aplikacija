@@ -51,6 +51,7 @@ export const TEXT = {
       + 'Shranjeni treningi in zgodovina ostanejo.',
 
     date: 'Datum:',
+    pickDate: 'Izberi datum treninga',
     repeatLast: 'Ponovi zadnji trening',
     set: 'Set',
     unit: 'kg',
@@ -150,6 +151,9 @@ export const TEXT = {
     searchWorkouts: 'Ime treninga ali datum',
     noWorkouts: 'Ni še nobenega shranjenega treninga.',
     noMatches: 'Ni zadetkov.',
+    removeWorkout: 'Zbriši trening',
+    removeWorkoutConfirm: 'Zbrišem ta trening? Izgine iz arhiva in z grafov moči. '
+      + 'Trening na seznamu za naslednjič ostane.',
     removedExercise: '(zbrisana vaja)',
     set: 'Set',
 

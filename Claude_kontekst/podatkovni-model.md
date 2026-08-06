@@ -92,13 +92,22 @@ in grafi zato ostanejo nedotaknjeni, tudi če predloge ni več.
 | `id` | string | |
 | `name` | string | ime treninga ob shranjevanju |
 | `templateId` | string | predloga, ki je bila takrat prepisana |
-| `date` | string | ISO datum |
+| `date` | string | ISO datum; prepisan iz `draft.startedAt` |
 | `exercises` | array | `{ exerciseId, sets: [...] }` |
 
 Vsak shranjen trening ostane tukaj za vedno. Prazna **navadna** serija se ob
 shranjevanju zavrže, vsaka druga vrsta ostane tudi prazna (glej `kind` spodaj).
 Predloga dobi **vse** vaje — tudi tiste, ki jih tisti dan ni uspel narediti;
 naslednjič naj se spet ponudijo.
+
+**`date` je začetek treninga in ne trenutek shranjevanja.** `saveWorkout()` ga vzame
+iz `draft.startedAt` (`workoutDate()` v `store.js`), tega pa premakne koledarček ob
+datumu na zaslonu TRENING. Trening, vpisan zvečer za včeraj, gre s tem na pravi dan;
+trening, začet pred polnočjo in shranjen po njej, ostane na svojem. Skvarjen ali
+manjkajoč žig pomeni "zdaj" — trening brez datuma ne obstaja.
+
+Zbriše se z `removeWorkout(id)` (koš v arhivu treningov). Predloga pri tem ostane:
+zbrisan je en dan, ne ime treninga.
 
 ### `set` — posamezna serija
 

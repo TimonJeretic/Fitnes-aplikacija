@@ -17,7 +17,7 @@ import { ICON_TRAINING, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
 import {
   el, button, icon, withLabel,
-  parseNumber, limitNumber, formatNumber, formatTime, formatDate
+  parseNumber, limitNumber, formatNumber, formatTime, formatDate, dayOfIso, isoOnDay
 } from '../dom.js';
 
 const T = TEXT.training;
@@ -42,6 +42,13 @@ const ICON_PENCIL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg>';
+
+// Koledarček ob datumu treninga. Edini namig, da se datum da zamenjati.
+const ICON_CALENDAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/>' +
+  '<path d="M8 3v4"/><path d="M16 3v4"/></svg>';
 
 // Pike na ploscici z imenom vaje. Edini namig, da se vaja da prijeti in premakniti.
 const ICON_GRIP =
@@ -279,7 +286,7 @@ function activeView() {
 // zaporedje in gumb izgine, da ga ne bi po nesreči zbrisal.
 function metaRow() {
   const row = el('div', 'training__meta');
-  row.append(el('div', 'training__date', T.date + ' ' + formatDate(draft.startedAt)));
+  row.append(dateField());
 
   const template = draft.templateId ? store.getTemplate(draft.templateId) : null;
   if (template && template.exerciseIds.length && draft.exercises.length === 0) {
@@ -287,6 +294,53 @@ function metaRow() {
   }
 
   return row;
+}
+
+// Datum treninga in koledarček zraven njega. Privzet je dan, ko je trening
+// nastal; koledarček ga zamenja, ker se trening pogosto vpiše šele zvečer ali
+// naslednji dan. Ta datum je tisti, s katerim gre trening v zgodovino in na graf
+// (glej workoutDate() v store.js).
+//
+// Polje `<input type="date">` leži **nevidno** čez ikono: dotik gre naravnost
+// vanj in sistemski koledar se odpre sam. Gumb, ki bi koledar odpiral iz kode,
+// bi delal samo tam, kjer obstaja showPicker() — polje dela povsod.
+function dateField() {
+  const wrap = el('div', 'training__date');
+  const label = el('span', 'training__date-text', T.date + ' ' + formatDate(draft.startedAt));
+
+  const picker = el('label', 'training__calendar');
+  withLabel(picker, T.pickDate);
+  picker.append(icon('training__calendar-icon', ICON_CALENDAR));
+
+  const input = el('input', 'training__date-input');
+  input.type = 'date';
+  input.value = dayOfIso(draft.startedAt);
+  input.setAttribute('aria-label', T.pickDate);
+
+  input.addEventListener('input', () => {
+    // Prazno polje pomeni "Počisti" v sistemskem koledarju. Trening brez datuma
+    // ne obstaja, zato ostane prejšnji — isoOnDay() ga vrne nedotaknjenega.
+    draft.startedAt = isoOnDay(draft.startedAt, input.value);
+    input.value = dayOfIso(draft.startedAt);
+    label.textContent = T.date + ' ' + formatDate(draft.startedAt);
+    persist();
+  });
+
+  // Chrome na računalniku odpre koledar samo ob dotiku ikone v polju, ta pa je
+  // tukaj nevidna. Kjer showPicker() ne obstaja (starejši iOS), polje odpre
+  // sistemski koledar že samo od sebe in tega klica ne rabi.
+  input.addEventListener('click', () => {
+    if (typeof input.showPicker !== 'function') return;
+    try {
+      input.showPicker();
+    } catch (error) {
+      // Brskalnik klica ni dovolil; polje ostane navadno polje za datum.
+    }
+  });
+
+  picker.append(input);
+  wrap.append(label, picker);
+  return wrap;
 }
 
 function addExerciseButton() {

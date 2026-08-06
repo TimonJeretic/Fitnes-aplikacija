@@ -2,7 +2,7 @@
 // Njegova naloga tukaj: shrani datoteke aplikacije, da dela tudi brez interneta.
 
 // Ime predpomnilnika. Ob spremembah incrementaj verzijo
-const CACHE = 'aplikacija-v14';
+const CACHE = 'aplikacija-v15';
 
 // POZOR: aplikacija je razdeljena na module. 
 // Vsak modul je svoja datoteka in mora biti naštet spodaj. 

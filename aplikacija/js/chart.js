@@ -124,24 +124,28 @@ export function aggregate(points, step, mode) {
 // --- Os Y ------------------------------------------------------------------
 
 // Graf namenoma NE začne pri nič: razlika med 82 in 85 kg bi bila pri ničli
-// nevidna črta. Odrežemo toliko, da podatki napolnijo višino, a nikoli več kot
-// polovico najnižje vrednosti — sicer graf pretirava in majhno nihanje izgleda
-// kot preobrat. Os je zato vedno označena s številkami.
+// nevidna črta. Os je zato vedno označena s številkami.
+//
+// Pravilo je preprosto in za vse grafe isto: dno je najnižja vrednost krat 0,8,
+// vrh najvišja krat 1,2. Rob je s tem sorazmeren s samimi številkami in ne z
+// njihovim razponom — pri teži okoli 85 kg to pomeni os od 68 do 102 ne glede na
+// to, ali si zanihal za pol kilograma ali za tri.
+const Y_FLOOR = 0.8;
+const Y_CEILING = 1.2;
+
 function scaleY(values) {
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const span = max - min;
+  const scale = { min: min * Y_FLOOR, max: max * Y_CEILING };
 
-  if (span === 0) {
-    const pad = Math.max(Math.abs(min) * 0.02, 0.5);
-    return { min: Math.max(0, min - pad), max: max + pad };
-  }
+  // Množenje drži samo pri pozitivnih številkah. Pri ničli da razpon nič (delitev
+  // z njim bi bila NaN), pri negativnih pa os obrne in podatke odreže — takrat
+  // pas naredimo sami. V praksi se to ne zgodi: teža, moč in kalorije so vedno
+  // večje od nič.
+  if (scale.min <= min && scale.max >= max && scale.max > scale.min) return scale;
 
-  const floor = Math.max(0, min * 0.5);
-  return {
-    min: Math.max(min - span * 0.1, floor),
-    max: max + span * 0.1
-  };
+  const pad = Math.max(Math.abs(min), Math.abs(max), 1) * 0.2;
+  return { min: min - pad, max: max + pad };
 }
 
 // Os s predpisanim razponom, ki ostane sredinjena na svojih podatkih. Rabi se pri

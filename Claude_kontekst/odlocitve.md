@@ -12,6 +12,108 @@ Vpisi niso strogo po datumu — vpis, ki ga iščeš, najdeš po naslovu.
 
 ---
 
+## 2026-08-06 — Os Y gre od najnižje krat 0,8 do najvišje krat 1,2
+
+**Odločitev:** `scaleY()` v `js/chart.js` postavi dno osi na `min × 0,8` in vrh na
+`max × 1,2`. Konstanti sta `Y_FLOOR` in `Y_CEILING`. Velja za vse tri grafe (teža in
+meritve, moč, prehrana); pri dveh serijah se to zgodi pred zaklepom razmerja osi,
+zato `AXIS_RATIO` ostane nedotaknjen.
+
+**Zakaj:** tako je naročeno. Rob je s tem sorazmeren s **številkami** in ne z njihovim
+razponom. Stari rez (10 % razpona, največ do polovice najnižje vrednosti) je vsak graf
+raztegnil čez vso višino, zato je nihanje pol kilograma izgledalo enako dramatično kot
+nihanje treh — krivulja je bila vedno enako strma in oblika ni pomenila nič. Novo
+pravilo pusti, da je majhno nihanje videti majhno.
+
+**Cena:** pri teži okoli 84 kg je os od 66,9 do 101 in krivulja je skoraj ravna črta.
+Trend se prebere iz številk ob točkah in iz smeri, ne iz naklona.
+
+**Rezerva za ničlo in negativne vrednosti:** množenje drži samo pri pozitivnih
+številkah — pri ničli da razpon nič (delitev z njim bi bila `NaN`), pri negativnih pa
+os obrne in podatke odreže. Takrat se pas naredi drugače (20 % največje absolutne
+vrednosti). V praksi se to ne zgodi: teža, moč in kalorije so vedno večje od nič.
+
+**Kaj bi jo ovrglo:** graf, na katerem se sprememba ne vidi več. Takrat gre množitelj
+bliže ena (0,95 / 1,05) — to je popravek dveh konstant, ne pravila.
+
+---
+
+## 2026-08-06 — Trening se zbriše v arhivu, s košem ob vrstici
+
+**Odločitev:** vrstica v arhivu treningov (`#/statistika/arhiv`) ima ob sebi koš, ki
+trening **s potrditvijo** zbriše iz zgodovine (`store.removeWorkout`). Vrstica in koš
+sta dva gumba v skupnem `.listrow` — isti vzorec kot v arhivu vaj in na seznamu
+preteklih treningov.
+
+**Zakaj:** to je bilo eno od odprtih vprašanj v [stanje.md](stanje.md) ("kje se ureja
+in briše zgodovina"). Napačno vpisan ali podvojen trening je do zdaj ostal na grafu
+moči za vedno. Brisanje je od obojega — popravljanja in brisanja — manjši poseg:
+zbrišeš in vpišeš na novo.
+
+**Predloga ostane.** Zbrisan je en dan, ne ime treninga. Nasprotje `removeExercise()`,
+ki vajo pobere iz vseh treningov hkrati.
+
+**Zakaj koš ob vrstici in ne v razprtem treningu:** vrstica arhiva je gumb, gumb v
+gumbu pa ni veljaven zapis. Koš zunaj nje je hkrati tam, kjer ga aplikacija že ima na
+dveh drugih seznamih.
+
+**Popravljanja shranjenega treninga še vedno ni.** To je svoje vprašanje: rabi pot do
+urejanja serij, ki je danes samo v treningu v teku.
+
+**Kaj bi jo ovrglo:** pomotoma zbrisan trening. Takrat rabi aplikacija koš za nedavno
+zbrisano — enako kot je zapisano pri brisanju vaje.
+
+---
+
+## 2026-08-06 — Datum treninga se izbere s koledarčkom, trening pa gre v zgodovino s tem datumom
+
+**Odločitev:** ob datumu v treningu v teku stoji koledarček
+(`.training__calendar` v `training.js`). Privzet je dan, ko je bil trening ustvarjen;
+izbrani dan se zapiše v `draft.startedAt`. `saveWorkout()` odslej vzame datum od tam
+(`workoutDate()`) in ne več iz trenutka shranjevanja.
+
+**Zakaj:** trening se ne vpisuje vedno takrat, ko se zgodi — vpišeš ga zvečer doma ali
+naslednje jutro, in do zdaj je pristal na napačnem dnevu, na grafu in v arhivu.
+Stranska korist: trening, začet pred polnočjo in shranjen po njej, ostane na svojem
+dnevu.
+
+**Zakaj nevidno polje čez ikono in ne gumb, ki bi koledar odprl iz kode:** iz kode ga
+odpre samo `showPicker()`, ki ga starejši iOS nima. Polje `<input type="date">`
+odpre sistemski koledar povsod; dodan klic `showPicker()` je samo za Chrome na
+računalniku, ki koledarja ob dotiku po polju sam od sebe ne odpre.
+
+**Zakaj se ura ohrani:** menja se dan, ne trenutek. Ura v žigu ni nikjer izpisana,
+odloča pa vrstni red dveh treningov istega dne.
+
+**Kaj bi jo ovrglo:** želja po popravku datuma tudi po shranjevanju. To je del
+urejanja zgodovine in spada v arhiv, ne sem.
+
+---
+
+## 2026-08-06 — Ikona zaslona PREHRANA je jabolko
+
+**Odločitev:** `ICON_NUTRITION` v `js/icons.js` je risba jabolka s peclem in listom.
+Zamenjala je začasno črko **P**. Izvorna datoteka je `aplikacija/icons/prehrana.svg`,
+tako kot pri `trening.svg`, `tehtanje.svg` in `statistika.svg`.
+
+**Zakaj:** vpis "Ikone namesto črk na spodnjih gumbih" spet drži za vse štiri gumbe.
+Jabolko je najbolj razumljiv znak za hrano — pri drsečem pogledu v telovadnici se ga
+ne zamenja z ničemer, kar aplikacija že ima.
+
+**Kako je narejena:** izvorna risba stoji na velikem praznem platnu
+(`viewBox="0 0 810 1440"`), zato je niz v `icons.js` obrezan na
+`viewBox="115 371 580 698"` — samo toliko, kolikor risba res zaseda, sicer bi bila
+ikona v 28 px gumbu drobna. Pot je nespremenjena, samo zapisana relativno; `fill` je
+`currentColor`, da barvo pobere iz CSS kot vse ostale.
+
+**Kaj bi jo ovrglo:** če bi jabolko na telefonu pri 28 px razpadlo — list in pecelj sta
+najtanjša dela risbe. Takrat se pecelj odebeli ali odreže, ne pa zamenja cela ikona.
+
+**Zakaj `prehrana.svg` ni v `FILES` v `sw.js`:** izvorne risbe se ob zagonu ne nalagajo,
+ikone živijo kot nizi v `icons.js`. Isto velja za `trening.svg` in ostale.
+
+---
+
 ## 2026-08-02 — Prehrana je četrti zaslon
 
 **Odločitev:** aplikacija dobi zaslon **PREHRANA** (`js/screens/nutrition.js`,
@@ -30,9 +132,10 @@ tem ožila tri prave. Ta gumb ni prazen. Isto velja za pomislek iz vpisa
 ostati pri treh velikih tarčah. Preverjeno pri 320, 360 in 390 px: štirje
 kvadratki po 60 px z 12 px razmika vzamejo 276 px, torej se ne stisnejo.
 
-**Ikona je začasna črka P.** `ICON_NUTRITION` v `js/icons.js` je SVG z besedilom,
-ne risba. To je zavestno kršenje vpisa "Ikone namesto črk na spodnjih gumbih" —
-za en gumb in do prave risbe. Zamenja se en niz in nič drugega.
+**~~Ikona je začasna črka P.~~ OVRŽENO 2026-08-06.** `ICON_NUTRITION` je bil SVG z
+besedilom, ne risba — zavestno kršenje vpisa "Ikone namesto črk na spodnjih gumbih",
+za en gumb in do prave risbe. Prava risba je prišla, glej vpis
+"Ikona zaslona PREHRANA je jabolko" spodaj.
 
 **Kaj bi jo ovrglo:** peti zaslon. Pri petih kvadratkih vrstica ne zdrži in
 zasloni gredo v podpoti (`#/prehrana/…`), kot je predvideno pri nastavitvah.
@@ -1122,9 +1225,11 @@ delovanje brez interneta. Graf, ki ga rabiva, je ena črta s časovno osjo — t
 kode kot vzdrževanje vendorane knjižnice.
 
 **Podrobnost, ki je bila odločitev in ne slučaj:** os Y **ne** začne pri nič. Razlika
-med 82 in 85 kg bi bila pri ničli nevidna. Odreže se toliko, da podatki napolnijo
+med 82 in 85 kg bi bila pri ničli nevidna. ~~Odreže se toliko, da podatki napolnijo
 višino (10 % razpona pod najnižjo vrednostjo), a nikoli več kot **polovico najnižje
-vrednosti** — sicer majhno nihanje izgleda kot preobrat. Os je zato vedno označena.
+vrednosti** — sicer majhno nihanje izgleda kot preobrat.~~ **OVRŽENO 2026-08-06** —
+rez je zdaj `min × 0,8` do `max × 1,2`, glej vpis *Os Y gre od najnižje krat 0,8 do
+najvišje krat 1,2* na vrhu dnevnika. Os je vedno označena s številkami.
 
 **Kaj bi jo ovrglo:** potreba po grafu, ki ga ni mogoče narisati z eno črto
 (stolpci, več serij hkrati, povečevanje s prsti).

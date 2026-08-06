@@ -113,8 +113,13 @@
 }
 
 /* Ena vrstica na trening: ime levo, datum desno. Višina je večja od
-   priporočenih 44 px — v seznam se pogosto zapelješ z eno roko. */
+   priporočenih 44 px — v seznam se pogosto zapelješ z eno roko.
+   Koš ob njej je skupni `.listrow__remove` iz screen.css, zato vrstica zasede
+   preostanek `.listrow` in ne cele širine. */
 .archive__row {
+  flex: 1;
+  min-width: 0;
+
   display: flex;
   align-items: center;
   gap: 10px;

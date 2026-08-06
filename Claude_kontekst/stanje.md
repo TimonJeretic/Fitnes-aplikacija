@@ -1,6 +1,6 @@
 # Stanje projekta
 
-**Zadnja posodobitev:** 2026-08-02
+**Zadnja posodobitev:** 2026-08-06
 
 To datoteko posodabljam sam, kadar se stanje spremeni. Kronologije tukaj ni —
 piše, kaj **danes** stoji. Zakaj je nekaj tako, je v [odlocitve.md](odlocitve.md).
@@ -24,7 +24,9 @@ in košem za brisanje predloge) in pod črto polje za novo ime. Med treningom: k
 vaj s serijami, stolpec "zadnjič" (dotik prepiše vrednost v polje levo), okno pod
 svinčnikom (zapisek, popravek imena vaje, preklop *vaja z lastno težo*), vlečenje
 vaj za **pikice** na ploščici z imenom, koš ob plusu (odstrani zadnjo serijo), gumba
-*Zavrži* in *Shrani*.
+*Zavrži* in *Shrani*. Ob datumu pod imenom stoji **koledarček**: privzet je dan, ko
+je trening nastal, dotik pa ga zamenja. S tem datumom gre trening v zgodovino in na
+graf — tudi če ga shraniš šele naslednji dan.
 
 Plus pod serijami odpre **izbiro vrste serije**: *Navaden set, Superset, Dropset,
 Myoreps, Elastika, Čas, Prazen set*. Številko dobijo in porabijo samo navaden set,
@@ -64,7 +66,9 @@ treningov; dokler ni izbrana, v njem sivo piše "Ime vaje") in graf z obdobji.
 Obdobje predstavlja **najboljši** nastop v njem, ne povprečje. Pod grafom so gumbi
 Dan / Mesec / Leto in razdelek *Najboljša serija po obdobjih*.
 `#/statistika/arhiv` je iskanje čez ime in datum hkrati, vrstica se razpre v cel
-trening; **samo za branje**. `#/statistika/vaje` je register vaj po abecedi, dotik
+trening; ob vsaki vrstici je **koš**, ki trening s potrditvijo zbriše iz zgodovine
+(predloga ostane). Popravljati shranjenega treninga še vedno ni mogoče.
+`#/statistika/vaje` je register vaj po abecedi, dotik
 razpre rekord (`PR: 102,5 kg × 5`), koš vajo zbriše iz vseh zapisov hkrati.
 
 **Zaslon PREHRANA.** Na vrhu vrstica *Danes zaužito* s kalorijami in proteini
@@ -77,8 +81,14 @@ dvema kljukicama, **Teža** in **Kalorije**: teža na levi osi, kalorije na desn
 razmerje med osema je zaklenjeno (`AXIS_RATIO = 40` v `js/chart.js`, torej 1 kg =
 40 kcal). Pod grafom Dan / Mesec / Leto.
 
-**Ikona zaslona PREHRANA je začasna črka P** (`ICON_NUTRITION` v `js/icons.js`) in
-čaka pravo risbo.
+**Os Y na vseh grafih** gre od najnižje vrednosti krat 0,8 do najvišje krat 1,2
+(`Y_FLOOR` in `Y_CEILING` v `js/chart.js`). Rob je s tem sorazmeren s številkami in
+ne z njihovim razponom: pri teži okoli 84 kg je os od 66,9 do 101 in majhno nihanje
+je videti majhno. Zakaj tako in kaj bi to ovrglo, je v [odlocitve.md](odlocitve.md).
+
+**Ikona zaslona PREHRANA je jabolko** (`ICON_NUTRITION` v `js/icons.js`, izvor
+`icons/prehrana.svg`). Stoji na spodnjem gumbu in v naslovni vrstici zaslona.
+Začasne črke **P** ni več.
 
 **Varnostna kopija.** Zobnik desno zgoraj na vseh štirih zaslonih odpre okno
 (`js/settings.js`) z gumbi *Uvoz kopije*, *Izvozi zdaj* in — kjer je to mogoče —
@@ -116,7 +126,7 @@ pravo širino telefona (postopek in pasti: [delovni-tok.md](delovni-tok.md)).
 
 - **Samodejni preizkusi** shrambe, grafa in zaslonov: TRENING (cela pot od novega
   treninga do shranjenega, vlečenje, omejitev vnosa), TEŽA (migracija, prepis vnosa
-  na isti dan, povprečenje po obdobjih, rez osi Y), STATISTIKA (formula moči in
+  na isti dan, povprečenje po obdobjih), STATISTIKA (formula moči in
   njena konkavnost, prištevanje telesne teže, iskanje po imenu in datumu).
   Imena se povsod primerjajo brez ozira na šumnike in velike črke.
 - **Izris vseh poti** na polni shrambi: `#/trening` (prazen in s treningom v teku),
@@ -178,6 +188,17 @@ pravo širino telefona (postopek in pasti: [delovni-tok.md](delovni-tok.md)).
   obdržijo svojo barvo na levi osi. Izris obeh zaslonov na nasutih podatkih:
   `Danes zaužito 1130 kcal / 80 g`, `Maintenance 1615`, `Povprečno zaužito 2420` —
   vse tri številke se ujemajo z ročnim izračunom.
+- **Os Y, brisanje treninga in koledarček (2026-08-06):** 19 preverjanj v Node in
+  29 v brezglavem Chromu. Os: pri 80 in 85 kg gre od `64` do `102`, ena sama točka
+  da veljavno os (`67,2` – `100,8`) in narisano piko, same ničle ne dajo `NaN`,
+  razmerje dveh osi ostane natanko 40 kcal/kg. Brisanje: trening izgine iz arhiva
+  in z grafa moči, predloga in vaja ostaneta, neznan `id` ne stori ničesar; koš je
+  svoj gumb (ne v gumbu vrstice), meri 48 px in ne prelije seznama. Koledarček:
+  polje je vrste `date`, privzeta vrednost je dan nastanka treninga, tarča meri
+  40 × 40 px in polje jo nevidno pokriva; izbran dan popravi napis in shrambo, ura
+  ostane ista, prazno polje datuma ne izgubi. Trening gre v zgodovino z datumom
+  začetka (preverjeno na 4. 8. in 1. 8., ne na dan preizkusa), skvarjen žig pomeni
+  danes. Posnetka zaslona pri 390 px potrdita koledarček ob datumu in koše v arhivu.
 
 **Na telefonu preverjeno (iPhone, nameščena aplikacija):** ikona na domačem zaslonu,
 uvodna animacija in prazen pas pod spodnjimi gumbi. Zadnji je bil **zunaj** okna
@@ -207,12 +228,14 @@ odstranjeno z zaslona (zato `blur()` pred vsakim takim izrisom in izrecni
 5. **Nastavi razmerje osi na grafu prehrane.** `AXIS_RATIO` v `js/chart.js` je
    zdaj 40 (1 kg = 40 kcal). Prava vrednost se pokaže šele na tvojih podatkih:
    večja številka črti stisne skupaj, manjša ju razmakne.
-6. **Prava ikona za PREHRANO** namesto začasne črke P.
+6. **Poglej, ali sta 0,8 in 1,2 prava množitelja za os Y.** Pri teži je krivulja
+   s tem skoraj ravna. Popravek sta `Y_FLOOR` in `Y_CEILING` v `js/chart.js`.
 
 ## Odprta vprašanja
 
-- **Kje se ureja in briše zgodovina** (napačno vpisan trening). Arhiv jo pokaže,
-  popraviti pa je še ni mogoče, ko je enkrat shranjena.
+- **Kje se ureja zgodovina** (napačno vpisan trening). **Brisanje je rešeno** —
+  koš ob vrstici v arhivu treningov. Popraviti shranjenega treninga še vedno ni
+  mogoče; datum je zdaj vsaj izbirljiv, dokler trening teče.
 - **Kam pride brisanje podatkov.** Izvoz in uvoz sta zdaj v oknu pod zobnikom;
   brisanje vsega tam namenoma še ni, ker je preblizu gumbu za uvoz.
 - **Ali aplikacija ostane v podmapi `aplikacija/`** ali se kdaj preseli na koren

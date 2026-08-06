@@ -28,8 +28,9 @@ Podrobnosti in kaj sledi: `Claude_kontekst/stanje.md`
 - **Nastavi razmerje osi na grafu prehrane.** `AXIS_RATIO` v `aplikacija/js/chart.js`
   je zdaj 40 (1 kg = 40 kcal). Prava vrednost se pokaže šele na resničnih podatkih:
   večja številka črti stisne skupaj, manjša ju razmakne.
-- **Prava ikona za PREHRANO.** Spodnji gumb ima zaenkrat samo črko **P**
-  (`ICON_NUTRITION` v `aplikacija/js/icons.js`) — zamenja se en niz in nič drugega.
+- **Poglej, ali sta 0,8 in 1,2 prava množitelja za os Y.** Dno osi je najnižja
+  vrednost krat `Y_FLOOR`, vrh najvišja krat `Y_CEILING` (`aplikacija/js/chart.js`).
+  Pri teži je krivulja s tem skoraj ravna; bližje ena, bolj se razpre.
 - **Označi vaje z lastno težo.** Migracija je vse vaje postavila na
   `usesBodyweight: false`. Zgibi, sklece in dipsi rabijo preklop v oknu pod
   svinčnikom, sicer graf moči pri njih upošteva samo dodano težo in ne telesne.

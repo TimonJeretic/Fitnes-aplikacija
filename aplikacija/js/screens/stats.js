@@ -18,7 +18,9 @@ import { aggregate, lineChart } from '../chart.js';
 import { navigate } from '../startup/navigate.js';
 import { ICON_STATS, ICON_TRASH } from '../icons.js';
 import { openSheet } from '../sheet.js';
-import { el, button, icon, formatNumber, formatRounded, formatTime, formatDay } from '../dom.js';
+import {
+  el, button, icon, withLabel, formatNumber, formatRounded, formatTime, formatDay
+} from '../dom.js';
 
 const T = TEXT.stats;
 
@@ -355,9 +357,12 @@ function archiveView() {
   return [back, search, list];
 }
 
-// Ena vrstica na trening: ime levo, datum desno. Dotik razpre cel trening pod
-// njo in odrine spodnje vrstice — brez menjave zaslona, da ne izgubiš mesta
-// v seznamu.
+// Ena vrstica na trening: ime levo, datum desno, koš čisto na robu. Dotik po
+// vrstici razpre cel trening pod njo in odrine spodnje vrstice — brez menjave
+// zaslona, da ne izgubiš mesta v seznamu.
+//
+// Koš je svoj gumb ob vrstici in ne v njej: gumb v gumbu ni veljaven zapis, dve
+// tarči drug ob drugem pa sta isti vzorec kot v arhivu vaj (.listrow).
 function fillArchive(list) {
   const workouts = store.searchWorkouts(workoutQuery);
 
@@ -370,6 +375,8 @@ function fillArchive(list) {
   for (const workout of workouts) {
     const open = workout.id === openWorkoutId;
 
+    const line = el('div', 'listrow');
+
     const row = button('archive__row', '', () => {
       // Ponoven dotik iste vrstice jo zapre.
       openWorkoutId = open ? null : workout.id;
@@ -381,7 +388,21 @@ function fillArchive(list) {
 
     row.append(el('span', 'archive__name', workout.name));
     row.append(el('span', 'archive__date', formatDay(workout.day)));
-    rows.push(row);
+    line.append(row);
+
+    // Brisanje treninga je nepovratno in pobriše cel dan, zato gre skozi
+    // potrditev — enako kot brisanje vaje in predloge.
+    const remove = button('listrow__remove', '', () => {
+      if (!confirm(T.removeWorkoutConfirm)) return;
+      store.removeWorkout(workout.id);
+      if (openWorkoutId === workout.id) openWorkoutId = null;
+      fillArchive(list);
+    });
+    remove.append(icon('listrow__icon', ICON_TRASH));
+    withLabel(remove, T.removeWorkout);
+    line.append(remove);
+
+    rows.push(line);
 
     if (open) rows.push(workoutDetail(workout.id));
   }
@@ -389,8 +410,9 @@ function fillArchive(list) {
   list.replaceChildren(...rows);
 }
 
-// Razprt trening. Samo za branje: popravljanje in brisanje zgodovine je svoje
-// vprašanje in bi zahtevalo svoj premislek (Claude_kontekst/stanje.md).
+// Razprt trening. Samo za branje: popravljanje shranjenega treninga je svoje
+// vprašanje in bi zahtevalo svoj premislek (Claude_kontekst/stanje.md). Pot iz
+// napačno vpisanega treninga je koš ob vrstici — zbriši in vpiši na novo.
 function workoutDetail(id) {
   const wrap = el('div', 'archive__detail');
 

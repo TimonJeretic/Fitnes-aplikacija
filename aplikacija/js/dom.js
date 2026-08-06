@@ -105,3 +105,32 @@ export function formatDay(day) {
   const parts = String(day).split('-');
   return Number(parts[2]) + '. ' + Number(parts[1]) + '. ' + parts[0];
 }
+
+// Oblika, ki jo daje in jemlje <input type="date">.
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// Poln časovni žig v dan 'YYYY-MM-DD', za v koledarček. Dan beremo iz lokalnega
+// časa in ne z .toISOString(): ta vzame UTC in bi trening, začet ob pol enih
+// zvečer poleti, ponudil z jutrišnjim datumom.
+export function dayOfIso(iso) {
+  const date = iso ? new Date(iso) : new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return date.getFullYear() + '-' + month + '-' + day;
+}
+
+// Isti časovni žig, prestavljen na izbrani dan. Ura ostane ista — trening je bil
+// ob tisti uri, koledarček menja samo datum. Nerazumljiv dan pusti žig pri miru:
+// sistemski koledar zna vrniti prazno polje in to ne sme pomeniti novega datuma.
+export function isoOnDay(iso, day) {
+  if (!DAY_PATTERN.test(String(day))) return iso;
+
+  const from = new Date(iso);
+  const base = Number.isNaN(from.getTime()) ? new Date() : from;
+  const parts = String(day).split('-');
+
+  return new Date(
+    Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]),
+    base.getHours(), base.getMinutes(), base.getSeconds(), base.getMilliseconds()
+  ).toISOString();
+}

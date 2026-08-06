@@ -534,6 +534,18 @@ export function searchWorkouts(query) {
   return all.filter((workout) => workoutHaystack(byId.get(workout.id)).includes(needle));
 }
 
+// Zbriše shranjen trening iz zgodovine. Nasprotje od removeExercise(): tam
+// izgine vaja iz vseh treningov, tukaj izgine en trening z vsemi svojimi vajami.
+//
+// Predloga ostane. Ime treninga se uporablja naprej, zbrisan je en sam dan —
+// in prav zaradi tega je brisanje varno: napačno vpisan trening izgine z grafov
+// in iz arhiva, seznam na zaslonu TRENING pa se ne spremeni.
+export function removeWorkout(id) {
+  const all = read();
+  all.workouts = all.workouts.filter((workout) => workout.id !== id);
+  write();
+}
+
 // Trening z razrešenimi imeni vaj. Shranjen trening hrani samo `exerciseId`,
 // zaslon pa ne sme sam brskati po registru vaj — zato razrešitev pripada sem.
 // `name: null` pomeni, da vaje v registru ni več; napis za to je stvar zaslona.
@@ -1097,6 +1109,15 @@ function keepSet(set) {
   return set.weightKg !== null || set.reps !== null;
 }
 
+// Kdaj je bil trening. To je `startedAt` in ne trenutek shranjevanja: dan je
+// izbirljiv s koledarčkom na zaslonu TRENING (vpišeš ga lahko zvečer za včeraj),
+// trening, začet pred polnočjo in shranjen po njej, pa s tem ne pade na naslednji
+// dan. Skvarjen ali manjkajoč žig pomeni zdaj — brez datuma trening ne more biti.
+function workoutDate(draft) {
+  const started = new Date(draft.startedAt);
+  return Number.isNaN(started.getTime()) ? new Date().toISOString() : started.toISOString();
+}
+
 // Shrani trening v zgodovino in posodobi predlogo.
 // Prazne serije se zavržejo, predloga pa dobi vse vaje — tudi tiste, ki jih
 // danes nisi uspel narediti; naslednjič naj se spet ponudijo.
@@ -1117,7 +1138,7 @@ export function saveWorkout(draft) {
     id: newId(),
     name: String(draft.name).trim(),
     templateId: template.id,
-    date: new Date().toISOString(),
+    date: workoutDate(draft),
     exercises
   };
 
